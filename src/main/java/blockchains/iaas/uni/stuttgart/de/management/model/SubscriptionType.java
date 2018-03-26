@@ -1,4 +1,4 @@
-package blockchains.iaas.uni.stuttgart.de.exceptions;
+package blockchains.iaas.uni.stuttgart.de.management.model;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -11,17 +11,10 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class SubmitTransactionException extends IllegalArgumentException {
-
-    public SubmitTransactionException() {
-        super();
-    }
-
-    public SubmitTransactionException(String s) {
-        super(s);
-    }
-
-    public SubmitTransactionException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public enum SubscriptionType {
+    SUBMIT_TRANSACTION,
+    RECEIVE_TRANSACTION,
+    RECEIVE_TRANSACTIONS,
+    DETECT_ORPHANED_TRANSACTION,
+    ENSURE_TRANSACTION_STATE
 }

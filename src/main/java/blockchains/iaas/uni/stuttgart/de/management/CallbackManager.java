@@ -2,11 +2,7 @@ package blockchains.iaas.uni.stuttgart.de.management;
 
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-import blockchains.iaas.uni.stuttgart.de.model.response.CorrelatedResponse;
-import blockchains.iaas.uni.stuttgart.de.model.response.StateCorrelatedResponse;
-import blockchains.iaas.uni.stuttgart.de.model.response.TransactionCorrelatedResponse;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CorrelatedResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,37 +31,19 @@ public class CallbackManager {
         return instance;
     }
 
-    public <T> void sendCallback(final String endpointUrl, final String correlationId, final T responseData) {
-        CorrelatedResponse responseBody;
-
-        if (responseData instanceof Transaction) {
-            responseBody = new TransactionCorrelatedResponse();
-            ((TransactionCorrelatedResponse) responseBody).setData((Transaction) responseData);
-        } else if (responseData instanceof TransactionState) {
-            responseBody = new StateCorrelatedResponse();
-            ((StateCorrelatedResponse) responseBody).setState((TransactionState) responseData);
-        } else {
-            log.error("Trying to send unrecognized response body");
-            return;
-        }
-
-        responseBody.setCorrelationId(correlationId);
+    public void sendCallback(final String endpointUrl, final CorrelatedResponse responseBody) {
         final Client client = ClientBuilder.newClient();
         final Response response = client.target(endpointUrl)
                 .request(MediaType.APPLICATION_XML)
                 .post(Entity.entity(responseBody, MediaType.APPLICATION_XML));
 
-        if (response.getStatus() != 201) {
-            final String msg = "Failed with HTTP error code : " + response.getStatus();
-            log.error(msg);
-            throw new RuntimeException(msg);
-        }
+        log.info("Callback client responded with code({})", response.getStatus());
 
     }
 
 
-    public <T> void sendCallbackAsync(final String endpointUrl, final String correlationId, final T responseBody) {
-        this.executorService.execute(() -> sendCallback(endpointUrl, correlationId, responseBody));
+    public void sendCallbackAsync(final String endpointUrl, final CorrelatedResponse responseBody) {
+        this.executorService.execute(() -> sendCallback(endpointUrl, responseBody));
     }
 
 }

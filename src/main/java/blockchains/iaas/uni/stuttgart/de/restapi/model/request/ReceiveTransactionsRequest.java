@@ -1,4 +1,4 @@
-package blockchains.iaas.uni.stuttgart.de.model.request;
+package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -7,25 +7,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.math.BigInteger;
 
 /********************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache Software License 2.0
+ * terms the Apache Software License 2.0
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-@XmlRootElement(name = "SubmitTransactionRequest")
+
+@XmlRootElement(name = "ReceiveTransactionsRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class SubmitTransactionRequest {
-
-    private String to;
-
-    private String valueAsString;
+public class ReceiveTransactionsRequest {
 
     private String blockchainId;
 
@@ -33,9 +28,9 @@ public class SubmitTransactionRequest {
 
     private long waitFor;
 
-    private long timeout;
-
     private String epUrl;
+
+    private String from;
 
     @XmlElement(name="EndPointUrl")
     public String getEpUrl() {
@@ -46,13 +41,13 @@ public class SubmitTransactionRequest {
         this.epUrl = epUrl;
     }
 
-    @XmlElement(name="To")
-    public String getTo() {
-        return to;
+    @XmlElement(name="From")
+    public String getFrom() {
+        return from;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public void setFrom(String from) {
+        this.from = from;
     }
 
     @XmlElement(name="BlockchainId")
@@ -82,33 +77,6 @@ public class SubmitTransactionRequest {
 
     public void setWaitFor(long waitFor) {
         this.waitFor = waitFor;
-    }
-
-    @XmlElement(name="Timeout")
-    public long getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(long timeout) {
-        this.timeout = timeout;
-    }
-
-    @XmlElement(name="Value")
-    public BigInteger getValue(){
-        return new BigInteger(valueAsString);
-    }
-
-    public void setValue(BigInteger value){
-        valueAsString = value.toString();
-    }
-
-
-    public String getValueAsString() {
-        return valueAsString;
-    }
-
-    public void setValueAsString(String value) {
-        this.valueAsString = value;
     }
 
 

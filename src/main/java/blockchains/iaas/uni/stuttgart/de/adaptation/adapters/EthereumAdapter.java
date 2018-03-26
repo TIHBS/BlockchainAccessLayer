@@ -23,24 +23,20 @@ import rx.subjects.PublishSubject;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /********************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache Software License 2.0
+ * terms the Apache Software License 2.0
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 public class EthereumAdapter implements BlockchainAdapter {
     private Credentials credentials;
@@ -76,11 +72,21 @@ public class EthereumAdapter implements BlockchainAdapter {
         }
     }
 
-    private CompletableFuture<Transaction> subscribeForTxEvent(String txHash, long waitFor, long timeoutMillis, TransactionState... observedStates) {
+    /**
+     * Subscribes for the event of detecting a transition of the state of a given transaction which is assumed to having been
+     * MINED before. The method supports detecting
+     * (i) a transaction being not found anymore (invalidated), or (ii) not having a containing block (orphaned), or
+     * (iii) having received enough block-confirmations (durably committed).
+     *
+     * @param txHash         the hash of the transaction to monitor
+     * @param waitFor        the number of block-confirmations to wait until the transaction is considered persisted (-1 if the
+     *                       transaction is never to be considered persisted)
+     * @param observedStates the set of states that will be reported to the calling method
+     * @return a future which is used to handle the subscription and receive the callback
+     */
+    private CompletableFuture<Transaction> subscribeForTxEvent(String txHash, long waitFor, TransactionState... observedStates) {
         final CompletableFuture<Transaction> result = new CompletableFuture<>();
         final Subscription subscription = web3j.blockObservable(false).subscribe(new Subscriber<EthBlock>() {
-            final Instant start = Instant.now();
-            Instant now;
 
             void handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
                                      final TransactionState detectedState, final TransactionState[] interesting,
@@ -118,7 +124,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 try {
                     // make sure the transaction exists
                     final EthTransaction transaction = web3j.ethGetTransactionByHash(txHash).send();
-
+                    // if not, then it is either invalidated or did not exist in the first place
                     if (!transaction.getTransaction().isPresent()) {
                         final String msg = String.format("The transaction of the hash %s is not found!", txHash);
                         log.info(msg);
@@ -141,7 +147,7 @@ public class EthereumAdapter implements BlockchainAdapter {
 
                     }
                     // check if enough block-confirmations have occurred.
-                    if (ethBlock.getBlock() != null) {
+                    if (waitFor >= 0 && ethBlock.getBlock() != null) {
                         if (ethBlock.getBlock().getNumber()
                                 .subtract(transaction.getTransaction().get().getBlockNumber())
                                 .intValue() >= waitFor) {
@@ -150,21 +156,8 @@ public class EthereumAdapter implements BlockchainAdapter {
                             log.info(msg);
 
                             handleDetectedState(transaction.getTransaction(), TransactionState.CONFIRMED, observedStates, result);
-                            return;
                         }
                     }
-
-                    // check if timeout occurred
-                    now = Instant.now();
-
-                    if (timeoutMillis >= 0 && Duration.between(start, now).toMillis() > timeoutMillis) {
-                        final String msg = String.format("The transaction of the hash %s has timed-out",
-                                txHash);
-                        log.info(msg);
-
-                        handleDetectedState(transaction.getTransaction(), TransactionState.TIMED_OUT, observedStates, result);
-                    }
-
 
                 } catch (IOException e) {
                     result.completeExceptionally(e);
@@ -179,7 +172,7 @@ public class EthereumAdapter implements BlockchainAdapter {
 
 
     @Override
-    public CompletableFuture<Transaction> submitTransaction(long waitFor, long timeoutMillis, String receiverAddress, BigDecimal value)
+    public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value)
             throws SubmitTransactionException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
@@ -188,18 +181,11 @@ public class EthereumAdapter implements BlockchainAdapter {
 
         try {
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
-                    .sendAsync().exceptionally((e) -> {
-                        log.error("Failed to submitTransaction. Reason: {}", e.getMessage());
-                        return null;
-                    })
-                    .thenCompose(tx -> {
-                        if (tx == null)
-                            return null;
-                        return subscribeForTxEvent(tx.getTransactionHash(), waitFor, timeoutMillis, TransactionState.CONFIRMED,
-                                TransactionState.TIMED_OUT);
-                    });
+                    .sendAsync()
+                    // when an exception (e.g., ConnectException happens), the following is skipped
+                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED));
 
-        } catch (Exception e) {
+        } catch (Exception e) {// this seems to never get invoked
             final String msg = "An error occurred while trying to submit a new transaction. Reason: " + e.getMessage();
             log.error(msg);
 
@@ -210,7 +196,7 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public Observable<Transaction> subscribeToReceivedTransactions(int waitFor, Optional<String> senderId) {
+    public Observable<Transaction> receiveTransactions(long waitFor, String senderId) {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
@@ -220,30 +206,38 @@ public class EthereumAdapter implements BlockchainAdapter {
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Subscription newTransactionObservable = web3j.transactionObservable().subscribe(tx -> {
             if (myAddress.equalsIgnoreCase(tx.getTo())) {
-                if (!senderId.isPresent() || (senderId.isPresent() && senderId.get().equalsIgnoreCase(tx.getFrom()))) {
+                if (senderId == null || senderId.trim().length() == 0 || senderId.equalsIgnoreCase(tx.getFrom())) {
                     log.info("New transaction received from {}", tx.getFrom());
-                    subscribeForTxEvent(tx.getHash(), waitFor, -1, TransactionState.CONFIRMED)
-                            .thenAccept(result::onNext);
+                    subscribeForTxEvent(tx.getHash(), waitFor, TransactionState.CONFIRMED)
+                            .thenAccept(result::onNext)
+                            .exceptionally(error -> {
+                                result.onError(error);
+                                return null;
+                            });
                 }
             }
-        });
+        }, result::onError);
 
-
-        result.doOnUnsubscribe(newTransactionObservable::unsubscribe);
-
-        return result;
-
+        return result.doOnUnsubscribe(newTransactionObservable::unsubscribe);
     }
 
     @Override
-    public CompletableFuture<TransactionState> subscribeToTransactionState(int waitFor, int timeoutMillis, String transactionHash) {
-        return subscribeForTxEvent(transactionHash, waitFor, timeoutMillis, TransactionState.values())
+    public CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) {
+        // only monitor the transition into the CONFIRMED state or the NOT_FOUND state
+        return subscribeForTxEvent(transactionId, waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState);
     }
 
     @Override
-    public boolean doesTransactionExist(String transactionHash) throws IOException {
-        final EthTransaction transaction = web3j.ethGetTransactionByHash(transactionHash).send();
+    public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) {
+        // only monitor the transition into the PENDING state
+        return subscribeForTxEvent(transactionId, -1, TransactionState.PENDING, TransactionState.NOT_FOUND)
+                .thenApply(Transaction::getState);
+    }
+
+    @Override
+    public boolean doesTransactionExist(String transactionId) throws IOException {
+        final EthTransaction transaction = web3j.ethGetTransactionByHash(transactionId).send();
 
         return transaction.getTransaction().isPresent();
     }

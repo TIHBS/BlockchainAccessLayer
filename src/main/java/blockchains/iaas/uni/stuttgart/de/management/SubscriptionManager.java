@@ -1,25 +1,26 @@
 package blockchains.iaas.uni.stuttgart.de.management;
 
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /********************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache Software License 2.0
+ * terms the Apache Software License 2.0
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 public class SubscriptionManager {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
@@ -50,9 +51,25 @@ public class SubscriptionManager {
         if(this.subscriptions.containsKey(subscriptionId)){
             return this.subscriptions.get(subscriptionId);
         }else{
-            log.error("subscription-id <{}> does not exist! null is returned");
+            log.info("trying to retrieve a non-existent subscription: <{}>! null is returned");
             return null;
         }
+    }
+
+    public void removeSubscription(String subscriptionId){
+        if(this.subscriptions.containsKey(subscriptionId)){
+            this.subscriptions.remove(subscriptionId);
+        }else{
+            log.info("trying to remove a non-existent subscription: <{}>! nothing is removed");
+        }
+    }
+
+    public Collection<String> getAllSubscriptionIdsOfType(SubscriptionType type){
+        return this.subscriptions
+                .keySet()
+                .stream()
+                .filter(subscriptionId -> this.subscriptions.get(subscriptionId).getType()==type)
+                .collect(Collectors.toList());
     }
 
 }

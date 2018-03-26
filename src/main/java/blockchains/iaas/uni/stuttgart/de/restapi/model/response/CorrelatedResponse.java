@@ -1,26 +1,33 @@
-package blockchains.iaas.uni.stuttgart.de.model.response;
+package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
+
+import blockchains.iaas.uni.stuttgart.de.restapi.model.ResourceSupport;
 
 import javax.xml.bind.annotation.*;
 
 /********************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
- *
- * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache Software License 2.0
+ * terms the Apache Software License 2.0
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 @XmlRootElement(name="CorrelatedResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CorrelatedResponse {
+public class CorrelatedResponse extends ResourceSupport {
     @XmlAttribute(name="correlationId")
     private String correlationId;
 
+    CorrelatedResponse(){
+
+    }
+
+    CorrelatedResponse(final String correlationId){
+        this.correlationId = correlationId;
+    }
 
     public String getCorrelationId() {
         return correlationId;
@@ -29,6 +36,5 @@ public class CorrelatedResponse {
     public void setCorrelationId(String correlationId) {
         this.correlationId = correlationId;
     }
-
 
 }

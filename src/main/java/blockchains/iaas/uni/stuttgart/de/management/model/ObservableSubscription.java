@@ -1,5 +1,7 @@
 package blockchains.iaas.uni.stuttgart.de.management.model;
 
+
+
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
  * University of Stuttgart
@@ -11,20 +13,23 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public abstract class Subscription {
-    private SubscriptionType type;
+public class ObservableSubscription extends  Subscription {
+    private rx.Subscription subscription;
 
-    public Subscription(final SubscriptionType type){
-        this.type = type;
+    public ObservableSubscription(rx.Subscription subscription, SubscriptionType type) {
+        super(type);
+        this.subscription = subscription;
     }
 
-    public SubscriptionType getType() {
-        return type;
+    public rx.Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setType(SubscriptionType type) {
-        this.type = type;
+    public void setSubscription(rx.Subscription subscription) {
+        this.subscription = subscription;
     }
 
-    public abstract void unsubscribe();
+    public void unsubscribe() {
+        this.subscription.unsubscribe();
+    }
 }
