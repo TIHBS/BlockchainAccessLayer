@@ -54,8 +54,3 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-.idea/artifacts/BlockchainAccessLayer_war_exploded.xml
-.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_annotations_2_9_0.xml
-.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_core_2_9_1.xml
-.idea/artifacts/BlockchainAccessLayer_war_exploded.xml
-target/blockchain-access-layer/WEB-INF/classes/blockchains/iaas/uni/stuttgart/de/management/SubscriptionManager.class
