@@ -1,4 +1,4 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model;
+package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,14 +19,15 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+
 @XmlRootElement(name = "Resources")
-public class ResourceSupport {
+public class LinkCollectionResponse {
 
     @JsonSerialize(using = LinksSerializer.class)
     private final List<Link> links = new ArrayList<>();
 
 
-    public ResourceSupport() {
+    public LinkCollectionResponse() {
 
     }
 

@@ -3,7 +3,7 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 import blockchains.iaas.uni.stuttgart.de.management.SubscriptionManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.ResourceSupport;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.LinkCollectionResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 
 import javax.ws.rs.DELETE;
@@ -25,7 +25,6 @@ import java.util.Collection;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-
 public abstract class SubscriptionController {
 
     @Context
@@ -34,7 +33,7 @@ public abstract class SubscriptionController {
     Response getSubscriptions(final SubscriptionType type, final UriInfo uriInfo) {
         final SubscriptionManager manager = SubscriptionManager.getInstance();
         final Collection<String> subscriptions = manager.getAllSubscriptionIdsOfType(type);
-        final ResourceSupport response = new ResourceSupport();
+        final LinkCollectionResponse response = new LinkCollectionResponse();
 
         for (final String subscriptionId : subscriptions) {
             response.add(UriUtil.generateSubResourceLink(uriInfo, subscriptionId, false, "self"));
@@ -43,7 +42,7 @@ public abstract class SubscriptionController {
         return Response.ok(response).build();
     }
 
-    public Response removeSubscription(final String subscriptionId){
+    Response removeSubscription(final String subscriptionId){
         final SubscriptionManager manager = SubscriptionManager.getInstance();
         final Subscription subscription = manager.getSubscription(subscriptionId);
 

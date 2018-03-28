@@ -24,6 +24,7 @@ import javax.ws.rs.core.Response;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
 @Path("detect-orphaned-transaction")
 public class OrphanedTransactionController extends SubscriptionController {
 

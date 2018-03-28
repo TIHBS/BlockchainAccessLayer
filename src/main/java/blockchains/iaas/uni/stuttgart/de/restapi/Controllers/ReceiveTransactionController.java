@@ -4,7 +4,7 @@ import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
-import io.swagger.v3.oas.annotations.Operation;
+//import io.swagger.v3.oas.annotations.Operation;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -29,7 +29,7 @@ import javax.ws.rs.core.Response;
 public class ReceiveTransactionController extends SubscriptionController{
 
     @GET
-    @Operation(summary="gets a list of all receive transaction subscriptions")
+    //@Operation(summary="gets a list of all receive transaction subscriptions")
     public Response get(){
         return getSubscriptions(SubscriptionType.RECEIVE_TRANSACTION, uriInfo);
     }

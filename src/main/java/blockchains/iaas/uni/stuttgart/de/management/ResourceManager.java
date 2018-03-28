@@ -5,13 +5,15 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.SubmitTransactionException;
+import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
+import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.TransactionCorrelatedResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Subscriber;
@@ -62,7 +64,7 @@ public class ResourceManager {
                     thenAccept(tx -> {
                         if (tx != null) {
                             CallbackManager.getInstance().sendCallback(epUrl,
-                                    new TransactionCorrelatedResponse(subscriptionId, tx));
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, tx));
                         } else
                             log.info("resulting transaction is null");
                     }).
@@ -70,10 +72,10 @@ public class ResourceManager {
                         log.info("Failed to submit a transaction. Reason: {}", e.getMessage());
                         if (e.getCause() instanceof IOException)
                             CallbackManager.getInstance().sendCallback(epUrl,
-                                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
                         else if (e.getCause() instanceof RuntimeException)
                             CallbackManager.getInstance().sendCallback(epUrl,
-                                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.INVALID));
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
 
                         // ManualUnsubscriptionException is also captured here
                         return null;
@@ -89,12 +91,12 @@ public class ResourceManager {
         } catch (SubmitTransactionException e) {
             // This (should only) happen when something is wrong with the transaction data
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.INVALID));
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
 
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
 
     }
@@ -135,7 +137,7 @@ public class ResourceManager {
                         public void onNext(Transaction transaction) {
                             if (transaction != null) {
                                 CallbackManager.getInstance().sendCallback(epUrl,
-                                        new TransactionCorrelatedResponse(subscriptionId, transaction));
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
 
                             } else {
                                 log.error("received transaction is null!");
@@ -192,7 +194,7 @@ public class ResourceManager {
 
                             if (throwable instanceof IOException || throwable.getCause() instanceof IOException) {
                                 CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                                        new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
                             }
                         }
 
@@ -200,7 +202,7 @@ public class ResourceManager {
                         public void onNext(Transaction transaction) {
                             if (transaction != null) {
                                 CallbackManager.getInstance().sendCallback(epUrl,
-                                        new TransactionCorrelatedResponse(subscriptionId, transaction));
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
                                 log.info("usubscribing from receiveTransactions");
                                 unsubscribe();
                             } else {
@@ -221,7 +223,7 @@ public class ResourceManager {
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
     }
 
@@ -247,14 +249,36 @@ public class ResourceManager {
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.detectOrphanedTransaction(transactionId);
-            subscribeToMonitoringOperation(subscriptionId, epUrl, future);
+            future.
+                    thenAccept(txState -> {
+                        if (txState != null) {
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, txState));
+                        } else // we should never reach here!
+                            log.error("resulting transactionState is null");
+                    }).
+                    exceptionally((e) -> {
+                        log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
+                        // This happens when a communication error, or an error with the tx exist.
+                        if (e.getCause() instanceof IOException)
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, TransactionState.UNKNOWN));
+
+
+                        // ManualUnsubscriptionException is also captured here
+                        return null;
+                    }).
+                    whenComplete((r, e) -> {
+                        // remove subscription from subscription list
+                        SubscriptionManager.getInstance().removeSubscription(subscriptionId);
+                    });
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, TransactionState.UNKNOWN));
         }
     }
 
@@ -280,41 +304,41 @@ public class ResourceManager {
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(waitFor, transactionId);
-            subscribeToMonitoringOperation(subscriptionId, epUrl, future);
+            future.
+                    thenAccept(txState -> {
+                        if (txState != null) {
+                            if(txState == TransactionState.CONFIRMED)
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, txState));
+                            else
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, txState));
+                        } else // we should never reach here!
+                            log.error("resulting transactionState is null");
+                    }).
+                    exceptionally((e) -> {
+                        log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
+                        // This happens when a communication error, or an error with the tx exist.
+                        if (e.getCause() instanceof IOException)
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
+
+
+                        // ManualUnsubscriptionException is also captured here
+                        return null;
+                    }).
+                    whenComplete((r, e) -> {
+                        // remove subscription from subscription list
+                        SubscriptionManager.getInstance().removeSubscription(subscriptionId);
+                    });
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
     }
 
-    private void subscribeToMonitoringOperation(final String subscriptionId,
-                                                final String epUrl, CompletableFuture<TransactionState> future) {
-        future.
-                thenAccept(txState -> {
-                    if (txState != null) {
-                        CallbackManager.getInstance().sendCallback(epUrl,
-                                new TransactionCorrelatedResponse(subscriptionId, txState));
-                    } else // we should never reach here!
-                        log.error("resulting transactionState is null");
-                }).
-                exceptionally((e) -> {
-                    log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
-                    // This happens when a communication error, or an error with the tx exist.
-                    if (e.getCause() instanceof IOException)
-                        CallbackManager.getInstance().sendCallback(epUrl,
-                                new TransactionCorrelatedResponse(subscriptionId, TransactionState.UNKNOWN));
-
-
-                    // ManualUnsubscriptionException is also captured here
-                    return null;
-                }).
-                whenComplete((r, e) -> {
-                    // remove subscription from subscription list
-                    SubscriptionManager.getInstance().removeSubscription(subscriptionId);
-                });
-    }
 }

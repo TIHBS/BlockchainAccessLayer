@@ -2,7 +2,6 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.request.DetectOrphanedTransactionRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.EnsureTransactionStateRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 

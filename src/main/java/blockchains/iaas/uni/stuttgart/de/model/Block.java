@@ -1,8 +1,5 @@
 package blockchains.iaas.uni.stuttgart.de.model;
 
-import blockchains.iaas.uni.stuttgart.de.restapi.model.ResourceSupport;
-import sun.misc.Resource;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;

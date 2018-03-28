@@ -1,7 +1,5 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
 
-import javax.xml.bind.annotation.*;
-
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
  * University of Stuttgart
@@ -13,26 +11,5 @@ import javax.xml.bind.annotation.*;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-@XmlRootElement(name="CorrelatedResponse")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class CorrelatedResponse  {
-    @XmlAttribute(name="correlationId")
-    private String correlationId;
-
-    CorrelatedResponse(){
-
-    }
-
-    CorrelatedResponse(final String correlationId){
-        this.correlationId = correlationId;
-    }
-
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
-    public void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
-    }
-
+public class CallbackMessage {
 }

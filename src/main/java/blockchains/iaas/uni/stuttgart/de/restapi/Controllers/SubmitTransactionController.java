@@ -3,6 +3,8 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.SubmitTransactionRequest;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CorrelatedResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.TransactionCorrelatedResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
@@ -39,10 +41,10 @@ public class SubmitTransactionController extends SubscriptionController {
 
     @POST
     @Path("/dummy")
-    @Consumes(MediaType.APPLICATION_XML)
-    public Response dummyEndPoint(TransactionCorrelatedResponse response){
+    @Consumes({MediaType.APPLICATION_JSON})
+    public Response dummyEndPoint(CamundaMessage response){
 
-        log.info("dummy path received the following transaction status: {}", response.getState());
+        log.info("dummy path received the following transaction status: {}", response.getProcessVariables().get("status"));
         return Response.accepted().build();
     }
 
