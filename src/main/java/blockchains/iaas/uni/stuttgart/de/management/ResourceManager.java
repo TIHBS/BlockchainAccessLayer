@@ -218,7 +218,7 @@ public class ResourceManager {
                     });
 
             // Add subscription to the list of subscriptions
-            final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTIONS);
+            final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, sub);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
@@ -273,7 +273,7 @@ public class ResourceManager {
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
                     });
             // Add subscription to the list of subscriptions
-            final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
+            final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.DETECT_ORPHANED_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
@@ -332,7 +332,7 @@ public class ResourceManager {
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
                     });
             // Add subscription to the list of subscriptions
-            final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
+            final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found

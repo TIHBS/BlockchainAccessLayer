@@ -117,6 +117,6 @@ The following series of screenshots show a sample execution of the case study:
  
  When we performed this sample execution, the setup was as follows:
  
-* a _geth_ node is running in a virtual machine in a VSphere accessible from the local network.
-* The blockchain access layer is runnging in a local Tomcat server listening to port 8081
+* a _geth_ node is running on a virtual machine in a VSphere accessible from the local network.
+* The blockchain access layer is running in a local Tomcat server listening to port 8081
 * The camunda engine is running in a local Tomcat server litening to port 8080

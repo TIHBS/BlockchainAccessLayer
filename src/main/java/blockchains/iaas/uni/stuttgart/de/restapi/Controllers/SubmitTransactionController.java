@@ -3,19 +3,17 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.SubmitTransactionRequest;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CorrelatedResponse;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.TransactionCorrelatedResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 
 @Path("submit-transaction")
