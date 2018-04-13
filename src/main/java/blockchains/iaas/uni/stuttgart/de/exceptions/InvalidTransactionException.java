@@ -11,23 +11,24 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class TransactionNotFoundException extends RuntimeException {
-    public TransactionNotFoundException() {
+public class InvalidTransactionException extends RuntimeException {
+
+    public InvalidTransactionException() {
     }
 
-    public TransactionNotFoundException(String message) {
+    public InvalidTransactionException(String message) {
         super(message);
     }
 
-    public TransactionNotFoundException(String message, Throwable cause) {
+    public InvalidTransactionException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public TransactionNotFoundException(Throwable cause) {
+    public InvalidTransactionException(Throwable cause) {
         super(cause);
     }
 
-    public TransactionNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidTransactionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

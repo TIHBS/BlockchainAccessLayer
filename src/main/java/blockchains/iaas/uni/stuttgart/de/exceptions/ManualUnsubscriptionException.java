@@ -11,7 +11,7 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class ManualUnsubscriptionException extends Exception {
+public class ManualUnsubscriptionException extends RuntimeException {
     public ManualUnsubscriptionException() {
         super();
     }

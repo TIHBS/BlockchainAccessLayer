@@ -26,6 +26,7 @@ import java.util.Map;
 public class AdapterManager {
     private static final Logger log = LoggerFactory.getLogger(AdapterManager.class);
     private static final String DEFAULT_ETHEREUM_ID = "eth-0";
+    private static final String DEFUALT_BICOIN_ID = "btc-0";
     private BlockchainAdapterFactory factory = new BlockchainAdapterFactory();
     private static AdapterManager instance = null;
     private final Map<String, BlockchainAdapter> map = Collections.synchronizedMap(new HashMap<>());
@@ -56,16 +57,22 @@ public class AdapterManager {
     private void initialize(){
         try {
             addDefaultEthereumNode(DEFAULT_ETHEREUM_ID);
-        } catch (IOException|CipherException e) {
+            addDefaultBitcoinNode(DEFUALT_BICOIN_ID);
+        } catch (Exception e) {
             //TODO better handling of errors
             //error logs are produced at a lower level
             e.printStackTrace();
         }
     }
 
-    private void addDefaultEthereumNode(String blockchainId) throws IOException, CipherException {
+    private void addDefaultEthereumNode(String blockchainId) throws Exception {
         map.put(blockchainId, factory.createBlockchainAdapter(NodeType.ETHEREUM));
     }
+
+    private void addDefaultBitcoinNode(String blockchainId) throws Exception {
+        map.put(blockchainId, factory.createBlockchainAdapter(NodeType.BITCOIN));
+    }
+
     // TODO provide ability to add/remove/configure nodes externally
     // TODO separate keystore management from node management
     // TODO expose nodes as a REST resource

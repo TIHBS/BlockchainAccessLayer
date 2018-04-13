@@ -1,6 +1,7 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 
-import blockchains.iaas.uni.stuttgart.de.exceptions.SubmitTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
@@ -26,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -171,9 +173,18 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
 
+    private static CompletionException wrapEthereumExceptions(Throwable e) {
+        if (e.getCause() instanceof IOException)
+            e = new BlockchainNodeUnreachableException(e);
+        else if (e.getCause() instanceof RuntimeException)
+            e = new InvalidTransactionException(e);
+
+        return new CompletionException(e);
+    }
+
     @Override
     public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value)
-            throws SubmitTransactionException {
+            throws InvalidTransactionException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
@@ -183,13 +194,17 @@ public class EthereumAdapter implements BlockchainAdapter {
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
-                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED));
+                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED))
+                    .exceptionally((e) -> {
+                                throw wrapEthereumExceptions(e);
+                            }
+                    );
 
         } catch (Exception e) {// this seems to never get invoked
-            final String msg = "An error occurred while trying to submit a new transaction. Reason: " + e.getMessage();
+            final String msg = "An error occurred while trying to submit a new transaction to ethereum. Reason: " + e.getMessage();
             log.error(msg);
 
-            throw new SubmitTransactionException(msg, e);
+            throw new InvalidTransactionException(msg, e);
         }
 
 
@@ -211,12 +226,12 @@ public class EthereumAdapter implements BlockchainAdapter {
                     subscribeForTxEvent(tx.getHash(), waitFor, TransactionState.CONFIRMED)
                             .thenAccept(result::onNext)
                             .exceptionally(error -> {
-                                result.onError(error);
+                                result.onError(wrapEthereumExceptions(error));
                                 return null;
                             });
                 }
             }
-        }, result::onError);
+        }, e->result.onError(wrapEthereumExceptions(e)));
 
         return result.doOnUnsubscribe(newTransactionObservable::unsubscribe);
     }
@@ -225,14 +240,20 @@ public class EthereumAdapter implements BlockchainAdapter {
     public CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) {
         // only monitor the transition into the CONFIRMED state or the NOT_FOUND state
         return subscribeForTxEvent(transactionId, waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND)
-                .thenApply(Transaction::getState);
+                .thenApply(Transaction::getState)
+                .exceptionally((e) -> {
+                    throw wrapEthereumExceptions(e);
+                });
     }
 
     @Override
     public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) {
         // only monitor the transition into the PENDING state
         return subscribeForTxEvent(transactionId, -1, TransactionState.PENDING, TransactionState.NOT_FOUND)
-                .thenApply(Transaction::getState);
+                .thenApply(Transaction::getState)
+                .exceptionally((e) -> {
+                    throw wrapEthereumExceptions(e);
+                });
     }
 
     @Override

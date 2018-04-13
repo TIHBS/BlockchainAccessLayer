@@ -3,10 +3,12 @@ The project is a Java 8 web application that uses Jersey to expose a RESTful API
 
 ## Configuration
 The blockchain access layer needs to be able to communicate with a [geth node](https://github.com/ethereum/go-ethereum)
-which enables RPC connections.
+which has RPC connections enabled.
 Furthermore, the layer directly accesses the keystore file holding the private key of an Ethereum account used for sending
 and receiving transactions.
-The configuration file that can be used to configure both aspects (communication with a geth node and the local keystore) can be found 
+On the other hand, the BAL also needs to be able to communicate with a [bitcoind node](https://bitcoin.org/en/bitcoin-core/)
+which has RPC connections enabled.
+The configuration file that can be used to configure these aspects (communication with a geth, and a bitcoind nodes and the local Ethereum keystore) can be found 
 [here](src/main/resources/config.properties)
 
 
@@ -79,6 +81,7 @@ geth attach http://localhost:8545
 ```
 please replace _localhost_ with the ip address of the computer running the node.
 
+
 ## Case Study
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
@@ -105,18 +108,23 @@ The following series of screenshots show a sample execution of the case study:
  3. Sending a transaction to the address of the crypto-exchange using the Ethereum Wallet application:
  ![](src/main/resources/images/send-transaction-form.png)
  
- 4. The log records produced by the process instance. The final message in the log shows the id of the transaction
+ 4. While waiting for the resulting Bitcoin transaction sent to the client to receive 1 confirmation, the business process instance looks
+ as follows:
+ ![](src/main/resources/images/waiting-for-bitcoin-tx.png)
+ 
+ 5. The log records produced by the process instance. The final message in the log shows the id of the transaction
  the exchange sent to the client.
  ![](src/main/resources/images/log.png)
  
- 5. [Rinkeby Explorer](https://www.rinkeby.io/#explorer) can be used to explore Rinkeby (Ethereum testnet) transactions and accounts.
+ 
+ 6. [BlockCypher](https://live.blockcypher.com/btc-testnet/) can be used to explore Bitcoin testnet3 (and other) blockchains.
  The following screenshot represents the result of querying the transaction id reported in the previous step:
- ![](src/main/resources/images/rinkeby.png)
- Please notice that the Explorer website does not always show the current state of the blockchain. The transaction in this case has actually
- received more than 12 block-confirmations whereas the Explorer reports only 5.
+ ![](src/main/resources/images/blockcypher.png)
+You can find the details about the resulting testnet3 Bitcoin transaction [here](https://live.blockcypher.com/btc-testnet/tx/347d8f2bc8dbc7cf62d8313f66d2ae930c9e92632fb5a2cfb2507caaaffa7f71/).
  
  When we performed this sample execution, the setup was as follows:
  
 * a _geth_ node is running on a virtual machine in a VSphere accessible from the local network.
+* a _bitcoind_ (Bitcoin Core) node is running on a virtual machine in a VSphere accessible from the local network.
 * The blockchain access layer is running in a local Tomcat server listening to port 8081
 * The camunda engine is running in a local Tomcat server litening to port 8080

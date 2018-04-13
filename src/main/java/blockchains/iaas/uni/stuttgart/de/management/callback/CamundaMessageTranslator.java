@@ -23,7 +23,7 @@ public class CamundaMessageTranslator extends MessageTranslator {
     @Override
     public CallbackMessage convert(String subscriptionId, boolean isErrorMessage, Transaction transaction, TransactionState state) {
         final CamundaMessage result = new CamundaMessage();
-        final String processInstnaceId = subscriptionId.substring(subscriptionId.indexOf('_')+1);
+        final String processInstnaceId = subscriptionId.substring(subscriptionId.indexOf('_') + 1);
         final String msgName = (isErrorMessage) ? "error_" : "message_" + subscriptionId;
         result.setMessageName(msgName);
         result.setProcessInstanceId(processInstnaceId);
@@ -36,8 +36,14 @@ public class CamundaMessageTranslator extends MessageTranslator {
             variables.put("to", new CamundaVariable(transaction.getTo(), "String"));
             variables.put("value", new CamundaVariable(transaction.getValueAsString(), "Long"));
             variables.put("transactionId", new CamundaVariable(transaction.getTransactionHash(), "String"));
-            variables.put("blockId", new CamundaVariable(transaction.getBlock().getHash(), "String"));
-            variables.put("blockNumber", new CamundaVariable(String.valueOf(transaction.getBlock().getNumberAsLong()), "Long"));
+
+            if (transaction.getBlock() != null) { //it could be null if we are accepting transactions with 0 confirmations
+                variables.put("blockId", new CamundaVariable(transaction.getBlock().getHash(), "String"));
+                variables.put("blockNumber", new CamundaVariable(String.valueOf(transaction.getBlock().getNumberAsLong()), "Long"));
+            } else {
+                variables.put("blockId", new CamundaVariable("", "String"));
+                variables.put("blockNumber", new CamundaVariable("-1", "Long"));
+            }
         }
 
         return result;

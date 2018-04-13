@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.neemre.btcd-cli4j</groupId>
+  <artifactId>btcd-cli4j-daemon</artifactId>
+  <versioning>
+    <release>0.5.10</release>
+    <versions>
+      <version>0.5.10</version>
+    </versions>
+    <lastUpdated>20180412113548</lastUpdated>
+  </versioning>
+</metadata>

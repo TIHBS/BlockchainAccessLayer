@@ -1,0 +1,1 @@
+mvn deploy:deploy-file -DgroupId=com.neemre.btcd-cli4j -DartifactId=btcd-cli4j-daemon -Dversion=0.5.10 -Durl=file:./ -DrepositoryId=local-maven-repo -DupdateReleaseInfo=true -Dfile="..\..\btcd-cli4j\daemon\target\btcd-cli4j-daemon-0.5.10-SNAPSHOT.jar"

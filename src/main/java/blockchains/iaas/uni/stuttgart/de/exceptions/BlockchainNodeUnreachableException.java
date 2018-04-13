@@ -11,17 +11,23 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class SubmitTransactionException extends IllegalArgumentException {
-
-    public SubmitTransactionException() {
-        super();
+public class BlockchainNodeUnreachableException extends RuntimeException {
+    public BlockchainNodeUnreachableException() {
     }
 
-    public SubmitTransactionException(String s) {
-        super(s);
+    public BlockchainNodeUnreachableException(String message) {
+        super(message);
     }
 
-    public SubmitTransactionException(String message, Throwable cause) {
+    public BlockchainNodeUnreachableException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public BlockchainNodeUnreachableException(Throwable cause) {
+        super(cause);
+    }
+
+    public BlockchainNodeUnreachableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

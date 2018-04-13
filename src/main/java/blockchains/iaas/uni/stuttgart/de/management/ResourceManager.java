@@ -4,7 +4,8 @@ package blockchains.iaas.uni.stuttgart.de.management;
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.SubmitTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Subscriber;
 
-import java.io.IOException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
@@ -70,10 +71,10 @@ public class ResourceManager {
                     }).
                     exceptionally((e) -> {
                         log.info("Failed to submit a transaction. Reason: {}", e.getMessage());
-                        if (e.getCause() instanceof IOException)
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
-                        else if (e.getCause() instanceof RuntimeException)
+                        else if (e.getCause() instanceof InvalidTransactionException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
 
@@ -88,7 +89,7 @@ public class ResourceManager {
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
-        } catch (SubmitTransactionException e) {
+        } catch (InvalidTransactionException e) {
             // This (should only) happen when something is wrong with the transaction data
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
@@ -192,9 +193,11 @@ public class ResourceManager {
                         public void onError(Throwable throwable) {
                             log.error("Failed to receive transaction. Reason:{}", throwable.getMessage());
 
-                            if (throwable instanceof IOException || throwable.getCause() instanceof IOException) {
+                            if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
                                 CallbackManager.getInstance().sendCallbackAsync(epUrl,
                                         MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
+                            } else {
+                                log.error("Unhandled exception. Exception details: " + throwable.getMessage());
                             }
                         }
 
@@ -260,7 +263,7 @@ public class ResourceManager {
                     exceptionally((e) -> {
                         log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
                         // This happens when a communication error, or an error with the tx exist.
-                        if (e.getCause() instanceof IOException)
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, TransactionState.UNKNOWN));
 
@@ -307,7 +310,7 @@ public class ResourceManager {
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
-                            if(txState == TransactionState.CONFIRMED)
+                            if (txState == TransactionState.CONFIRMED)
                                 CallbackManager.getInstance().sendCallback(epUrl,
                                         MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, txState));
                             else
@@ -319,7 +322,7 @@ public class ResourceManager {
                     exceptionally((e) -> {
                         log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
                         // This happens when a communication error, or an error with the tx exist.
-                        if (e.getCause() instanceof IOException)
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
 

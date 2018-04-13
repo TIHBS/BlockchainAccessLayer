@@ -11,7 +11,7 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class BlockchainIdNotFoundException extends Exception {
+public class BlockchainIdNotFoundException extends RuntimeException {
     public BlockchainIdNotFoundException() {
         super();
     }
