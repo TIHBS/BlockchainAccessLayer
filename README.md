@@ -109,11 +109,12 @@ The exchange uses the following simplified BlockME-model:
 
 Please follow these instructions:
 1. Configure and run a local geth node (see above).
-2. Configure the blockchain access layer to communicate with this node and to read a valid Ethereum keystore file (see above)
-3. Build and deploy the blockchain access layer (see above).
-4. Configure, build, deploy and initiate the process model ([see this Github repository for instructions](https://github.com/ghareeb-falazi/BlockME-UseCase))
-5. Send ethers to the address maintained by the blockchain access layer (the first address of the keyfile mentioned in step 3).
-6. Monitor the Tomcat server logs for both applications to see the progress. You can also use the 
+2. Configure and run a local bitcoind node (see above).
+3. Configure the blockchain access layer to communicate with this node and to read a valid Ethereum keystore file (see above)
+4. Build and deploy the blockchain access layer (see above).
+5. Configure, build, deploy and initiate the process model ([see this Github repository for instructions](https://github.com/ghareeb-falazi/BlockME-UseCase))
+6. Send ethers to the address maintained by the blockchain access layer (the first address of the keyfile mentioned in step 3).
+7. Monitor the Tomcat server logs for both applications to see the progress. You can also use the 
 Camunda Cockpit application (installed as part of step 4) to monitor the current state of instances of deployed process models.
 
 The following series of screenshots show a sample execution of the case study:
