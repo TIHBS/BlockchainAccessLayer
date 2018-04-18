@@ -35,8 +35,8 @@ import java.util.concurrent.CompletableFuture;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class ResourceManager {
-    private static final Logger log = LoggerFactory.getLogger(ResourceManager.class);
+public class BlockchainManager {
+    private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
 
     /**
      * Submits a transaction to the blockchain, and sends a callback message informing a remote endpoint of the result.
@@ -64,8 +64,15 @@ public class ResourceManager {
             future.
                     thenAccept(tx -> {
                         if (tx != null) {
-                            CallbackManager.getInstance().sendCallback(epUrl,
-                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, tx));
+                            if(tx.getState() == TransactionState.CONFIRMED) {
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, tx));
+                            }
+                            else {// it is NOT_FOUND
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, tx));
+                            }
+
                         } else
                             log.info("resulting transaction is null");
                     }).
@@ -191,7 +198,7 @@ public class ResourceManager {
                     .subscribe(new Subscriber<Transaction>() {
                         @Override
                         public void onError(Throwable throwable) {
-                            log.error("Failed to receive transaction. Reason:{}", throwable.getMessage());
+                            log.error("Failed to receive transaction. Reason: " + throwable.getMessage());
 
                             if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
                                 CallbackManager.getInstance().sendCallbackAsync(epUrl,

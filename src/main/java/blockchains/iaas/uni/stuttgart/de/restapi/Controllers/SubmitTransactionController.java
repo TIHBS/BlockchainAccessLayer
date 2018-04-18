@@ -1,6 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.SubmitTransactionRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
@@ -18,7 +18,7 @@ import javax.ws.rs.core.Response;
 
 @Path("submit-transaction")
 public class SubmitTransactionController extends SubscriptionController {
-    private static final Logger log = LoggerFactory.getLogger(ResourceManager.class);
+    private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
 
     @GET
     public Response get(){
@@ -28,7 +28,7 @@ public class SubmitTransactionController extends SubscriptionController {
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     public Response submitTransaction(SubmitTransactionRequest request){
-        final ResourceManager manager = new ResourceManager();
+        final BlockchainManager manager = new BlockchainManager();
         manager.submitNewTransaction(request.getSubscriptionId(), request.getTo(), request.getValue(), request.getBlockchainId(),
                 request.getWaitFor(), request.getEpUrl());
 
@@ -45,5 +45,7 @@ public class SubmitTransactionController extends SubscriptionController {
         log.info("dummy path received the following transaction status: {}", response.getProcessVariables().get("status"));
         return Response.accepted().build();
     }
+
+
 
 }

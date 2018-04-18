@@ -1,6 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.EnsureTransactionStateRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
@@ -34,7 +34,7 @@ public class EnsureTransactionStateController extends SubscriptionController {
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     public Response ensureTransactionState(EnsureTransactionStateRequest request){
-        final ResourceManager manager = new ResourceManager();
+        final BlockchainManager manager = new BlockchainManager();
         manager.ensureTransactionState(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(),
                 request.getWaitFor(), request.getEpUrl());
 

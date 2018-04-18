@@ -7,6 +7,7 @@ import blockchains.iaas.uni.stuttgart.de.restapi.model.response.LinkCollectionRe
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -42,13 +43,27 @@ public abstract class SubscriptionController {
         return Response.ok(response).build();
     }
 
+    private Response getSubscription(final String subscriptionId){
+        final SubscriptionManager manager = SubscriptionManager.getInstance();
+        final Subscription subscription = manager.getSubscription(subscriptionId);
+
+        if(subscription != null) {
+            final LinkCollectionResponse response = new LinkCollectionResponse();
+            response.add(UriUtil.generateSelfLink(uriInfo));
+            return Response.ok(response).build();
+        }
+        else{
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+    }
+
     Response removeSubscription(final String subscriptionId){
         final SubscriptionManager manager = SubscriptionManager.getInstance();
         final Subscription subscription = manager.getSubscription(subscriptionId);
 
         if(subscription!= null){
             subscription.unsubscribe();
-            // removing the subscription from the list is done elsewhere (in the ResourceManager)
+            // removing the subscription from the list is done elsewhere (in the BlockchainManager)
         }
 
         return Response.ok().build();
@@ -58,5 +73,11 @@ public abstract class SubscriptionController {
     @Path("/{subscriptionId}")
     public Response removeSubscriptionOperation(@PathParam("subscriptionId")final String subscriptionId){
         return this.removeSubscription(subscriptionId);
+    }
+
+    @GET
+    @Path("/{subscriptionId}")
+    public Response getSubscriptionDetails(@PathParam("subscriptionId")final String subscriptionId){
+        return this.getSubscription(subscriptionId);
     }
 }

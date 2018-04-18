@@ -194,7 +194,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
-                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED))
+                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND))
                     .exceptionally((e) -> {
                                 throw wrapEthereumExceptions(e);
                             }
@@ -222,7 +222,7 @@ public class EthereumAdapter implements BlockchainAdapter {
         final Subscription newTransactionObservable = web3j.transactionObservable().subscribe(tx -> {
             if (myAddress.equalsIgnoreCase(tx.getTo())) {
                 if (senderId == null || senderId.trim().length() == 0 || senderId.equalsIgnoreCase(tx.getFrom())) {
-                    log.info("New transaction received from {}", tx.getFrom());
+                    log.info("New transaction received from:" + tx.getFrom());
                     subscribeForTxEvent(tx.getHash(), waitFor, TransactionState.CONFIRMED)
                             .thenAccept(result::onNext)
                             .exceptionally(error -> {
@@ -256,11 +256,5 @@ public class EthereumAdapter implements BlockchainAdapter {
                 });
     }
 
-    @Override
-    public boolean doesTransactionExist(String transactionId) throws IOException {
-        final EthTransaction transaction = web3j.ethGetTransactionByHash(transactionId).send();
-
-        return transaction.getTransaction().isPresent();
-    }
 
 }

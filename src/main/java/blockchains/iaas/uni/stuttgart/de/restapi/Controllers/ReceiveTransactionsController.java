@@ -1,9 +1,8 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import blockchains.iaas.uni.stuttgart.de.management.ResourceManager;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.request.SubmitTransactionRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 
 import javax.ws.rs.*;
@@ -33,7 +32,7 @@ public class ReceiveTransactionsController extends SubscriptionController {
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     public Response receiveTransaction(ReceiveTransactionsRequest request){
-        final ResourceManager manager = new ResourceManager();
+        final BlockchainManager manager = new BlockchainManager();
         manager.receiveTransactions(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
                 request.getWaitFor(), request.getEpUrl());
 

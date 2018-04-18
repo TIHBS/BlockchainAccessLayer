@@ -26,10 +26,12 @@ public interface BlockchainAdapter {
      * submits a transaction to the blockchain that transfers an amount of the native crypto-currency to some address.
      * @param waitFor the number of block-confirmations to receive before emitting a result
      * @param receiverAddress the address of the receiver
-     * @param value the value to transfer measured in the most granular unit, e.g., wei, satochi
+     * @param value the value to transfer measured in the most granular unit, e.g., wei, satoshi
      * @return a completable future that emits a summary of the submitted transaction.
+     * The future should normally complete with a transaction of the state CONFIRMED if the desired number of block-confirmations were received,
+     * and with a transaction of the state NOT_FOUND if the transaction was committed to a block and then orphaned and invalidated.
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable,
-     * and with an exception of type InvalidTransactionException if the transaction is invalid (e.g., malformed)
+     * and with an exception of type InvalidTransactionException if the transaction is initially invalid (e.g., malformed)
      * @throws InvalidTransactionException if the submitted transaction causes an immediate validation error, e.g.,
      * insufficient funds, or incorrect receiverAddress (this seems to never be thrown)
      */
@@ -64,11 +66,4 @@ public interface BlockchainAdapter {
      */
     CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId);
 
-    /**
-     * Indicates whether the specified transaction is recognized by the blockchain
-     * @param transactionId the hash of the transaction to look for
-     * @return <code>true</code> if the transaction is recognized by the corresponding blockchain node; otherwise \
-     * <code>false</code>
-     */
-    boolean doesTransactionExist(String transactionId) throws IOException;
 }
