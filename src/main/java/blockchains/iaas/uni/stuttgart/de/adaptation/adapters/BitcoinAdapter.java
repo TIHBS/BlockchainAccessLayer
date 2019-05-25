@@ -1,5 +1,10 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BitcoinUtils;
@@ -20,13 +25,7 @@ import com.neemre.btcdcli4j.daemon.event.WalletListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
-import rx.Observer;
 import rx.subjects.PublishSubject;
-
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -55,8 +54,6 @@ public class BitcoinAdapter implements BlockchainAdapter {
      *
      * @param transactionId the id of the transaction to inspect
      * @return the Bitcoin address that owned the output used to fund the first input of the given transaction
-     * @throws BitcoindException
-     * @throws CommunicationException
      */
     private String findTransactionFirstSender(String transactionId) throws BitcoindException, CommunicationException {
         String address = "";
@@ -105,7 +102,6 @@ public class BitcoinAdapter implements BlockchainAdapter {
         return result;
     }
 
-
     /**
      * Subscribes for the event of detecting a transition of the state of a given transaction which is assumed to having been
      * MINED before. The method supports detecting
@@ -132,7 +128,7 @@ public class BitcoinAdapter implements BlockchainAdapter {
                     if (transactionDetails != null) {
                         final Block myBlock = generateBlockObject(block);
                         result = generateTransactionObject(transactionDetails, myBlock, true);
-                    }  else {
+                    } else {
                         result = new Transaction();
                     }
 
@@ -170,8 +166,6 @@ public class BitcoinAdapter implements BlockchainAdapter {
 
                         handleDetectedState(tx, block, TransactionState.CONFIRMED, observedStates, result);
                     }
-
-
                 } catch (BitcoindException e) {
                     result.completeExceptionally(new InvalidTransactionException(e));
                 } catch (CommunicationException e) {
@@ -186,7 +180,6 @@ public class BitcoinAdapter implements BlockchainAdapter {
 
         return result;
     }
-
 
     @Override
     public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException {
@@ -206,7 +199,6 @@ public class BitcoinAdapter implements BlockchainAdapter {
             }
 
             return result;
-
         } catch (BitcoindException e) {
             throw new InvalidTransactionException(e);
         } catch (CommunicationException e) {
@@ -243,13 +235,11 @@ public class BitcoinAdapter implements BlockchainAdapter {
                                 resultTx.setState(TransactionState.CONFIRMED);
                                 subject.onNext(resultTx);
                             }
-
                         }
                     } catch (BitcoindException | CommunicationException e) {
                         log.error("Failed to receive a Bitcoin transaction. Reason: " + e.getMessage());
                     }
                 }
-
             }
         };
 
@@ -270,5 +260,4 @@ public class BitcoinAdapter implements BlockchainAdapter {
         return subscribeForTxEvent(transactionId, -1, TransactionState.PENDING, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState);
     }
-
 }

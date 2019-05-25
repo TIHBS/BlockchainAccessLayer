@@ -1,8 +1,15 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -22,13 +29,6 @@ import rx.Subscriber;
 import rx.Subscription;
 import rx.subjects.PublishSubject;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
  * University of Stuttgart
@@ -46,12 +46,10 @@ public class EthereumAdapter implements BlockchainAdapter {
     private final Web3j web3j;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
 
-
     public EthereumAdapter(final String nodeUrl) {
         this.nodeUrl = nodeUrl;
         this.web3j = Web3j.build(new HttpService(this.nodeUrl));
     }
-
 
     public boolean testConnectionToNode() {
         try {
@@ -63,7 +61,6 @@ public class EthereumAdapter implements BlockchainAdapter {
             return false;
         }
     }
-
 
     public void setCredentials(String password, String fileSource) throws IOException, CipherException {
         try {
@@ -106,9 +103,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                         result.setValue(transactionDetails.get().getValue());
                     }
                     future.complete(result);
-
                 }
-
             }
 
             @Override
@@ -133,7 +128,6 @@ public class EthereumAdapter implements BlockchainAdapter {
                         handleDetectedState(transaction.getTransaction(), TransactionState.NOT_FOUND, observedStates, result);
 
                         return;
-
                     }
 
                     // make sure the transaction is still contained in a block, i.e., it was not orphaned
@@ -146,7 +140,6 @@ public class EthereumAdapter implements BlockchainAdapter {
 
                         handleDetectedState(transaction.getTransaction(), TransactionState.PENDING, observedStates, result);
                         return;
-
                     }
                     // check if enough block-confirmations have occurred.
                     if (waitFor >= 0 && ethBlock.getBlock() != null) {
@@ -160,7 +153,6 @@ public class EthereumAdapter implements BlockchainAdapter {
                             handleDetectedState(transaction.getTransaction(), TransactionState.CONFIRMED, observedStates, result);
                         }
                     }
-
                 } catch (IOException e) {
                     result.completeExceptionally(e);
                 }
@@ -171,7 +163,6 @@ public class EthereumAdapter implements BlockchainAdapter {
 
         return result;
     }
-
 
     private static CompletionException wrapEthereumExceptions(Throwable e) {
         if (e.getCause() instanceof IOException)
@@ -199,15 +190,12 @@ public class EthereumAdapter implements BlockchainAdapter {
                                 throw wrapEthereumExceptions(e);
                             }
                     );
-
         } catch (Exception e) {// this seems to never get invoked
             final String msg = "An error occurred while trying to submit a new transaction to ethereum. Reason: " + e.getMessage();
             log.error(msg);
 
             throw new InvalidTransactionException(msg, e);
         }
-
-
     }
 
     @Override
@@ -231,7 +219,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                             });
                 }
             }
-        }, e->result.onError(wrapEthereumExceptions(e)));
+        }, e -> result.onError(wrapEthereumExceptions(e)));
 
         return result.doOnUnsubscribe(newTransactionObservable::unsubscribe);
     }
@@ -255,6 +243,4 @@ public class EthereumAdapter implements BlockchainAdapter {
                     throw wrapEthereumExceptions(e);
                 });
     }
-
-
 }

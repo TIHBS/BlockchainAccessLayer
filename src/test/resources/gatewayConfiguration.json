@@ -1,0 +1,20 @@
+{
+  "eth1": {
+    "@type": "ethereum",
+    "nodeUrl":"http://129.69.214.124:8545",
+    "keystorePath":"C:\\Ethereum\\keystore\\UTC--2018-03-05T15-33-22.456000000Z--e4b51a3d4e77d2ce2a9d9ce107ec8ec7cff5571d.json",
+    "keystorePassword":"123456789"
+  },
+  "bc1" : {
+    "@type": "bitcoin",
+    "rpcProtocol": "http",
+    "rpcHost": "129.69.214.211",
+    "rpcPort": "8332",
+    "rpcUser": "falazigb",
+    "rpcPassword": "123456789",
+    "httpAuthScheme": "Basic",
+    "notificationAlertPort": "5158",
+    "notificationBlockPort": "5159",
+    "notificationWalletPort": "5160"
+  }
+}
