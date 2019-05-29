@@ -37,7 +37,7 @@ public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
      * Uses the equation from the Bitcoin whitepaper to calculate the degree-of-confidence
      *
      * @param transaction the transaction to calculate the current confidence for.
-     * @return the current confidence measured between 0.0 and 1.0
+     * @return the current DoC measured between 0.0 and 1.0
      */
     @Override
     public double getCurrentConfidence(Transaction transaction) {
