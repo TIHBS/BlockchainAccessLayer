@@ -17,6 +17,7 @@ import java.util.Map;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.BitcoinAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.EthereumAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.gateways.AbstractGateway;
 import blockchains.iaas.uni.stuttgart.de.gateways.BitcoinGateway;
 import blockchains.iaas.uni.stuttgart.de.gateways.EthereumGateway;
@@ -66,18 +67,23 @@ public class BlockchainAdapterFactory {
     private EthereumAdapter createEthereumAdapter(EthereumGateway gateway) throws IOException, CipherException {
         final EthereumAdapter result = new EthereumAdapter(gateway.getNodeUrl());
         result.setCredentials(gateway.getKeystorePassword(), gateway.getKeystorePath());
+        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
+        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
+        result.setConfidenceCalculator(cCalc);
 
         return result;
     }
 
     private BitcoinAdapter createBitcoinAdapter(BitcoinGateway gateway) throws BitcoindException, CommunicationException {
         final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-        final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager)
-                .build();
-
+        final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
         final BtcdClient client = new BtcdClientImpl(httpProvider, gateway.getAsProperties());
         final BtcdDaemon daemon = new BtcdDaemonImpl(client);
+        final BitcoinAdapter result = new BitcoinAdapter(client, daemon);
+        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
+        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
+        result.setConfidenceCalculator(cCalc);
 
-        return new BitcoinAdapter(client, daemon);
+        return result;
     }
 }

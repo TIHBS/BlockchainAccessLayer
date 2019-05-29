@@ -3,6 +3,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
@@ -10,6 +11,7 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BitcoinUtils;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.gateways.AbstractGateway;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -22,6 +24,7 @@ import com.neemre.btcdcli4j.core.domain.RawTransactionOverview;
 import com.neemre.btcdcli4j.daemon.BtcdDaemon;
 import com.neemre.btcdcli4j.daemon.event.BlockListener;
 import com.neemre.btcdcli4j.daemon.event.WalletListener;
+import org.apache.http.MethodNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -38,7 +41,7 @@ import rx.subjects.PublishSubject;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class BitcoinAdapter implements BlockchainAdapter {
+public class BitcoinAdapter extends AbstractAdapter {
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
     private BtcdClient client;
     private BtcdDaemon daemon;
@@ -259,5 +262,10 @@ public class BitcoinAdapter implements BlockchainAdapter {
     public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) {
         return subscribeForTxEvent(transactionId, -1, TransactionState.PENDING, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState);
+    }
+
+    @Override
+    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, Map<String, String> parameters, double requiredConfidence) throws MethodNotSupportedException {
+        throw new MethodNotSupportedException("Bitcoin does not support smart contract function invocations!");
     }
 }

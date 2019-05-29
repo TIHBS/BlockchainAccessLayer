@@ -3,6 +3,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -13,6 +14,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import org.apache.http.MethodNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.CipherException;
@@ -40,7 +42,7 @@ import rx.subjects.PublishSubject;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class EthereumAdapter implements BlockchainAdapter {
+public class EthereumAdapter extends AbstractAdapter {
     private Credentials credentials;
     private final String nodeUrl;
     private final Web3j web3j;
@@ -242,5 +244,10 @@ public class EthereumAdapter implements BlockchainAdapter {
                 .exceptionally((e) -> {
                     throw wrapEthereumExceptions(e);
                 });
+    }
+
+    @Override
+    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, Map<String, String> parameters, double requiredConfidence) throws MethodNotSupportedException {
+        return null;
     }
 }

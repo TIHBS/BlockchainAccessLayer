@@ -20,11 +20,26 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-@JsonSubTypes({
+@JsonSubTypes( {
         @JsonSubTypes.Type(value = EthereumGateway.class, name = "ethereum"),
 
-        @JsonSubTypes.Type(value = BitcoinGateway.class, name = "bitcoin") }
+        @JsonSubTypes.Type(value = BitcoinGateway.class, name = "bitcoin")}
 )
 public abstract class AbstractGateway {
+    private double adversaryVotingRatio;
+
+    public double getAdversaryVotingRatio() {
+        return adversaryVotingRatio;
+    }
+
+    public void setAdversaryVotingRatio(double adversaryVotingRatio) {
+        if (adversaryVotingRatio < 0 || adversaryVotingRatio > 1.0) {
+            throw new IllegalArgumentException("Voting power of adversary should be between 0.0 and 1.0, but (" +
+                    adversaryVotingRatio + ") is passed!");
+        }
+
+        this.adversaryVotingRatio = adversaryVotingRatio;
+    }
+
     public abstract Properties getAsProperties();
 }

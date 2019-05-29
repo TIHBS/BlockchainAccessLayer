@@ -3,11 +3,13 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import org.apache.http.MethodNotSupportedException;
 import rx.Observable;
 
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /********************************************************************************
@@ -65,5 +67,7 @@ public interface BlockchainAdapter {
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable
      */
     CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId);
+
+    CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, Map<String, String> parameters, double requiredConfidence) throws MethodNotSupportedException;
 
 }
