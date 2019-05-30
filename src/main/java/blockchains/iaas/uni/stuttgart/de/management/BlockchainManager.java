@@ -1,28 +1,26 @@
 package blockchains.iaas.uni.stuttgart.de.management;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
+import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
 import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-
+import io.reactivex.disposables.Disposable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Subscriber;
-
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.CompletableFuture;
 
 /********************************************************************************
  * Copyright (c) 2019 Institute for the Architecture of Application System -
@@ -64,15 +62,13 @@ public class BlockchainManager {
             future.
                     thenAccept(tx -> {
                         if (tx != null) {
-                            if(tx.getState() == TransactionState.CONFIRMED) {
+                            if (tx.getState() == TransactionState.CONFIRMED) {
                                 CallbackManager.getInstance().sendCallback(epUrl,
                                         MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, tx));
-                            }
-                            else {// it is NOT_FOUND
+                            } else {// it is NOT_FOUND
                                 CallbackManager.getInstance().sendCallback(epUrl,
                                         MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, tx));
                             }
-
                         } else
                             log.info("resulting transaction is null");
                     }).
@@ -100,15 +96,12 @@ public class BlockchainManager {
             // This (should only) happen when something is wrong with the transaction data
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
-
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
-
     }
-
 
     /**
      * Receives the stream of all transactions addressed to us on the specified blockchainId, and for each one, sends a
@@ -130,32 +123,18 @@ public class BlockchainManager {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final rx.Subscription subscription = adapter.receiveTransactions(waitFor, from)
-                    .doOnUnsubscribe(() -> {
+            final Disposable subscription = adapter.receiveTransactions(waitFor, from)
+                    .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
                     })
-                    .subscribe(new Subscriber<Transaction>() {
-                        @Override
-                        public void onError(Throwable throwable) {
-                            log.error("Failed to receive transaction. Reason:{}", throwable.getMessage());
-                        }
-
-                        @Override
-                        public void onNext(Transaction transaction) {
-                            if (transaction != null) {
-                                CallbackManager.getInstance().sendCallback(epUrl,
-                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
-
-                            } else {
-                                log.error("received transaction is null!");
-                            }
-
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            // this is NOT called when we unsubscribe!
+                    .doOnError(throwable -> log.error("Failed to receive transaction. Reason:{}", throwable.getMessage()))
+                    .subscribe(transaction -> {
+                        if (transaction != null) {
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
+                        } else {
+                            log.error("received transaction is null!");
                         }
                     });
 
@@ -167,7 +146,6 @@ public class BlockchainManager {
             log.error("blockchainId ({}) is not recognized, but no error callback is sent to endpoint!", blockchainId);
         }
     }
-
 
     /**
      * Receives a single transaction addressed to us on the specified blockchainId, and sends a
@@ -190,40 +168,29 @@ public class BlockchainManager {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final rx.Subscription subscription = adapter.receiveTransactions(waitFor, from)
-                    .doOnUnsubscribe(() -> {
+            final Disposable subscription = adapter.receiveTransactions(waitFor, from)
+                    .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
                     })
-                    .subscribe(new Subscriber<Transaction>() {
-                        @Override
-                        public void onError(Throwable throwable) {
-                            log.error("Failed to receive transaction. Reason: " + throwable.getMessage());
+                    .doOnError(throwable -> {
+                        log.error("Failed to receive transaction. Reason: " + throwable.getMessage());
 
-                            if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
-                                CallbackManager.getInstance().sendCallbackAsync(epUrl,
-                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
-                            } else {
-                                log.error("Unhandled exception. Exception details: " + throwable.getMessage());
-                            }
+                        if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
+                            CallbackManager.getInstance().sendCallbackAsync(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
+                        } else {
+                            log.error("Unhandled exception. Exception details: " + throwable.getMessage());
                         }
-
-                        @Override
-                        public void onNext(Transaction transaction) {
-                            if (transaction != null) {
-                                CallbackManager.getInstance().sendCallback(epUrl,
-                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
-                                log.info("usubscribing from receiveTransactions");
-                                unsubscribe();
-                            } else {
-                                log.error("received transaction is null!");
-                            }
-
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            // this is NOT called when we unsubscribe!
+                    })
+                    .take(1)
+                    .subscribe(transaction -> {
+                        if (transaction != null) {
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, transaction));
+                            log.info("usubscribing from receiveTransactions");
+                        } else {
+                            log.error("received transaction is null!");
                         }
                     });
 
@@ -236,7 +203,6 @@ public class BlockchainManager {
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
     }
-
 
     /**
      * Detects that a specific mined transasction got orphaned. Sends a callback when this is detected.
@@ -273,7 +239,6 @@ public class BlockchainManager {
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, TransactionState.UNKNOWN));
-
 
                         // ManualUnsubscriptionException is also captured here
                         return null;
@@ -333,7 +298,6 @@ public class BlockchainManager {
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
 
-
                         // ManualUnsubscriptionException is also captured here
                         return null;
                     }).
@@ -350,5 +314,4 @@ public class BlockchainManager {
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
     }
-
 }
