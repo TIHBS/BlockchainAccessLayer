@@ -22,7 +22,11 @@ public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
     }
 
     public void setAdversaryRatio(double adversaryRatio) {
-        this.adversaryRatio = adversaryRatio;
+        if (adversaryRatio >= 0.0 && adversaryRatio <= 1.0) {
+            this.adversaryRatio = adversaryRatio;
+        } else {
+            throw new IllegalArgumentException("Adversary ratio must be between 0.0 and 1.0!");
+        }
     }
 
     public long getCurrentBlockchainHeight() {
@@ -41,8 +45,24 @@ public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
      */
     @Override
     public double getCurrentConfidence(Transaction transaction) {
-        final double q = this.adversaryRatio;
         final long z = this.currentBlockchainHeight - transaction.getBlock().getNumberAsLong();
+        return this.getConfidence(z);
+    }
+
+    public long getEquivalentBlockDepth(double requiredConfidence) {
+        long z = 0;
+        double currentConfidence = 0.0;
+
+        while (currentConfidence < requiredConfidence) {
+            currentConfidence = getConfidence(z);
+            ++z;
+        }
+
+        return z;
+    }
+
+    private double getConfidence(long z) {
+        final double q = this.adversaryRatio;
 
         if (z < 0.0) {
             throw new RuntimeException("currentBlockchainHeight is smaller than the block height of the transaction!");
@@ -54,13 +74,11 @@ public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
         double part2;
 
         for (int k = 0; k < z; k++) {
-            part1 = (Math.pow(lambda, k)*Math.exp(-lambda))/MathUtils.factorial(k);
-            part2 = 1-Math.pow(q/(1-q), z-k);
+            part1 = (Math.pow(lambda, k) * Math.exp(-lambda)) / MathUtils.factorial(k);
+            part2 = 1 - Math.pow(q / (1 - q), z - k);
             accumulator += part1 * part2;
         }
 
         return accumulator;
     }
-
-
 }

@@ -13,16 +13,26 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import javax.naming.OperationNotSupportedException;
+
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.EthereumParameterDecoder;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.EthereumParameterDecodingException;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionParameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -30,13 +40,23 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.AbiTypes;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Transfer;
+import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Convert;
 
 public class EthereumAdapter extends AbstractAdapter {
@@ -224,8 +244,117 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) {
-        return null;
+    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> arguments, double requiredConfidence) {
+        if (credentials == null) {
+            log.error("Credentials are not set for the Ethereum user");
+            throw new NullPointerException("Credentials are not set for the Ethereum user");
+        }
+        CompletableFuture<Transaction> result;
+
+        try {
+            long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+            final ScipParser scip = ScipParser.parse(functionIdentifier);
+            List<TypeReference<?>> outputParameters;
+
+            if (scip.getReturnType().equals("void")) {
+                outputParameters = Collections.emptyList();
+            } else {
+                final Class<? extends Type> returnType = AbiTypes.getType(scip.getReturnType());
+                outputParameters = Collections.singletonList(TypeReference.create(returnType));
+            }
+
+            final Function function = new Function(
+                    scip.getFunctionName(),  // function we're calling
+                    this.convertToSolidityTypes(scip.getParameterTypes(), arguments),  // Parameters to pass as Solidity Types
+                    outputParameters);//Type of returned value
+
+            final String encodedFunction = FunctionEncoder.encode(function);
+            final String scAddress = scip.getFunctionPathSegments()[0];
+            Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, scAddress, function.getOutputParameters());
+
+            if (resultFromEthCall != null) {
+                return CompletableFuture.completedFuture(resultFromEthCall);
+            }
+
+            return this.invokeFunctionByTransaction(waitFor, encodedFunction, scAddress);
+
+        } catch (Exception e) {
+            log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
+            result = new CompletableFuture<>();
+            result.completeExceptionally(wrapEthereumExceptions(e));
+        }
+
+        return result;
+    }
+
+    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress,
+                                           List<TypeReference<Type>> returnType) {
+        try {
+            org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
+                    .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
+            EthCall ethCall = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
+            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnType);
+
+            if (decoded.size() > 0) {
+                Transaction tx = new Transaction();
+                Type type = decoded.get(0);
+                tx.setReturnValue(type.getTypeAsString() + ":" + type.getValue().toString());
+
+                return tx;
+            } else {
+                throw new OperationNotSupportedException("Failed to invoke function by ethCall");
+            }
+        } catch (Exception e) {
+            log.debug("Failed to execute smart contract function via eth_call. Reason: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private CompletableFuture<Transaction> invokeFunctionByTransaction(long waitFor, String encodedFunction, String scAddress) {
+        return this
+                .retrieveNewNonce()
+                .thenApply(nonce -> {
+                    try {
+                        return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
+                                credentials.getAddress(),
+                                nonce,
+                                DefaultGasProvider.GAS_PRICE,
+                                DefaultGasProvider.GAS_LIMIT,
+                                scAddress,
+                                encodedFunction);
+                    } catch (Exception e) {
+                        log.error("An error occurred while trying to create a function signature!. Reason: {}", e.getMessage());
+                        throw new CompletionException(wrapEthereumExceptions(e));
+                    }
+                })
+                .thenCompose(transaction -> web3j.ethSendTransaction(transaction).sendAsync())
+                .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND))
+                .exceptionally((e) -> {
+                    throw wrapEthereumExceptions(e);
+                });
+    }
+
+    // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
+    private List<Type> convertToSolidityTypes(List<SmartContractFunctionParameter> params, List<SmartContractFunctionArgument> arguments) throws EthereumParameterDecodingException {
+        if (params.size() == arguments.size()) {
+            List<Type> result = new ArrayList<>();
+            EthereumParameterDecoder decoder = new EthereumParameterDecoder();
+
+            for (int i = 0; i < params.size(); i++) {
+                result.add(decoder.decodeParameter(params.get(i).getType(), arguments.get(i).getValue()));
+            }
+
+            return result;
+        }
+
+        throw new IllegalArgumentException("The passed arguments do not match the expected parameters!");
+    }
+
+    private CompletableFuture<BigInteger> retrieveNewNonce() {
+        return web3j.ethGetTransactionCount(
+                credentials.getAddress(), DefaultBlockParameterName.LATEST)
+                .sendAsync()
+                .thenApply(EthGetTransactionCount::getTransactionCount);
     }
 
     private static void handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,

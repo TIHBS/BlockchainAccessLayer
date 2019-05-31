@@ -20,6 +20,7 @@ public class ScipParser {
     private final String scip;
     private String blockchainId;
     private String functionName;
+    private String returnType;
     private String[] functionPathSegments;
     private List<SmartContractFunctionParameter> parameterTypes;
 
@@ -33,6 +34,10 @@ public class ScipParser {
 
     public String[] getFunctionPathSegments() {
         return functionPathSegments;
+    }
+
+    public String getReturnType() {
+        return returnType;
     }
 
     public List<SmartContractFunctionParameter> getParameterTypes() {
@@ -63,18 +68,31 @@ public class ScipParser {
         this.parameterTypes = new ArrayList<>();
 
         if (query != null && !query.isEmpty()) {
-            String[] segments = query.split("&");
+            String[] paramsReturn = query.split(":");
 
-            for (String segment: segments) {
-                String[] parameter = segment.split("=");
-
-                if(parameter.length != 2) {
-                    throw new IllegalArgumentException("The passed uri is not a valid scip. Reason: " +
-                            "parameters are not well defined (" + query + ")");
-                }
-
-                this.parameterTypes.add(new SmartContractFunctionParameter(parameter[0], parameter[1]));
+            if(paramsReturn.length != 2) {
+                throw new IllegalArgumentException("query section should have the following syntax: " +
+                        "?<param name-type pairs>:<returnType>");
             }
+
+            this.returnType = paramsReturn[1];
+
+            if(paramsReturn[0].length() > 0) {
+                String[] segments = paramsReturn[0].split("&");
+
+                for (String segment : segments) {
+                    String[] parameter = segment.split("=");
+
+                    if (parameter.length != 2) {
+                        throw new IllegalArgumentException("The passed uri is not a valid scip. Reason: " +
+                                "parameters are not well defined (" + query + ")");
+                    }
+
+                    this.parameterTypes.add(new SmartContractFunctionParameter(parameter[0], parameter[1]));
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("The return type is not specified for the function!");
         }
 
     }

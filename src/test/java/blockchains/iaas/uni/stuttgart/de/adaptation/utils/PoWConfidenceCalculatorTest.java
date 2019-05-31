@@ -19,18 +19,27 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PoWConfidenceCalculatorTest {
-
+    private final long DEPTH = 12;
+    private final double Q = 0.2;
     @Test
     void getCurrentConfidence() {
-        final double ETH_EXPECTED_CONFIDENCE = 0.99970567;
+
         final PoWConfidenceCalculator calculator = new PoWConfidenceCalculator();
         final Block blockEth = new Block();
         blockEth.setNumberAsLong(1);
         final Transaction transactionEth = new Transaction();
         transactionEth.setBlock(blockEth);
-        calculator.setCurrentBlockchainHeight(13);
-        calculator.setAdversaryRatio(0.2);
+        calculator.setCurrentBlockchainHeight(1 + DEPTH);
+        calculator.setAdversaryRatio(Q);
         double result = calculator.getCurrentConfidence(transactionEth);
+        double ETH_EXPECTED_CONFIDENCE = 0.99970567;
         Assertions.assertTrue( MathUtils.doubleEquals(result, ETH_EXPECTED_CONFIDENCE));
+    }
+
+    @Test
+    void getEquivalentDepth() {
+        final PoWConfidenceCalculator calculator = new PoWConfidenceCalculator();
+        calculator.setAdversaryRatio(Q);
+        Assertions.assertEquals(DEPTH, calculator.getEquivalentBlockDepth(0.999));
     }
 }
