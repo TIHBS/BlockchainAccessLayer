@@ -100,7 +100,7 @@ public class BlockchainManager {
             // This (should only) happen when something is wrong with the transaction data
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
-        } catch (BlockchainIdNotFoundException e) {
+        } catch (BlockchainIdNotFoundException | MethodNotSupportedException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
@@ -148,6 +148,9 @@ public class BlockchainManager {
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             log.error("blockchainId ({}) is not recognized, but no error callback is sent to endpoint!", blockchainId);
+        } catch (MethodNotSupportedException e) {
+            // trying to receive monetary transactions on, e.g., Fabric.
+            log.error(e.getMessage());
         }
     }
 
@@ -201,8 +204,9 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, sub);
-        } catch (BlockchainIdNotFoundException e) {
-            // This (should only) happen when the blockchainId is not found
+        } catch (BlockchainIdNotFoundException | MethodNotSupportedException e) {
+            // This (should only) happen when the blockchainId is not found Or
+            // if trying to receive a monetary transaction via, e.g., Fabric
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }
@@ -254,8 +258,9 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.DETECT_ORPHANED_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
-        } catch (BlockchainIdNotFoundException e) {
-            // This (should only) happen when the blockchainId is not found
+        } catch (BlockchainIdNotFoundException | MethodNotSupportedException e) {
+            // This (should only) happen when the blockchainId is not found Or
+            // if trying to receive a monetary transaction via, e.g., Fabric
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, TransactionState.UNKNOWN));
         }
@@ -312,8 +317,9 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
-        } catch (BlockchainIdNotFoundException e) {
-            // This (should only) happen when the blockchainId is not found
+        } catch (BlockchainIdNotFoundException | MethodNotSupportedException e) {
+            // This (should only) happen when the blockchainId is not found Or
+            // if trying to monitor a monetary transaction via, e.g., Fabric
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                     MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
         }

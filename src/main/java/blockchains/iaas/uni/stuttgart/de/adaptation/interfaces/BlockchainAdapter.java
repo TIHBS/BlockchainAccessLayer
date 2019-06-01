@@ -37,7 +37,7 @@ public interface BlockchainAdapter {
      * @throws InvalidTransactionException if the submitted transaction causes an immediate validation error, e.g.,
      *                                     insufficient funds, or incorrect receiverAddress (this seems to never be thrown)
      */
-    CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException;
+    CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException, MethodNotSupportedException;
 
     /**
      * receives transactions addressed to us (potentially from a specific sender)
@@ -46,7 +46,7 @@ public interface BlockchainAdapter {
      * @param senderId an optional address of the sender. If specified, only transactions from this sender are considered
      * @return an observable that emits a summary of the received transaction whenever one is detected
      */
-    Observable<Transaction> receiveTransactions(long waitFor, String senderId);
+    Observable<Transaction> receiveTransactions(long waitFor, String senderId) throws MethodNotSupportedException;
 
     /**
      * ensures that a transaction receives enough block-confirmations
@@ -57,7 +57,7 @@ public interface BlockchainAdapter {
      * number of block-confirmations got received, or NOT_FOUND if the transaction got invalidated).
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable
      */
-    CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId);
+    CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) throws MethodNotSupportedException;
 
     /**
      * detects that the given transaction got orphaned
@@ -67,7 +67,7 @@ public interface BlockchainAdapter {
      * block, i.e., it is orphaned)
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable
      */
-    CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId);
+    CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws MethodNotSupportedException;
 
     CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws MethodNotSupportedException;
 }
