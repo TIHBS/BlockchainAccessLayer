@@ -1,6 +1,5 @@
-/********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,8 +7,8 @@
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
+ *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -24,12 +23,12 @@ import java.util.concurrent.CompletionException;
 
 import javax.naming.OperationNotSupportedException;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.EthereumParameterDecoder;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.EthereumParameterDecodingException;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionParameter;
@@ -166,6 +165,8 @@ public class EthereumAdapter extends AbstractAdapter {
     private static CompletionException wrapEthereumExceptions(Throwable e) {
         if (e.getCause() instanceof IOException)
             e = new BlockchainNodeUnreachableException(e);
+        else if (e instanceof EthereumParameterDecodingException || e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
+            e = new InvokeSmartContractFunctionFailure(e);
         else if (e.getCause() instanceof RuntimeException)
             e = new InvalidTransactionException(e);
 
@@ -277,7 +278,6 @@ public class EthereumAdapter extends AbstractAdapter {
             }
 
             return this.invokeFunctionByTransaction(waitFor, encodedFunction, scAddress);
-
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
             result = new CompletableFuture<>();
@@ -288,7 +288,7 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress,
-                                           List<TypeReference<Type>> returnType) {
+                                                   List<TypeReference<Type>> returnType) {
         try {
             org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
                     .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
@@ -296,9 +296,12 @@ public class EthereumAdapter extends AbstractAdapter {
             List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnType);
 
             if (decoded.size() > 0) {
-                Transaction tx = new Transaction();
-                Type type = decoded.get(0);
-                tx.setReturnValue(type.getTypeAsString() + ":" + type.getValue().toString());
+                final Transaction tx = new Transaction();
+                final Type type = decoded.get(0);
+                final EthereumReturnValueEncoder encoder = new EthereumReturnValueEncoder();
+                final String valueAsString = encoder.encodeValue(type);
+                tx.setReturnValue(type.getTypeAsString() + ":" + valueAsString);
+                tx.setState(TransactionState.RETURN_VALUE);
 
                 return tx;
             } else {

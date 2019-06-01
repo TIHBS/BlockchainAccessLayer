@@ -1,27 +1,3 @@
-package blockchains.iaas.uni.stuttgart.de.management;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-
-import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
-import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
-import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
-import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-import io.reactivex.disposables.Disposable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /********************************************************************************
  * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
@@ -33,6 +9,34 @@ import org.slf4j.LoggerFactory;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.management;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
+import blockchains.iaas.uni.stuttgart.de.management.callback.MessageTranslatorFactory;
+import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
+import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import io.reactivex.disposables.Disposable;
+import org.apache.http.MethodNotSupportedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class BlockchainManager {
     private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
 
@@ -205,7 +209,7 @@ public class BlockchainManager {
     }
 
     /**
-     * Detects that a specific mined transasction got orphaned. Sends a callback when this is detected.
+     * Detects that a specific mined transaction got orphaned. Sends a callback when this is detected.
      * Resulting states:
      * <p>
      * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible.
@@ -308,6 +312,78 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
             SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
+        } catch (BlockchainIdNotFoundException e) {
+            // This (should only) happen when the blockchainId is not found
+            CallbackManager.getInstance().sendCallbackAsync(epUrl,
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
+        }
+    }
+
+    /**
+     * Invokes a smart contract function, and sends a callback message informing a remote endpoint of the result.
+     * The invocation might require the submission of a transaction if the invoked function is not read-only.
+     * The status of the result could be:
+     * <p>
+     * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible or the function is not recognized
+     * INVALID: the submitted transaction failed validation at the node (if a transaction was required)
+     * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
+     * or the result returned from a read-only smart contract function.
+     * @param subscriptionId upplied by the remote application as a means for correlation
+     * @param scip a URI following the Smart Contract Invocation Protocol scheme representing the smart contract function to be invoked
+     * @param arguments the arguments to be passed to the smart contract function
+     * @param minimumConfidence the minimum confidence that the submitted transaction must reach before returning a CONFIRMED response (percentage)
+     * @param epUrl the url of the endpoint to send the callback message to
+     */
+    public void invokeSmartContractFunction(final String subscriptionId, final String scip, final List<SmartContractFunctionArgument> arguments,
+                                            final double minimumConfidence, final String epUrl) {
+        final AdapterManager adapterManager = AdapterManager.getInstance();
+        final double minimumConfidenceAsProbability = minimumConfidence / 100.0;
+
+        try {
+            final ScipParser parser = ScipParser.parse(scip);
+            final BlockchainAdapter adapter = adapterManager.getAdapter(parser.getBlockchainId());
+            final CompletableFuture<Transaction> future = adapter.invokeSmartContract(scip, arguments, minimumConfidenceAsProbability);
+            // This happens when a communication error, or an error with the tx exist.
+            future.
+                    thenAccept(tx -> {
+                        if (tx != null) {
+                            if (tx.getState() == TransactionState.CONFIRMED || tx.getState() == TransactionState.RETURN_VALUE) {
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, false, tx));
+                            } else {// it is NOT_FOUND
+                                CallbackManager.getInstance().sendCallback(epUrl,
+                                        MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, tx));
+                            }
+                        } else
+                            log.info("resulting transaction is null");
+                    }).
+                    exceptionally((e) -> {
+                        log.info("Failed to invoke smart contract function. Reason: {}", e.getMessage());
+                        // happens if the node is unreachable, or something goes wrong while trying to invoke the sc function.
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException ||
+                                e.getCause() instanceof InvokeSmartContractFunctionFailure)
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.UNKNOWN));
+                        else if (e.getCause() instanceof InvalidTransactionException)
+                            CallbackManager.getInstance().sendCallback(epUrl,
+                                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
+
+                        // ManualUnsubscriptionException is also captured here
+                        return null;
+                    }).
+                    whenComplete((r, e) -> {
+                        // remove subscription from subscription list
+                        SubscriptionManager.getInstance().removeSubscription(subscriptionId);
+                    });
+
+            // Add subscription to the list of subscriptions
+            final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION);
+            SubscriptionManager.getInstance().createSubscription(subscriptionId, subscription);
+        } catch (InvalidTransactionException | MethodNotSupportedException e) {
+            // This (should only) happen when something is wrong with the transaction data OR
+            // when the underlying blockchain does not support smart contract function invocations (like Bitcoin)
+            CallbackManager.getInstance().sendCallbackAsync(epUrl,
+                    MessageTranslatorFactory.getCallbackAdapter().convert(subscriptionId, true, TransactionState.INVALID));
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             CallbackManager.getInstance().sendCallbackAsync(epUrl,

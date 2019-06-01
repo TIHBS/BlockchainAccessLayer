@@ -1,4 +1,15 @@
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Author: Ghareeb Falazi
+ *
+ * This program and the accompanying materials are made available under the
+ * terms the Apache Software License 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *******************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -6,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BitcoinUtils;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
@@ -28,17 +39,6 @@ import org.apache.http.MethodNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
- * University of Stuttgart
- * Author: Ghareeb Falazi
- *
- * This program and the accompanying materials are made available under the
- * terms the Apache Software License 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 public class BitcoinAdapter extends AbstractAdapter {
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
     private BtcdClient client;

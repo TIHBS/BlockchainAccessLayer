@@ -8,7 +8,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 import java.math.BigInteger;
 import java.util.regex.Matcher;
@@ -23,6 +23,7 @@ import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.Utf8String;
 
+//todo support array types e.g., address[]
 /**
  * Byte array values are expected to be a single hexadecimal number.
  * Uint values are expected to be decimal numbers

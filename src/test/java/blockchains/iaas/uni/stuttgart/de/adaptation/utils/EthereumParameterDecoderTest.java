@@ -12,11 +12,10 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
 
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumParameterDecoder;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumParameterDecodingException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.web3j.abi.datatypes.Type;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class EthereumParameterDecoderTest {
 

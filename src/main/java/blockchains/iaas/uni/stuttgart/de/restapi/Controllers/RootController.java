@@ -33,6 +33,7 @@ public class RootController {
         response.add(UriUtil.generateSubResourceLink(uriInfo, "receive-transactions", false, "receive-transactions"));
         response.add(UriUtil.generateSubResourceLink(uriInfo, "ensure-transaction-state", false, "ensure-transaction-state"));
         response.add(UriUtil.generateSubResourceLink(uriInfo, "detect-orphaned-transaction", false, "detect-orphaned-transaction"));
+        response.add(UriUtil.generateSubResourceLink(uriInfo, "invoke-smart-contract-function", false, "invoke-smart-contract-function"));
 
         return Response.ok(response).build();
     }

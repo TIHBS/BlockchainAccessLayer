@@ -17,14 +17,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name="Argument")
-@XmlAccessorType(XmlAccessType.NONE)
+@XmlRootElement(name = "Argument")
+@XmlAccessorType(XmlAccessType.PROPERTY)
 public class SmartContractFunctionArgument {
-    @XmlElement(name="Name")
     private String name;
-    @XmlElement(name="Value")
     private String value;
 
+    @XmlElement(name = "Name")
     public String getName() {
         return name;
     }
@@ -33,6 +32,7 @@ public class SmartContractFunctionArgument {
         this.name = name;
     }
 
+    @XmlElement(name = "Value")
     public String getValue() {
         return value;
     }
@@ -49,17 +49,17 @@ public class SmartContractFunctionArgument {
         this.value = value;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SmartContractFunctionArgument that = (SmartContractFunctionArgument) o;
-        return name.equals(that.name) &&
-                value.equals(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, value);
-    }
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        SmartContractFunctionArgument that = (SmartContractFunctionArgument) o;
+//        return name.equals(that.name) &&
+//                value.equals(that.value);
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(name, value);
+//    }
 }

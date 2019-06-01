@@ -40,6 +40,7 @@ paths to create the corresponding subscription:
 {application-URL}/webapi/receive-transactions
 {application-URL}/webapi/detect-orphaned-transaction
 {application-URL}/webapi/ensure-transaction-state
+{application-URL}/webapi/invoke-smart-contract-function
 ```
 
 * A GET method is also provided for the aforementioned URLs that lists the currently active subscriptions.
@@ -53,6 +54,7 @@ paths to manually delete the corresponding subscription:
 {application-URL}/webapi/receive-transactions/{subscription-id}
 {application-URL}/webapi/detect-orphaned-transaction/{subscription-id}
 {application-URL}/webapi/ensure-transaction-state/{subscription-id}
+{application-URL}/webapi/invoke-smart-contract-function
 ```
 
 ## Running a Local geth Node
@@ -100,8 +102,10 @@ connection, and the availability of peers).
 ```
 bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the node> -rpcuser=<rpc username> -rpcpassword=<rpc password>
 ```
+## Setting-up a Hyperledger Fabric Network
+Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
-## Case Study
+## Case Study (For BlockME)
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
 
@@ -147,3 +151,6 @@ You can find the details about the resulting testnet3 Bitcoin transaction [here]
 * a _bitcoind_ (Bitcoin Core) node is running on a virtual machine in a VSphere accessible from the local network.
 * The blockchain access layer is running in a local Tomcat server listening to port 8081
 * The camunda engine is running in a local Tomcat server litening to port 8080
+
+## Case Study (For BlockME2)
+Detailed case study for BlockME2 coming soon!

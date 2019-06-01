@@ -9,13 +9,12 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters;
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -67,7 +66,7 @@ class EthereumAdapterTest {
 
     @Test
     void testInvokeSmartContract() throws Exception {
-        Permissions contract = this.testDeployContract();
+        Permissions contract = this.deployContract();
         String scip = String.format("scip://%s/%s/setPublicKey?publicKey=bytes:void", NETWORK_NAME, contract.getContractAddress());
         byte[] bytes = MESSAGE.getBytes();
         String argument = new BigInteger(bytes).toString(16);
@@ -97,11 +96,17 @@ class EthereumAdapterTest {
 
     @Test
     @Disabled
-    Permissions testDeployContract() throws ExecutionException, InterruptedException, IOException {
+    void testDepoloyContract() throws InterruptedException, ExecutionException, IOException {
+        Permissions permissions = this.deployContract();
+        log.debug("Deployed smart contract. Address: {}", permissions.getContractAddress());
+    }
+
+    Permissions deployContract() throws ExecutionException, InterruptedException, IOException {
         Permissions contract = Permissions.deploy(this.adapter.getWeb3j(), this.adapter.getCredentials(),
                 new DefaultGasProvider()).sendAsync().get();
         Assertions.assertTrue(contract.isValid());
 
         return contract;
     }
+
 }

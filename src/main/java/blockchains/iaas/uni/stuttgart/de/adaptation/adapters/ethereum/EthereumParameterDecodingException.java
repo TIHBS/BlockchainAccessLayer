@@ -8,7 +8,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 public class EthereumParameterDecodingException extends Exception {
     public EthereumParameterDecodingException() {

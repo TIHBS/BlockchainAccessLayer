@@ -14,8 +14,8 @@ package blockchains.iaas.uni.stuttgart.de.adaptation;
 import java.io.IOException;
 import java.util.Map;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.BitcoinAdapter;
-import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.EthereumAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin.BitcoinAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.gateways.AbstractGateway;
