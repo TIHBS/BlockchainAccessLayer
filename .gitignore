@@ -23,7 +23,7 @@ build/src/main/resources/static/**/*
 # IDEs and editors
 .idea
 *.iws
-*.iml
+BlockchainAccessLayer.iml
 *.ipr
 .project
 .classpath
