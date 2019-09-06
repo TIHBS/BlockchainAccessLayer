@@ -1,19 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.adaptation;
-
-import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.web3j.crypto.CipherException;
-
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -23,20 +9,32 @@ import java.util.Map;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.adaptation;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.gateways.GatewayManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AdapterManager {
     private static final Logger log = LoggerFactory.getLogger(AdapterManager.class);
-    private static final String DEFAULT_ETHEREUM_ID = "eth-0";
-    private static final String DEFUALT_BICOIN_ID = "btc-0";
+    //private static final String DEFAULT_ETHEREUM_ID = "eth-0";
+    //private static final String DEFUALT_BICOIN_ID = "btc-0";
     private BlockchainAdapterFactory factory = new BlockchainAdapterFactory();
     private static AdapterManager instance = null;
     private final Map<String, BlockchainAdapter> map = Collections.synchronizedMap(new HashMap<>());
 
-    private AdapterManager(){
+    private AdapterManager() {
 
     }
 
-    public static AdapterManager getInstance(){
-        if(instance == null){
+    public static AdapterManager getInstance() {
+        if (instance == null) {
             instance = new AdapterManager();
             instance.initialize();
         }
@@ -45,35 +43,26 @@ public class AdapterManager {
     }
 
     public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException {
-        if(map.containsKey(blockchainId)){
+        if (map.containsKey(blockchainId)) {
             return map.get(blockchainId);
-        }else{
+        } else {
             final String msg = String.format("blockchain-id <%s> does not exist!", blockchainId);
             log.error(msg);
             throw new BlockchainIdNotFoundException(msg);
         }
     }
 
-    private void initialize(){
+    private void initialize() {
         try {
-            addDefaultEthereumNode(DEFAULT_ETHEREUM_ID);
-            addDefaultBitcoinNode(DEFUALT_BICOIN_ID);
+            createAdapters();
         } catch (Exception e) {
             //TODO better handling of errors
-            //error logs are produced at a lower level
-            e.printStackTrace();
         }
     }
 
-    private void addDefaultEthereumNode(String blockchainId) throws Exception {
-        map.put(blockchainId, factory.createBlockchainAdapter(NodeType.ETHEREUM));
+    private void createAdapters() throws Exception {
+        for(String id : GatewayManager.getInstance().getGateways().keySet()) {
+            map.put(id, factory.createBlockchainAdapter(id));
+        }
     }
-
-    private void addDefaultBitcoinNode(String blockchainId) throws Exception {
-        map.put(blockchainId, factory.createBlockchainAdapter(NodeType.BITCOIN));
-    }
-
-    // TODO provide ability to add/remove/configure nodes externally
-    // TODO separate keystore management from node management
-    // TODO expose nodes as a REST resource
 }

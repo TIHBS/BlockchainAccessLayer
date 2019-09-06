@@ -1,12 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.RoundingMode;
-
-/********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -14,7 +7,14 @@ import java.math.RoundingMode;
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
+ *******************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+
 public class BitcoinUtils {
     private static final long SATOSHIS_PER_BITCCOIN = 100000000L;
     private static final int LARGEST_SCALE = 8;

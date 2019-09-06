@@ -38,18 +38,22 @@ public class Transaction {
     @XmlElement(name="TransactionState")
     private TransactionState state;
 
+    @XmlElement(name="ReturnValue")
+    private String returnValue;
+
     public Transaction() {
     }
 
     public Transaction(String transactionHash,
                        Block block,
-                       String from, String to, BigInteger value, TransactionState state) {
+                       String from, String to, BigInteger value, TransactionState state, String returnValue) {
         this.transactionHash = transactionHash;
         this.block = block;
         this.from = from;
         this.to = to;
         this.value = value;
         this.state = state;
+        this.returnValue = returnValue;
     }
 
     public String getTransactionHash() {
@@ -98,6 +102,14 @@ public class Transaction {
 
     public void setState(TransactionState state) {
         this.state = state;
+    }
+
+    public String getReturnValue() {
+        return returnValue;
+    }
+
+    public void setReturnValue(String returnValue) {
+        this.returnValue = returnValue;
     }
 
     @XmlElement(name="Value")

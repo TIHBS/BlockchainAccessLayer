@@ -1,6 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.management.model;
 
-
+import io.reactivex.disposables.Disposable;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -14,22 +14,22 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 public class ObservableSubscription extends  Subscription {
-    private rx.Subscription subscription;
+    private Disposable subscription;
 
-    public ObservableSubscription(rx.Subscription subscription, SubscriptionType type) {
+    public ObservableSubscription(Disposable subscription, SubscriptionType type) {
         super(type);
         this.subscription = subscription;
     }
 
-    public rx.Subscription getSubscription() {
+    public Disposable getSubscription() {
         return subscription;
     }
 
-    public void setSubscription(rx.Subscription subscription) {
+    public void setSubscription(Disposable subscription) {
         this.subscription = subscription;
     }
 
     public void unsubscribe() {
-        this.subscription.unsubscribe();
+        this.subscription.dispose();
     }
 }

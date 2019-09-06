@@ -1,12 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -16,17 +9,21 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 
 @XmlRootElement(name = "DetectOrphanedTransactionRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class DetectOrphanedTransactionRequest {
 
     private String blockchainId;
-
     private String subscriptionId;
-
     private String epUrl;
-
     private String txId;
 
     @XmlElement(name="EndPointUrl")

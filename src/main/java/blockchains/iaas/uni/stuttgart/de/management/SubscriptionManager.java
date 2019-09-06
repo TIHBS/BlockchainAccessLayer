@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+// todo this class should persist subscriptions to stable storage!
 public class SubscriptionManager {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
     private static SubscriptionManager instance = null;
