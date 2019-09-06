@@ -10,38 +10,63 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashMap;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
+import lombok.Builder;
 import org.apache.http.MethodNotSupportedException;
-import org.hyperledger.fabric.sdk.ChaincodeEndorsementPolicy;
-import org.hyperledger.fabric.sdk.ChaincodeID;
-import org.hyperledger.fabric.sdk.Channel;
-import org.hyperledger.fabric.sdk.HFClient;
-import org.hyperledger.fabric.sdk.ProposalResponse;
-import org.hyperledger.fabric.sdk.TransactionProposalRequest;
-import org.hyperledger.fabric.sdk.TransactionRequest;
-import org.hyperledger.fabric.sdk.exception.ChaincodeEndorsementPolicyParseException;
-import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
-import org.hyperledger.fabric.sdk.exception.ProposalException;
+import org.hyperledger.fabric.gateway.Contract;
+import org.hyperledger.fabric.gateway.ContractException;
+import org.hyperledger.fabric.gateway.Gateway;
+import org.hyperledger.fabric.gateway.Network;
+import org.hyperledger.fabric.gateway.Wallet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+@Builder
 public class FabricAdapter implements BlockchainAdapter {
+    private String walletPath;
+    private String userName;
+    private String connectionProfilePath;
+    private static final Logger log = LoggerFactory.getLogger(FabricAdapter.class);
+
+    public String getWalletPath() {
+        return walletPath;
+    }
+
+    public void setWalletPath(String walletPath) {
+        this.walletPath = walletPath;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getConnectionProfilePath() {
+        return connectionProfilePath;
+    }
+
+    public void setConnectionProfilePath(String connectionProfilePath) {
+        this.connectionProfilePath = connectionProfilePath;
+    }
+
     @Override
     public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException, MethodNotSupportedException {
         throw new MethodNotSupportedException("Fabric does not support submitting monetary transactions!");
@@ -63,46 +88,83 @@ public class FabricAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws MethodNotSupportedException {
+    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) {
         ScipParser parser = ScipParser.parse(functionIdentifier);
+        String[] pathSegments = parser.getFunctionPathSegments();
+        String channelName;
+        String chaincodeName;
+        String smartContractName = null;
+        CompletableFuture<Transaction> result;
 
-        HFClient client = HFClient.createNewInstance();
-        Channel channel = client.getChannel(parser.getFunctionPathSegments()[0]);
-        ///////////////
-        /// Send transaction proposal to all peers
-        TransactionProposalRequest transactionProposalRequest = client.newTransactionProposalRequest();
-        transactionProposalRequest.setChaincodeID(ChaincodeID.newBuilder().build());
-        // todo add language type to gateway config
-        transactionProposalRequest.setChaincodeLanguage(TransactionRequest.Type.JAVA);
-        //transactionProposalRequest.setFcn("invoke");
-        transactionProposalRequest.setFcn(parser.getFunctionName());
-        transactionProposalRequest.setProposalWaitTime(0);
-        transactionProposalRequest.setArgs(parameters.stream().map(SmartContractFunctionArgument::getValue).collect(Collectors.joining()));
+        if (pathSegments.length != 3 && pathSegments.length != 2) {
+            String message = String.format("Unable to identify the path to the requested function. Expected path segements: 3 or 2. Found path segments: %s", pathSegments.length);
+            log.error(message);
+            result = new CompletableFuture<>();
+            result.completeExceptionally(new InvokeSmartContractFunctionFailure(message));
+        } else {
+            channelName = pathSegments[0];
+            chaincodeName = pathSegments[1];
 
-        Map<String, byte[]> tm2 = new HashMap<>();
-        tm2.put("result", ":)".getBytes(UTF_8));  //
-        Transaction result = null;
-        try {
-            transactionProposalRequest.setTransientMap(tm2);
-            ChaincodeEndorsementPolicy chaincodeEndorsementPolicy = new ChaincodeEndorsementPolicy();
-            chaincodeEndorsementPolicy.fromYamlFile(new File("/sdkintegration/chaincodeendorsementpolicy.yaml"));
-            transactionProposalRequest.setChaincodeEndorsementPolicy(chaincodeEndorsementPolicy);
-
-            //  Collection<ProposalResponse> transactionPropResp = channel.sendTransactionProposalToEndorsers(transactionProposalRequest);
-            Collection<ProposalResponse> transactionPropResp = channel.sendTransactionProposal(transactionProposalRequest, channel.getPeers());
-            for (ProposalResponse response : transactionPropResp) {
-                if (response.getStatus() == ProposalResponse.Status.SUCCESS) {
-                    result = new Transaction();
-                    result.setState(TransactionState.CONFIRMED);
-                    result.setTransactionHash(response.getTransactionID());
-                }
+            if (pathSegments.length == 3) {
+                smartContractName = pathSegments[2];
             }
-        } catch (InvalidArgumentException | ChaincodeEndorsementPolicyParseException | IOException | ProposalException e) {
-            e.printStackTrace();
-            result = new Transaction();
-            result.setState(TransactionState.INVALID);
+
+            final String FUNCTION_NAME = parser.getFunctionName();
+
+            // Load an existing wallet holding identities used to access the network.
+            Path walletDirectory = Paths.get(walletPath);
+
+            try {
+                Wallet wallet = Wallet.createFileSystemWallet(walletDirectory);
+
+                // Path to a connection profile describing the network.
+                Path networkConfigFile = Paths.get(this.connectionProfilePath);
+
+                // Configure the gateway connection used to access the network.
+                Gateway.Builder builder = Gateway.createBuilder()
+                        .identity(wallet, userName)
+                        .networkConfig(networkConfigFile);
+
+                // Create a gateway connection
+                try (Gateway gateway = builder.connect()) {
+
+                    // Obtain a smart contract deployed on the network.
+                    Network network = gateway.getNetwork(channelName);
+                    Contract contract;
+
+                    if (smartContractName != null) {
+                        contract = network.getContract(chaincodeName, smartContractName);
+                    } else {
+                        contract = network.getContract(chaincodeName);
+                    }
+                    byte[] resultAsBytes = contract.evaluateTransaction(
+                            FUNCTION_NAME,
+                            parameters
+                                    .stream()
+                                    .map(SmartContractFunctionArgument::getValue)
+                                    .toArray(String[]::new));
+                    String resultS = new String(resultAsBytes, StandardCharsets.UTF_8);
+                    log.info(resultS);
+                    result = new CompletableFuture<>();
+                    Transaction resultT = new Transaction();
+                    resultT.setReturnValue(resultS);
+                    resultT.setState(TransactionState.RETURN_VALUE);
+                    result.complete(resultT);
+
+//                    // Submit transactions that store state to the ledger.
+//                    byte[] createCarResult = contract.submitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary");
+//                    log.info(new String(createCarResult, StandardCharsets.UTF_8));
+//
+//                    // Evaluate transactions that query state from the ledger.
+//                    byte[] queryAllCarsResult = contract.evaluateTransaction("queryAllCars");
+//                    System.out.println(new String(queryAllCarsResult, StandardCharsets.UTF_8));
+                }
+            } catch (IOException | ContractException e) {
+                result = new CompletableFuture<>();
+                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e));
+            }
         }
 
-        return CompletableFuture.completedFuture(result);
+        return result;
     }
 }

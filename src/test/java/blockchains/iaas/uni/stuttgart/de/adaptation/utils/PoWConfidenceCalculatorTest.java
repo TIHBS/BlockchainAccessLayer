@@ -12,11 +12,9 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
 import blockchains.iaas.uni.stuttgart.de.model.Block;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PoWConfidenceCalculatorTest {
     private final long DEPTH = 12;
@@ -27,7 +25,7 @@ class PoWConfidenceCalculatorTest {
         final PoWConfidenceCalculator calculator = new PoWConfidenceCalculator();
         final Block blockEth = new Block();
         blockEth.setNumberAsLong(1);
-        final Transaction transactionEth = new Transaction();
+        final LinearChainTransaction transactionEth = new LinearChainTransaction();
         transactionEth.setBlock(blockEth);
         calculator.setCurrentBlockchainHeight(1 + DEPTH);
         calculator.setAdversaryRatio(Q);

@@ -90,7 +90,7 @@ In order to connect a _bitcoind_ node to [testnet3](https://en.bitcoin.it/wiki/T
 
 1. [Install bitcoind](https://bitcoin.org/en/download):
  this differs depending on your operating system. For the installation instructions on Ubuntu you can follow [these steps](https://gist.github.com/rjmacarthy/b56497a81a6497bfabb1).
-2. Configure _bitcoind_: This can be done by editing the entry `btc-0` in the [`gatewayConfiguration.json`](src/main/resources/gatewayConfiguration.json) file.
+2. Configure _bitcoind_: This can be done by editing and using the [`bitcoin.conf`](src/main/resources/bitcoin.conf) file when starting the bicoind daemon.
 The configuration allows external rpc-based communication with the node, and instructs it to communicate with the testnet rather than
 the mainnet. Furthermore, it orders the node to build an index on the blockchain that allows querying even historic transactions. Finally, it instructs the node
 to send notifications to the BAL when it detects a new block or a transaction addressed to one of the Bitcoin wallet's addresses.
@@ -114,7 +114,7 @@ The exchange uses the following simplified BlockME-model:
 Please follow these instructions:
 1. Configure and run a local geth node (see above).
 2. Configure and run a local bitcoind node (see above).
-3. Configure the blockchain access layer to communicate with this node and to read a valid Ethereum keystore file (see above)
+3. Configure the blockchain access layer to communicate with these nodes (see the file [gatewayConfiguration.json](src/main/resources/gatewayConfiguration.json)).
 4. Build and deploy the blockchain access layer (see above).
 5. Configure, build, deploy and initiate the process model ([see this Github repository for instructions](https://github.com/ghareeb-falazi/BlockME-UseCase))
 6. Send ethers to the address maintained by the blockchain access layer (the first address of the keyfile mentioned in step 3).

@@ -13,6 +13,9 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.Map;
 
+import javax.sound.sampled.Line;
+
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
@@ -31,19 +34,22 @@ public class CamundaMessageTranslator extends MessageTranslator {
 
         variables.put("status", new CamundaVariable(state.toString(), "String"));
 
-        if (transaction != null) {
+        // todo handle communication between Camunda and Fabric
+        if (transaction instanceof LinearChainTransaction) {
+            LinearChainTransaction tx = (LinearChainTransaction) transaction;
+
             if (state != TransactionState.RETURN_VALUE) {
-                variables.put("from", new CamundaVariable(transaction.getFrom(), "String"));
-                variables.put("to", new CamundaVariable(transaction.getTo(), "String"));
-                variables.put("value", new CamundaVariable(transaction.getValueAsString(), "Long"));
-                variables.put("transactionId", new CamundaVariable(transaction.getTransactionHash(), "String"));
+                variables.put("from", new CamundaVariable(tx.getFrom(), "String"));
+                variables.put("to", new CamundaVariable(tx.getTo(), "String"));
+                variables.put("value", new CamundaVariable(tx.getValueAsString(), "Long"));
+                variables.put("transactionId", new CamundaVariable(tx.getTransactionHash(), "String"));
             } else {
                 variables.put("returnValue", new CamundaVariable(transaction.getReturnValue(), "String"));
             }
 
-            if (transaction.getBlock() != null) { //it could be null if we are accepting transactions with 0 confirmations
-                variables.put("blockId", new CamundaVariable(transaction.getBlock().getHash(), "String"));
-                variables.put("blockNumber", new CamundaVariable(String.valueOf(transaction.getBlock().getNumberAsLong()), "Long"));
+            if (tx.getBlock() != null) { //it could be null if we are accepting transactions with 0 confirmations
+                variables.put("blockId", new CamundaVariable(tx.getBlock().getHash(), "String"));
+                variables.put("blockNumber", new CamundaVariable(String.valueOf(tx.getBlock().getNumberAsLong()), "Long"));
             } else {
                 variables.put("blockId", new CamundaVariable("", "String"));
                 variables.put("blockNumber", new CamundaVariable("-1", "Long"));
