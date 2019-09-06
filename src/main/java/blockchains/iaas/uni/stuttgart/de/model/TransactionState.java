@@ -1,10 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.model;
-
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlRootElement;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -14,11 +9,17 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-@XmlRootElement(name="State")
+package blockchains.iaas.uni.stuttgart.de.model;
+
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "State")
 public enum TransactionState {
     UNKNOWN,
     PENDING,
     CONFIRMED,
     NOT_FOUND,
-    INVALID
+    INVALID,
+    // transactions which are only place holders for read-only
+    RETURN_VALUE
 }

@@ -18,7 +18,7 @@ import javax.ws.rs.core.Response;
 
 @Path("submit-transaction")
 public class SubmitTransactionController extends SubscriptionController {
-    private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
+    private static final Logger log = LoggerFactory.getLogger(SubmitTransactionController.class);
 
     @GET
     public Response get(){

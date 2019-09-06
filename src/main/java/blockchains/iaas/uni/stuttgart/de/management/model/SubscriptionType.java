@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.management.model;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,10 +9,13 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.management.model;
+
 public enum SubscriptionType {
     SUBMIT_TRANSACTION,
     RECEIVE_TRANSACTION,
     RECEIVE_TRANSACTIONS,
     DETECT_ORPHANED_TRANSACTION,
-    ENSURE_TRANSACTION_STATE
+    ENSURE_TRANSACTION_STATE,
+    INVOKE_SMART_CONTRACT_FUNCTION
 }
