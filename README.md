@@ -90,7 +90,7 @@ In order to connect a _bitcoind_ node to [testnet3](https://en.bitcoin.it/wiki/T
 
 1. [Install bitcoind](https://bitcoin.org/en/download):
  this differs depending on your operating system. For the installation instructions on Ubuntu you can follow [these steps](https://gist.github.com/rjmacarthy/b56497a81a6497bfabb1).
-2. Configure _bitcoind_: This can be done by editing the bitcoin.conf file. The configuration file we used can be found [here](src/main/resources/bitcoin.conf).
+2. Configure _bitcoind_: This can be done by editing the entry `btc-0` in the [`gatewayConfiguration.json`](src/main/resources/gatewayConfiguration.json) file.
 The configuration allows external rpc-based communication with the node, and instructs it to communicate with the testnet rather than
 the mainnet. Furthermore, it orders the node to build an index on the blockchain that allows querying even historic transactions. Finally, it instructs the node
 to send notifications to the BAL when it detects a new block or a transaction addressed to one of the Bitcoin wallet's addresses.

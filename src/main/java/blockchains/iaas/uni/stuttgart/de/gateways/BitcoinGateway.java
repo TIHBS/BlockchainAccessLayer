@@ -17,15 +17,15 @@ public class BitcoinGateway extends AbstractGateway {
     private static final String PREFIX = "node.bitcoind.";
     // Configuration parameters for the 'bitcoind' JSON-RPC client ('BtcdClient')
     public static final String RPC_PROTOCOL = "rpc.protocol";
-    public static final String RPC_HOST = "rpc.host";
-    public static final String RPC_PORT = "rpc.port";
-    public static final String RPC_USER = "rpc.user";
-    public static final String RPC_PASSWORD = "rpc.password";
-    public static final String HTTP_AUTHENTICATION_SCHEME = "http.auth_scheme";
+    public static final String RPC_HOST = PREFIX + "rpc.host";
+    public static final String RPC_PORT = PREFIX + "rpc.port";
+    public static final String RPC_USER = PREFIX + "rpc.user";
+    public static final String RPC_PASSWORD = PREFIX + "rpc.password";
+    public static final String HTTP_AUTHENTICATION_SCHEME = PREFIX + "http.auth_scheme";
     // Configuration parameters for the 'bitcoind' notification daemon ('BtcdDaemon')
-    public static final String NOTIFICATION_ALERT_PORT = "notification.alert.port";
-    public static final String NOTIFICATION_BLOCK_PORT = "notification.block.port";
-    public static final String NOTIFICATION_WALLET_PORT = "notification.wallet.port";
+    public static final String NOTIFICATION_ALERT_PORT = PREFIX + "notification.alert.port";
+    public static final String NOTIFICATION_BLOCK_PORT = PREFIX + "notification.block.port";
+    public static final String NOTIFICATION_WALLET_PORT = PREFIX + "notification.wallet.port";
 
     private String rpcProtocol;
     private String rpcHost;
