@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
@@ -127,7 +128,6 @@ public class FabricAdapter implements BlockchainAdapter {
 
                 // Create a gateway connection
                 try (Gateway gateway = builder.connect()) {
-
                     // Obtain a smart contract deployed on the network.
                     Network network = gateway.getNetwork(channelName);
                     Contract contract;
@@ -137,12 +137,10 @@ public class FabricAdapter implements BlockchainAdapter {
                     } else {
                         contract = network.getContract(chaincodeName);
                     }
-                    byte[] resultAsBytes = contract.evaluateTransaction(
-                            FUNCTION_NAME,
-                            parameters
-                                    .stream()
-                                    .map(SmartContractFunctionArgument::getValue)
-                                    .toArray(String[]::new));
+
+                    String[] params = parameters.stream().map(SmartContractFunctionArgument::getValue).toArray(String[]::new);
+                    byte[] resultAsBytes = contract.submitTransaction(FUNCTION_NAME, params);
+
                     String resultS = new String(resultAsBytes, StandardCharsets.UTF_8);
                     log.info(resultS);
                     result = new CompletableFuture<>();
@@ -150,16 +148,8 @@ public class FabricAdapter implements BlockchainAdapter {
                     resultT.setReturnValue(resultS);
                     resultT.setState(TransactionState.RETURN_VALUE);
                     result.complete(resultT);
-
-//                    // Submit transactions that store state to the ledger.
-//                    byte[] createCarResult = contract.submitTransaction("createCar", "CAR10", "VW", "Polo", "Grey", "Mary");
-//                    log.info(new String(createCarResult, StandardCharsets.UTF_8));
-//
-//                    // Evaluate transactions that query state from the ledger.
-//                    byte[] queryAllCarsResult = contract.evaluateTransaction("queryAllCars");
-//                    System.out.println(new String(queryAllCarsResult, StandardCharsets.UTF_8));
                 }
-            } catch (IOException | ContractException e) {
+            } catch (IOException | ContractException | TimeoutException | InterruptedException e) {
                 result = new CompletableFuture<>();
                 result.completeExceptionally(new InvokeSmartContractFunctionFailure(e));
             }

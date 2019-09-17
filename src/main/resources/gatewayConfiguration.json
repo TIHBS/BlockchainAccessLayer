@@ -21,8 +21,8 @@
   },
   "fabric-0" : {
     "@type": "fabric",
-    "walletPath": "C:\\Fabric\\wallet",
+    "walletPath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\fabcar\\javascript\\wallet",
     "userName": "user1",
-    "connectionProfilePath": "C:\\Fabric\\connection-org1.json"
+    "connectionProfilePath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\first-network\\connection-org1.json"
   }
 }
