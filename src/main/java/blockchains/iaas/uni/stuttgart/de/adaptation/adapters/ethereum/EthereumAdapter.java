@@ -30,6 +30,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableExc
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionParameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
@@ -365,7 +366,7 @@ public class EthereumAdapter extends AbstractAdapter {
                                             CompletableFuture<Transaction> future) {
         // Only complete the future if we are interested in this event
         if (Arrays.asList(interesting).contains(detectedState)) {
-            final Transaction result = new Transaction();
+            final LinearChainTransaction result = new LinearChainTransaction();
             result.setState(detectedState);
 
             if (transactionDetails.isPresent()) {

@@ -16,11 +16,13 @@ import java.util.Map;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin.BitcoinAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric.FabricAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.gateways.AbstractGateway;
 import blockchains.iaas.uni.stuttgart.de.gateways.BitcoinGateway;
 import blockchains.iaas.uni.stuttgart.de.gateways.EthereumGateway;
+import blockchains.iaas.uni.stuttgart.de.gateways.FabricGateway;
 import blockchains.iaas.uni.stuttgart.de.gateways.GatewayManager;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
@@ -53,6 +55,8 @@ public class BlockchainAdapterFactory {
                 return createEthereumAdapter((EthereumGateway) gateway);
             } else if (gateway instanceof BitcoinGateway) {
                 return createBitcoinAdapter((BitcoinGateway) gateway);
+            } else if (gateway instanceof FabricGateway) {
+                return createFabricAdapter((FabricGateway) gateway);
             } else {
                 log.error("Invalid gateway type!");
                 return null;
@@ -85,5 +89,13 @@ public class BlockchainAdapterFactory {
         result.setConfidenceCalculator(cCalc);
 
         return result;
+    }
+
+    private FabricAdapter createFabricAdapter(FabricGateway gateway) {
+        return FabricAdapter.builder()
+                .connectionProfilePath(gateway.getConnectionProfilePath())
+                .userName(gateway.getUserName())
+                .walletPath(gateway.getWalletPath())
+                .build();
     }
 }

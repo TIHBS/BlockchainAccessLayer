@@ -8,13 +8,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
+package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
+import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.FinalityConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 
-/**
- * Calculates the DoC of a transaction
- */
-public interface FinalityConfidenceCalculator {
-    double getCurrentConfidence(LinearChainTransaction transaction);
+public class BFTConfidenceCalculator implements FinalityConfidenceCalculator {
+    @Override
+    public double getCurrentConfidence(LinearChainTransaction transaction) {
+        // always return 1.0 since when BFT consensus succeeds, we are sure that the included tx are durably committed.
+        return 1.0;
+    }
 }

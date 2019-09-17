@@ -11,7 +11,7 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.FinalityConfidenceCalculator;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 
 public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
     private long currentBlockchainHeight;
@@ -44,7 +44,7 @@ public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
      * @return the current DoC measured between 0.0 and 1.0
      */
     @Override
-    public double getCurrentConfidence(Transaction transaction) {
+    public double getCurrentConfidence(LinearChainTransaction transaction) {
         final long z = this.currentBlockchainHeight - transaction.getBlock().getNumberAsLong();
         return this.getConfidence(z);
     }

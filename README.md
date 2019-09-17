@@ -8,8 +8,9 @@ Furthermore, the layer directly accesses the keystore file holding the private k
 and receiving transactions.
 On the other hand, the BAL also needs to be able to communicate with a [bitcoind node](https://bitcoin.org/en/bitcoin-core/)
 which has RPC connections enabled.
-The configuration file that can be used to configure these aspects (communication with a geth, and a bitcoind nodes and the local Ethereum keystore) can be found 
-[here](src/main/resources/config.properties)
+Finally, it needs to communicate with a [Hyperledger Fabric](https://hyperledger-fabric.readthedocs.io/) network.
+The configuration file that can be used to configure these aspects (communication with the Fabric network, a geth, and a bitcoind nodes etc.) can be found 
+[here](src/main/resources/gatewayConfiguration.json)
 
 
 ## Building and Deployment
@@ -90,7 +91,7 @@ In order to connect a _bitcoind_ node to [testnet3](https://en.bitcoin.it/wiki/T
 
 1. [Install bitcoind](https://bitcoin.org/en/download):
  this differs depending on your operating system. For the installation instructions on Ubuntu you can follow [these steps](https://gist.github.com/rjmacarthy/b56497a81a6497bfabb1).
-2. Configure _bitcoind_: This can be done by editing the bitcoin.conf file. The configuration file we used can be found [here](src/main/resources/bitcoin.conf).
+2. Configure _bitcoind_: This can be done by editing and using the [`bitcoin.conf`](src/main/resources/bitcoin.conf) file when starting the bicoind daemon.
 The configuration allows external rpc-based communication with the node, and instructs it to communicate with the testnet rather than
 the mainnet. Furthermore, it orders the node to build an index on the blockchain that allows querying even historic transactions. Finally, it instructs the node
 to send notifications to the BAL when it detects a new block or a transaction addressed to one of the Bitcoin wallet's addresses.
@@ -105,6 +106,21 @@ bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the 
 ## Setting-up a Hyperledger Fabric Network
 Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
+### Note
+The included Fabric unit test depends on the [FabCar official example](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html), so in order to run it
+ensure the following:
+
+1. follow the steps of running the first Fabric tutorial at: https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html (use the javascript smart contract).
+2. execute the enrollAdmin.js and the registerUser.js node programs.
+3. alter the local hosts file by adding the following entries:
+   * 127.0.0.1	orderer.example.com
+   * 127.0.0.1	peer0.org1.example.com
+   * 127.0.0.1	peer0.org2.example.com
+   * 127.0.0.1	peer1.org1.example.com
+   * 127.0.0.1	peer1.org2.example.com
+   
+   This ensures that the SDK is able to find the orderer and network peers.
+
 ## Case Study (For BlockME)
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
@@ -114,7 +130,7 @@ The exchange uses the following simplified BlockME-model:
 Please follow these instructions:
 1. Configure and run a local geth node (see above).
 2. Configure and run a local bitcoind node (see above).
-3. Configure the blockchain access layer to communicate with this node and to read a valid Ethereum keystore file (see above)
+3. Configure the blockchain access layer to communicate with these nodes (see the file [gatewayConfiguration.json](src/main/resources/gatewayConfiguration.json)).
 4. Build and deploy the blockchain access layer (see above).
 5. Configure, build, deploy and initiate the process model ([see this Github repository for instructions](https://github.com/ghareeb-falazi/BlockME-UseCase))
 6. Send ethers to the address maintained by the blockchain access layer (the first address of the keyfile mentioned in step 3).

@@ -22,6 +22,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableExc
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import com.neemre.btcdcli4j.core.BitcoindException;
@@ -78,12 +79,12 @@ public class BitcoinAdapter extends AbstractAdapter {
         return result;
     }
 
-    private Transaction generateTransactionObject(com.neemre.btcdcli4j.core.domain.Transaction transaction, Block block, boolean detectSender) {
-        Transaction result = null;
+    private LinearChainTransaction generateTransactionObject(com.neemre.btcdcli4j.core.domain.Transaction transaction, Block block, boolean detectSender) {
+        LinearChainTransaction result = null;
         // there might be multi-inputs and/or multi-outputs for a transactions, we only consider the first input/output affecting the wallet
         if (transaction.getDetails().size() > 0) {
             final PaymentOverview overview = transaction.getDetails().get(0);
-            result = new Transaction();
+            result = new LinearChainTransaction();
             result.setTo(overview.getAddress());
             result.setBlock(block);
             result.setTransactionHash(transaction.getTxId());
@@ -124,13 +125,13 @@ public class BitcoinAdapter extends AbstractAdapter {
                                      CompletableFuture<Transaction> future) {
                 // Only complete the future if we are interested in this event
                 if (Arrays.asList(interesting).contains(detectedState)) {
-                    Transaction result = null;
+                    LinearChainTransaction result;
 
                     if (transactionDetails != null) {
                         final Block myBlock = generateBlockObject(block);
                         result = generateTransactionObject(transactionDetails, myBlock, true);
                     } else {
-                        result = new Transaction();
+                        result = new LinearChainTransaction();
                     }
 
                     result.setState(detectedState);
@@ -194,7 +195,7 @@ public class BitcoinAdapter extends AbstractAdapter {
             } else {
                 result = new CompletableFuture<>();
                 final com.neemre.btcdcli4j.core.domain.Transaction tx = client.getTransaction(transactionId);
-                final Transaction resultTx = generateTransactionObject(tx, null, true);
+                final LinearChainTransaction resultTx = generateTransactionObject(tx, null, true);
                 resultTx.setState(TransactionState.CONFIRMED);
                 result.complete(resultTx);
             }
@@ -232,7 +233,7 @@ public class BitcoinAdapter extends AbstractAdapter {
                                             return null;
                                         });
                             } else {
-                                final Transaction resultTx = generateTransactionObject(transaction, null, true);
+                                final LinearChainTransaction resultTx = generateTransactionObject(transaction, null, true);
                                 resultTx.setState(TransactionState.CONFIRMED);
                                 subject.onNext(resultTx);
                             }

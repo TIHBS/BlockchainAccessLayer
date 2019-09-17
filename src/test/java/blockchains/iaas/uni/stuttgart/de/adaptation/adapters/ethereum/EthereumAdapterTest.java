@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.contracts.Permissions;
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import org.junit.jupiter.api.Assertions;
@@ -60,7 +61,7 @@ class EthereumAdapterTest {
     void testSendTransaction() throws ExecutionException, InterruptedException {
         final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
         final BigDecimal value = new BigDecimal(5000);
-        Transaction result = this.adapter.submitTransaction(3, toAddress, value).get();
+        LinearChainTransaction result = (LinearChainTransaction) this.adapter.submitTransaction(3, toAddress, value).get();
         log.debug("transaction hash is: " + result.getTransactionHash());
     }
 
@@ -75,9 +76,9 @@ class EthereumAdapterTest {
 
 //        byte[] result = contract.getPublicKey("0x90645Dc507225d61cB81cF83e7470F5a6AA1215A").send();
 //        log.debug(new String(result));
-         scip = String.format("scip://%s/%s/getPublicKey?ethereumAddress=address:bytes", NETWORK_NAME, contract.getContractAddress());
+        scip = String.format("scip://%s/%s/getPublicKey?ethereumAddress=address:bytes", NETWORK_NAME, contract.getContractAddress());
         //String scip = "scip://eth-0/0x14E8548A45551d4a052884d68bd3F924AE13c7F4/getPublicKey?ethereumAddress=address:bytes";
-        Transaction result = this.adapter.invokeSmartContract(scip,
+        Transaction result =  this.adapter.invokeSmartContract(scip,
                 Collections.singletonList(new SmartContractFunctionArgument("ethereumAddress", "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A")), REQUIRED_CONFIDENCE).get();
         String value = result.getReturnValue();
         log.debug(value);
@@ -108,5 +109,4 @@ class EthereumAdapterTest {
 
         return contract;
     }
-
 }

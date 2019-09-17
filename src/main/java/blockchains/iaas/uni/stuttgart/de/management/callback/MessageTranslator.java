@@ -1,5 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.management.callback;
 
+import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
