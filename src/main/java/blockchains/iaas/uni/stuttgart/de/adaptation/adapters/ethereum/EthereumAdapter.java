@@ -175,7 +175,7 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value)
+    public CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence)
             throws InvalidTransactionException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
@@ -183,6 +183,7 @@ public class EthereumAdapter extends AbstractAdapter {
         }
 
         try {
+            final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
@@ -200,12 +201,13 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public Observable<Transaction> receiveTransactions(long waitFor, String senderId) {
+    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
 
+        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         final String myAddress = credentials.getAddress();
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Disposable newTransactionObservable = web3j.transactionFlowable().subscribe(tx -> {
@@ -226,7 +228,8 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) {
+    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) {
+        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         // only monitor the transition into the CONFIRMED state or the NOT_FOUND state
         return subscribeForTxEvent(transactionId, waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState)

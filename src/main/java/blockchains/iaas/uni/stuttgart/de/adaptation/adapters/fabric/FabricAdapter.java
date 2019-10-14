@@ -69,17 +69,21 @@ public class FabricAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException, MethodNotSupportedException {
+    public CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence
+
+
+
+    ) throws InvalidTransactionException, MethodNotSupportedException {
         throw new MethodNotSupportedException("Fabric does not support submitting monetary transactions!");
     }
 
     @Override
-    public Observable<Transaction> receiveTransactions(long waitFor, String senderId) throws MethodNotSupportedException {
+    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws MethodNotSupportedException {
         throw new MethodNotSupportedException("Fabric does not support receiving monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) throws MethodNotSupportedException {
+    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws MethodNotSupportedException {
         throw new MethodNotSupportedException("Fabric does not support monetary transactions!");
     }
 

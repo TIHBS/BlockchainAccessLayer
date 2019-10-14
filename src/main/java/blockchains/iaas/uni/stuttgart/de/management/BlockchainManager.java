@@ -30,7 +30,6 @@ import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.disposables.Disposable;
@@ -49,20 +48,20 @@ public class BlockchainManager {
      * INVALID: the submitted transaction faild validation at the node
      * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
      *
-     * @param subscriptionId supplied by the remote application as a means for correlation
-     * @param to             the address of the transaction recipient
-     * @param value          the value of the transaction
-     * @param blockchainId   the blockchain network id
-     * @param waitFor        the number of block-confirmations to wait for until determining the transaction is durably persisted
-     * @param epUrl          the url of the endpoint to send the callback message to
+     * @param subscriptionId     supplied by the remote application as a means for correlation
+     * @param to                 the address of the transaction recipient
+     * @param value              the value of the transaction
+     * @param blockchainId       the blockchain network id
+     * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
+     * @param epUrl              the url of the endpoint to send the callback message to
      */
     public void submitNewTransaction(final String subscriptionId, final String to, final BigInteger value,
-                                     final String blockchainId, final long waitFor, final String epUrl) {
+                                     final String blockchainId, final double requiredConfidence, final String epUrl) {
         final AdapterManager adapterManager = AdapterManager.getInstance();
 
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<Transaction> future = adapter.submitTransaction(waitFor, to, new BigDecimal(value));
+            final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
             // This happens when a communication error, or an error with the tx exist.
             future.
                     thenAccept(tx -> {
@@ -116,19 +115,19 @@ public class BlockchainManager {
      * <p>
      * CONFIRMED
      *
-     * @param subscriptionId supplied by the remote application as a means for correlation
-     * @param from           an optional parameter.If supplied, it indicates the sending address of the transactions we are interested
-     *                       in.
-     * @param blockchainId   the blockchain network id
-     * @param waitFor        the number of block-confirmations to wait for until determining the transaction is durably persisted
-     * @param epUrl          the url of the endpoint to send the callback message to
+     * @param subscriptionId     supplied by the remote application as a means for correlation
+     * @param from               an optional parameter.If supplied, it indicates the sending address of the transactions we are interested
+     *                           in.
+     * @param blockchainId       the blockchain network id
+     * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
+     * @param epUrl              the url of the endpoint to send the callback message to
      */
     public void receiveTransactions(final String subscriptionId, final String from, final String blockchainId,
-                                    final long waitFor, final String epUrl) {
+                                    final double requiredConfidence, final String epUrl) {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(waitFor, from)
+            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
@@ -164,19 +163,19 @@ public class BlockchainManager {
      * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible.
      * CONFIRMED: the submitted transaction received the desired number of block-confirmations
      *
-     * @param subscriptionId supplied by the remote application as a means for correlation
-     * @param from           an optional parameter.If supplied, it indicates the sending address of the transactions we are interested
-     *                       in.
-     * @param blockchainId   the blockchain network id
-     * @param waitFor        the number of block-confirmations to wait for until determining the transaction is durably persisted
-     * @param epUrl          the url of the endpoint to send the callback message to
+     * @param subscriptionId     supplied by the remote application as a means for correlation
+     * @param from               an optional parameter.If supplied, it indicates the sending address of the transactions we are interested
+     *                           in.
+     * @param blockchainId       the blockchain network id
+     * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
+     * @param epUrl              the url of the endpoint to send the callback message to
      */
     public void receiveTransaction(final String subscriptionId, final String from, final String blockchainId,
-                                   final long waitFor, final String epUrl) {
+                                   final double requiredConfidence, final String epUrl) {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(waitFor, from)
+            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(subscriptionId);
@@ -281,14 +280,15 @@ public class BlockchainManager {
      * @param subscriptionId supplied by the remote application as a means for correlation
      * @param transactionId  the hash of the transaction to monitor
      * @param blockchainId   the blockchain network id
+     * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
      * @param epUrl          the url of the endpoint to send the callback message to
      */
     public void ensureTransactionState(final String subscriptionId, final String transactionId, final String blockchainId,
-                                       final long waitFor, final String epUrl) {
+                                       final double requiredConfidence, final String epUrl) {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(waitFor, transactionId);
+            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
@@ -335,16 +335,17 @@ public class BlockchainManager {
      * INVALID: the submitted transaction failed validation at the node (if a transaction was required)
      * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
      * or the result returned from a read-only smart contract function.
-     * @param subscriptionId upplied by the remote application as a means for correlation
-     * @param scip a URI following the Smart Contract Invocation Protocol scheme representing the smart contract function to be invoked
-     * @param arguments the arguments to be passed to the smart contract function
-     * @param minimumConfidence the minimum confidence that the submitted transaction must reach before returning a CONFIRMED response (percentage)
-     * @param epUrl the url of the endpoint to send the callback message to
+     *
+     * @param subscriptionId    upplied by the remote application as a means for correlation
+     * @param scip              a URI following the Smart Contract Invocation Protocol scheme representing the smart contract function to be invoked
+     * @param arguments         the arguments to be passed to the smart contract function
+     * @param requiredConfidence the minimum confidence that the submitted transaction must reach before returning a CONFIRMED response (percentage)
+     * @param epUrl             the url of the endpoint to send the callback message to
      */
     public void invokeSmartContractFunction(final String subscriptionId, final String scip, final List<SmartContractFunctionArgument> arguments,
-                                            final double minimumConfidence, final String epUrl) {
+                                            final double requiredConfidence, final String epUrl) {
         final AdapterManager adapterManager = AdapterManager.getInstance();
-        final double minimumConfidenceAsProbability = minimumConfidence / 100.0;
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
 
         try {
             final ScipParser parser = ScipParser.parse(scip);

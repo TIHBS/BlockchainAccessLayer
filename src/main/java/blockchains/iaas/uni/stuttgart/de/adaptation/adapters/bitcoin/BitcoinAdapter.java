@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
@@ -184,11 +185,12 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> submitTransaction(long waitFor, String receiverAddress, BigDecimal value) throws InvalidTransactionException {
+    public CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence) throws InvalidTransactionException {
         try {
             final BigDecimal valueBitcoins = BitcoinUtils.satoshiToBitcoin(value);
             final String transactionId = client.sendToAddress(receiverAddress, valueBitcoins);
             CompletableFuture<Transaction> result;
+            long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
 
             if (waitFor > 0) {
                 result = subscribeForTxEvent(transactionId, waitFor, TransactionState.NOT_FOUND, TransactionState.CONFIRMED);
@@ -209,9 +211,10 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public Observable<Transaction> receiveTransactions(long waitFor, String senderId) {
+    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) {
 
         final PublishSubject<Transaction> subject = PublishSubject.create();
+        long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         final WalletListener listener = new WalletListener() {
             @Override
             public void walletChanged(com.neemre.btcdcli4j.core.domain.Transaction transaction) {
@@ -252,7 +255,8 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<TransactionState> ensureTransactionState(long waitFor, String transactionId) {
+    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) {
+        long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         return subscribeForTxEvent(transactionId, waitFor, TransactionState.NOT_FOUND, TransactionState.CONFIRMED)
                 .thenApply(Transaction::getState);
     }

@@ -36,7 +36,7 @@ public class EnsureTransactionStateController extends SubscriptionController {
     public Response ensureTransactionState(EnsureTransactionStateRequest request){
         final BlockchainManager manager = new BlockchainManager();
         manager.ensureTransactionState(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(),
-                request.getWaitFor(), request.getEpUrl());
+                request.getRequiredConfidence(), request.getEpUrl());
 
         return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
                 .build();

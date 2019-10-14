@@ -39,7 +39,7 @@ public class ReceiveTransactionController extends SubscriptionController{
     public Response receiveTransaction(ReceiveTransactionsRequest request){
         final BlockchainManager manager = new BlockchainManager();
         manager.receiveTransaction(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
-                request.getWaitFor(), request.getEpUrl());
+                request.getRequiredConfidence(), request.getEpUrl());
 
         return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
                 .build();

@@ -61,7 +61,7 @@ class EthereumAdapterTest {
     void testSendTransaction() throws ExecutionException, InterruptedException {
         final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
         final BigDecimal value = new BigDecimal(5000);
-        LinearChainTransaction result = (LinearChainTransaction) this.adapter.submitTransaction(3, toAddress, value).get();
+        LinearChainTransaction result = (LinearChainTransaction) this.adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
         log.debug("transaction hash is: " + result.getTransactionHash());
     }
 
