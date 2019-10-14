@@ -30,7 +30,7 @@ public class SubmitTransactionController extends SubscriptionController {
     public Response submitTransaction(SubmitTransactionRequest request){
         final BlockchainManager manager = new BlockchainManager();
         manager.submitNewTransaction(request.getSubscriptionId(), request.getTo(), request.getValue(), request.getBlockchainId(),
-                request.getWaitFor(), request.getEpUrl());
+                request.getRequiredConfidence(), request.getEpUrl());
 
         return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
                 .build();
