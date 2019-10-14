@@ -69,7 +69,7 @@ public class EnsureTransactionStateRequest {
         return requiredConfidence;
     }
 
-    public void setRequiredConfidence(double waitFor) {
-        this.requiredConfidence = waitFor;
+    public void setRequiredConfidence(double requiredConfidence) {
+        this.requiredConfidence = requiredConfidence;
     }
 }
