@@ -30,18 +30,6 @@
             <id>local-maven-repo</id>
             <url>file:///${project.basedir}/local-maven-repo</url>
         </repository>
-
-        <!-- The snapshots repository of the Heyperledger fabric java libraries.-->
-        <repository>
-            <id>hyperledger-snapshots-repo</id>
-            <url>https://nexus.hyperledger.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
     </repositories>
 
 
@@ -59,9 +47,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.hyperledger.fabric-gateway-java</groupId>
+            <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-gateway-java</artifactId>
-            <version>1.4.0-SNAPSHOT</version>
+            <version>1.4.0</version>
         </dependency>
 
         <dependency>
@@ -99,7 +87,7 @@
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
-            <version>4.2.0</version>
+            <version>4.5.6</version>
         </dependency>
 
         <dependency>
