@@ -21,11 +21,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes( {
-        @JsonSubTypes.Type(value = EthereumGateway.class, name = "ethereum"),
-        @JsonSubTypes.Type(value = BitcoinGateway.class, name = "bitcoin"),
-        @JsonSubTypes.Type(value = FabricGateway.class, name = "fabric")}
+        @JsonSubTypes.Type(value = EthereumConnectionProfile.class, name = "ethereum"),
+        @JsonSubTypes.Type(value = BitcoinConnectionProfile.class, name = "bitcoin"),
+        @JsonSubTypes.Type(value = FabricConnectionProfile.class, name = "fabric")}
 )
-public abstract class AbstractGateway {
+public abstract class AbstractConnectionProfile {
     private double adversaryVotingRatio;
 
     public double getAdversaryVotingRatio() {

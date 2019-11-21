@@ -17,7 +17,7 @@ import java.util.Map;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.gateways.GatewayManager;
+import blockchains.iaas.uni.stuttgart.de.gateways.ConnectionProfilesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class AdapterManager {
     }
 
     private void createAdapters() throws Exception {
-        for(String id : GatewayManager.getInstance().getGateways().keySet()) {
+        for(String id : ConnectionProfilesManager.getInstance().getGateways().keySet()) {
             map.put(id, factory.createBlockchainAdapter(id));
         }
     }

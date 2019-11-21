@@ -17,21 +17,19 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class GatewayManagerTest {
     @Test
     void testDeserialization() {
-        GatewayManager manager = GatewayManager.getInstance();
+        ConnectionProfilesManager manager = ConnectionProfilesManager.getInstance();
         Assertions.assertNotNull(manager);
-        Map<String, AbstractGateway> gatewayMap = manager.getGateways();
+        Map<String, AbstractConnectionProfile> gatewayMap = manager.getGateways();
         Assertions.assertNotNull(gatewayMap);
         Assertions.assertEquals(2, gatewayMap.size());
         Set<String> keySet = gatewayMap.keySet();
         Assertions.assertTrue(keySet.contains("eth1"));
         Assertions.assertTrue(keySet.contains("bc1"));
-        Assertions.assertTrue(gatewayMap.get("eth1") instanceof EthereumGateway);
-        Assertions.assertTrue(gatewayMap.get("bc1") instanceof BitcoinGateway);
+        Assertions.assertTrue(gatewayMap.get("eth1") instanceof EthereumConnectionProfile);
+        Assertions.assertTrue(gatewayMap.get("bc1") instanceof BitcoinConnectionProfile);
     }
 
 }

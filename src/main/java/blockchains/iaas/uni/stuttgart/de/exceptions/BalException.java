@@ -10,25 +10,26 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-    public class InvokeSmartContractFunctionFailure extends BalException {
-        @Override
-        public ExceptionCategory getCategory() {
-            return ExceptionCategory.ExecutionError;
-        }
+public abstract class BalException extends RuntimeException {
 
-        public InvokeSmartContractFunctionFailure() {
+    public abstract ExceptionCategory getCategory();
+
+    public int getCode() {
+        return this.getCategory().getCode();
     }
 
-    public InvokeSmartContractFunctionFailure(String message) {
+    public BalException() {
+    }
+
+    public BalException(String message) {
         super(message);
     }
 
-    public InvokeSmartContractFunctionFailure(String message, Throwable cause) {
+    public BalException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public InvokeSmartContractFunctionFailure(Throwable cause) {
+    public BalException(Throwable cause) {
         super(cause);
     }
-
 }

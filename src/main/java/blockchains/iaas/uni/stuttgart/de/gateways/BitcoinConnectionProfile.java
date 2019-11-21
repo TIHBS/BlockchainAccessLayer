@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.gateways;
 
 import java.util.Properties;
 
-public class BitcoinGateway extends AbstractGateway {
+public class BitcoinConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "node.bitcoind.";
     // Configuration parameters for the 'bitcoind' JSON-RPC client ('BtcdClient')
     public static final String RPC_PROTOCOL = "rpc.protocol";
@@ -37,10 +37,10 @@ public class BitcoinGateway extends AbstractGateway {
     private String notificationBlockPort;
     private String notificationWalletPort;
 
-    public BitcoinGateway() {
+    public BitcoinConnectionProfile() {
     }
 
-    public BitcoinGateway(String rpcProtocol, String rpcHost, String rpcPort, String rpcUser, String rpcPassword, String httpAuthScheme, String notificationAlertPort, String notificationBlockPort, String notificationWalletPort) {
+    public BitcoinConnectionProfile(String rpcProtocol, String rpcHost, String rpcPort, String rpcUser, String rpcPassword, String httpAuthScheme, String notificationAlertPort, String notificationBlockPort, String notificationWalletPort) {
         this.rpcProtocol = rpcProtocol;
         this.rpcHost = rpcHost;
         this.rpcPort = rpcPort;

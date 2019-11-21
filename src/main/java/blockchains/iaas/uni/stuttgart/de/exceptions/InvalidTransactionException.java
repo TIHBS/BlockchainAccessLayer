@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.exceptions;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,7 +9,14 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class InvalidTransactionException extends RuntimeException {
+package blockchains.iaas.uni.stuttgart.de.exceptions;
+
+public class InvalidTransactionException extends BalException {
+
+    @Override
+    public ExceptionCategory getCategory() {
+        return ExceptionCategory.ExecutionError;
+    }
 
     public InvalidTransactionException() {
     }
@@ -28,7 +33,4 @@ public class InvalidTransactionException extends RuntimeException {
         super(cause);
     }
 
-    public InvalidTransactionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

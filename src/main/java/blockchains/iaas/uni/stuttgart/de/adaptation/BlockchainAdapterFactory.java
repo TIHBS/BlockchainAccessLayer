@@ -19,11 +19,11 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumAd
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric.FabricAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
-import blockchains.iaas.uni.stuttgart.de.gateways.AbstractGateway;
-import blockchains.iaas.uni.stuttgart.de.gateways.BitcoinGateway;
-import blockchains.iaas.uni.stuttgart.de.gateways.EthereumGateway;
-import blockchains.iaas.uni.stuttgart.de.gateways.FabricGateway;
-import blockchains.iaas.uni.stuttgart.de.gateways.GatewayManager;
+import blockchains.iaas.uni.stuttgart.de.gateways.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.gateways.BitcoinConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.gateways.EthereumConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.gateways.FabricConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.gateways.ConnectionProfilesManager;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -42,8 +42,8 @@ public class BlockchainAdapterFactory {
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
     public BlockchainAdapter createBlockchainAdapter(String gatewayKey) throws Exception {
-        Map<String, AbstractGateway> allGateways = GatewayManager.getInstance().getGateways();
-        AbstractGateway gateway = allGateways.get(gatewayKey);
+        Map<String, AbstractConnectionProfile> allGateways = ConnectionProfilesManager.getInstance().getGateways();
+        AbstractConnectionProfile gateway = allGateways.get(gatewayKey);
 
         if (gateway == null) {
             log.error("gateway not found: {}", gatewayKey);
@@ -51,12 +51,12 @@ public class BlockchainAdapterFactory {
         }
 
         try {
-            if (gateway instanceof EthereumGateway) {
-                return createEthereumAdapter((EthereumGateway) gateway);
-            } else if (gateway instanceof BitcoinGateway) {
-                return createBitcoinAdapter((BitcoinGateway) gateway);
-            } else if (gateway instanceof FabricGateway) {
-                return createFabricAdapter((FabricGateway) gateway);
+            if (gateway instanceof EthereumConnectionProfile) {
+                return createEthereumAdapter((EthereumConnectionProfile) gateway);
+            } else if (gateway instanceof BitcoinConnectionProfile) {
+                return createBitcoinAdapter((BitcoinConnectionProfile) gateway);
+            } else if (gateway instanceof FabricConnectionProfile) {
+                return createFabricAdapter((FabricConnectionProfile) gateway);
             } else {
                 log.error("Invalid gateway type!");
                 return null;
@@ -68,7 +68,7 @@ public class BlockchainAdapterFactory {
         }
     }
 
-    private EthereumAdapter createEthereumAdapter(EthereumGateway gateway) throws IOException, CipherException {
+    private EthereumAdapter createEthereumAdapter(EthereumConnectionProfile gateway) throws IOException, CipherException {
         final EthereumAdapter result = new EthereumAdapter(gateway.getNodeUrl());
         result.setCredentials(gateway.getKeystorePassword(), gateway.getKeystorePath());
         final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
@@ -78,7 +78,7 @@ public class BlockchainAdapterFactory {
         return result;
     }
 
-    private BitcoinAdapter createBitcoinAdapter(BitcoinGateway gateway) throws BitcoindException, CommunicationException {
+    private BitcoinAdapter createBitcoinAdapter(BitcoinConnectionProfile gateway) throws BitcoindException, CommunicationException {
         final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
         final BtcdClient client = new BtcdClientImpl(httpProvider, gateway.getAsProperties());
@@ -91,7 +91,7 @@ public class BlockchainAdapterFactory {
         return result;
     }
 
-    private FabricAdapter createFabricAdapter(FabricGateway gateway) {
+    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway) {
         return FabricAdapter.builder()
                 .connectionProfilePath(gateway.getConnectionProfilePath())
                 .userName(gateway.getUserName())

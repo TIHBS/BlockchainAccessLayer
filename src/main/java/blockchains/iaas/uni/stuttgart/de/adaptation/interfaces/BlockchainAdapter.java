@@ -12,7 +12,7 @@ import io.reactivex.Observable;
 import org.apache.http.MethodNotSupportedException;
 
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *

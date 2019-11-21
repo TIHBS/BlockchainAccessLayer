@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.gateways;
 
 import java.util.Properties;
 
-public class EthereumGateway extends AbstractGateway {
+public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
     public static final String NODE_URL = PREFIX + "nodeUrl";
     public static final String KEYSTORE_PATH = PREFIX + "keystorePath";
@@ -22,10 +22,10 @@ public class EthereumGateway extends AbstractGateway {
     private String keystorePath;
     private String keystorePassword;
 
-    public EthereumGateway() {
+    public EthereumConnectionProfile() {
     }
 
-    public EthereumGateway(String nodeUrl, String keystorePath, String keystorePassword) {
+    public EthereumConnectionProfile(String nodeUrl, String keystorePath, String keystorePassword) {
         this.nodeUrl = nodeUrl;
         this.keystorePath = keystorePath;
         this.keystorePassword = keystorePassword;

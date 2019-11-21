@@ -12,7 +12,7 @@ package blockchains.iaas.uni.stuttgart.de.gateways;
 
 import java.util.Properties;
 
-public class FabricGateway extends AbstractGateway {
+public class FabricConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "hyperledger.fabric.";
     private static final String WALLET_PATH = PREFIX + "walletPath";
     private static final String USER_NAME = PREFIX + "userName";
@@ -21,10 +21,10 @@ public class FabricGateway extends AbstractGateway {
     private String userName;
     private String connectionProfilePath;
 
-    public FabricGateway() {
+    public FabricConnectionProfile() {
     }
 
-    public FabricGateway(String walletPath, String userName, String connectionProfilePath) {
+    public FabricConnectionProfile(String walletPath, String userName, String connectionProfilePath) {
         this.walletPath = walletPath;
         this.userName = userName;
         this.connectionProfilePath = connectionProfilePath;
