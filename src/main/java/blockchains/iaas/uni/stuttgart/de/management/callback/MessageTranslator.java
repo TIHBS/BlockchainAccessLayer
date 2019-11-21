@@ -1,6 +1,5 @@
 package blockchains.iaas.uni.stuttgart.de.management.callback;
 
-import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
@@ -17,13 +16,13 @@ import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 public abstract class MessageTranslator {
-    public abstract CallbackMessage convert(String subscriptionId, boolean isErrorMessage, Transaction transaction, TransactionState state);
+    public abstract CallbackMessage convert(String subscriptionId, Transaction transaction, TransactionState state, boolean isErrorMessage, int errorCode);
 
-    public CallbackMessage convert(String subscriptionId, boolean isErrorMessage, Transaction transaction){
-        return this.convert( subscriptionId, isErrorMessage, transaction, transaction.getState());
+    public CallbackMessage convert(String subscriptionId, Transaction transaction, boolean isErrorMessage) {
+        return this.convert(subscriptionId, transaction, transaction.getState(), isErrorMessage, 0);
     }
 
-    public CallbackMessage convert(String subscriptionId, boolean isErrorMessage, TransactionState state){
-        return this.convert( subscriptionId, isErrorMessage, null, state);
+    public CallbackMessage convert(String subscriptionId, TransactionState state, boolean isErrorMessage, int errorCode) {
+        return this.convert(subscriptionId, null, state, isErrorMessage, errorCode);
     }
 }

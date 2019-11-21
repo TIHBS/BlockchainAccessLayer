@@ -21,6 +21,7 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
@@ -37,7 +38,6 @@ import com.neemre.btcdcli4j.daemon.event.BlockListener;
 import com.neemre.btcdcli4j.daemon.event.WalletListener;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
-import org.apache.http.MethodNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,7 +268,7 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Bitcoin does not support smart contract function invocations!");
+    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws NotSupportedException {
+        throw new NotSupportedException("Bitcoin does not support smart contract function invocations!");
     }
 }

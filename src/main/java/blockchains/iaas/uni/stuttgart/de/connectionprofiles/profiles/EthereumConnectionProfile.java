@@ -1,6 +1,5 @@
-/********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,10 +7,12 @@
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+ *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
 import java.util.Properties;
+
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 
 public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
@@ -57,11 +58,13 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(NODE_URL, this.nodeUrl);
         result.setProperty(KEYSTORE_PASSWORD, this.keystorePassword);
         result.setProperty(KEYSTORE_PATH, this.keystorePath);
 
         return result;
     }
+
+
 }

@@ -8,9 +8,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
 import java.util.Properties;
+
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 
 public class FabricConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "hyperledger.fabric.";
@@ -56,7 +58,7 @@ public class FabricConnectionProfile extends AbstractConnectionProfile {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(WALLET_PATH, this.walletPath);
         result.setProperty(USER_NAME, this.userName);
         result.setProperty(CONNECTION_PROFILE_PATH, this.connectionProfilePath);

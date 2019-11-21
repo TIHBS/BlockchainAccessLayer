@@ -10,10 +10,13 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.gateways;
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles;
 
 import java.util.Properties;
 
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.BitcoinConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.EthereumConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.FabricConnectionProfile;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -26,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = FabricConnectionProfile.class, name = "fabric")}
 )
 public abstract class AbstractConnectionProfile {
+    private static final String PREFIX = "common.";
+    private static final String ADVERSARY_VOTING_RATIO = PREFIX + "adversaryVotingRatio";
     private double adversaryVotingRatio;
 
     public double getAdversaryVotingRatio() {
@@ -41,5 +46,23 @@ public abstract class AbstractConnectionProfile {
         this.adversaryVotingRatio = adversaryVotingRatio;
     }
 
-    public abstract Properties getAsProperties();
+    public Properties getAsProperties() {
+        Properties result = new Properties();
+        result.put(ADVERSARY_VOTING_RATIO, String.valueOf(adversaryVotingRatio));
+
+        return  result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractConnectionProfile that = (AbstractConnectionProfile) o;
+        return this.getAsProperties().equals(that.getAsProperties());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getAsProperties().hashCode();
+    }
 }

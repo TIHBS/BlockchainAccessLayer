@@ -12,18 +12,16 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
 import java.io.IOException;
-import java.util.Map;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin.BitcoinAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum.EthereumAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric.FabricAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
-import blockchains.iaas.uni.stuttgart.de.gateways.AbstractConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.gateways.BitcoinConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.gateways.EthereumConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.gateways.FabricConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.gateways.ConnectionProfilesManager;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.BitcoinConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.EthereumConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.FabricConnectionProfile;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -41,28 +39,20 @@ public class BlockchainAdapterFactory {
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
-    public BlockchainAdapter createBlockchainAdapter(String gatewayKey) throws Exception {
-        Map<String, AbstractConnectionProfile> allGateways = ConnectionProfilesManager.getInstance().getGateways();
-        AbstractConnectionProfile gateway = allGateways.get(gatewayKey);
-
-        if (gateway == null) {
-            log.error("gateway not found: {}", gatewayKey);
-            return null;
-        }
-
+    public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile) throws Exception {
         try {
-            if (gateway instanceof EthereumConnectionProfile) {
-                return createEthereumAdapter((EthereumConnectionProfile) gateway);
-            } else if (gateway instanceof BitcoinConnectionProfile) {
-                return createBitcoinAdapter((BitcoinConnectionProfile) gateway);
-            } else if (gateway instanceof FabricConnectionProfile) {
-                return createFabricAdapter((FabricConnectionProfile) gateway);
+            if (connectionProfile instanceof EthereumConnectionProfile) {
+                return createEthereumAdapter((EthereumConnectionProfile) connectionProfile);
+            } else if (connectionProfile instanceof BitcoinConnectionProfile) {
+                return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
+            } else if (connectionProfile instanceof FabricConnectionProfile) {
+                return createFabricAdapter((FabricConnectionProfile) connectionProfile);
             } else {
-                log.error("Invalid gateway type!");
+                log.error("Invalid connectionProfile type!");
                 return null;
             }
         } catch (Exception e) {
-            final String msg = String.format("Error while creating a blockchain adapter for %s. Details: %s", gatewayKey, e.getMessage());
+            final String msg = String.format("Error while creating a blockchain adapter for. Details: %s", e.getMessage());
             log.error(msg);
             throw new Exception(msg, e);
         }

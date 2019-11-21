@@ -23,12 +23,12 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
 import lombok.Builder;
-import org.apache.http.MethodNotSupportedException;
 import org.hyperledger.fabric.gateway.Contract;
 import org.hyperledger.fabric.gateway.ContractException;
 import org.hyperledger.fabric.gateway.Gateway;
@@ -73,23 +73,23 @@ public class FabricAdapter implements BlockchainAdapter {
 
 
 
-    ) throws InvalidTransactionException, MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support submitting monetary transactions!");
+    ) throws InvalidTransactionException, NotSupportedException {
+        throw new NotSupportedException("Fabric does not support submitting monetary transactions!");
     }
 
     @Override
-    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support receiving monetary transactions!");
+    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support receiving monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support monetary transactions!");
+    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support monetary transactions!");
+    public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support monetary transactions!");
     }
 
     @Override

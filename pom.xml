@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>blockchains.iaas.uni.stuttgart.de</groupId>
-    <artifactId>blockchain-access-layer</artifactId>
+    <artifactId>bal</artifactId>
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>blockchain-access-layer</name>
+    <name>Blockchain Access Layer</name>
 
     <build>
-        <finalName>blockchain-access-layer</finalName>
+        <finalName>bal</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

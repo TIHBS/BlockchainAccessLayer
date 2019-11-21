@@ -14,55 +14,61 @@ package blockchains.iaas.uni.stuttgart.de.adaptation;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.gateways.ConnectionProfilesManager;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AdapterManager {
     private static final Logger log = LoggerFactory.getLogger(AdapterManager.class);
-    //private static final String DEFAULT_ETHEREUM_ID = "eth-0";
-    //private static final String DEFUALT_BICOIN_ID = "btc-0";
     private BlockchainAdapterFactory factory = new BlockchainAdapterFactory();
     private static AdapterManager instance = null;
-    private final Map<String, BlockchainAdapter> map = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Pair<BlockchainAdapter, AbstractConnectionProfile>> map = Collections.synchronizedMap(new HashMap<>());
 
     private AdapterManager() {
-
     }
 
     public static AdapterManager getInstance() {
         if (instance == null) {
             instance = new AdapterManager();
-            instance.initialize();
         }
 
         return instance;
     }
 
-    public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException {
-        if (map.containsKey(blockchainId)) {
-            return map.get(blockchainId);
-        } else {
+    public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException, BlockchainNodeUnreachableException {
+        AbstractConnectionProfile connectionProfile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
+        // no connection profile!
+        if (connectionProfile == null) {
             final String msg = String.format("blockchain-id <%s> does not exist!", blockchainId);
             log.error(msg);
             throw new BlockchainIdNotFoundException(msg);
         }
-    }
 
-    private void initialize() {
-        try {
-            createAdapters();
-        } catch (Exception e) {
-            //TODO better handling of errors
+        // we already have an adapter for it
+        if (map.containsKey(blockchainId)) {
+            Pair<BlockchainAdapter, AbstractConnectionProfile> result = map.get(blockchainId);
+            // is the connection profile still the same?
+            if (result.getRight().equals(connectionProfile)) {
+                return map.get(blockchainId).getLeft();
+            }
+            // no we need to create it!
         }
-    }
 
-    private void createAdapters() throws Exception {
-        for(String id : ConnectionProfilesManager.getInstance().getGateways().keySet()) {
-            map.put(id, factory.createBlockchainAdapter(id));
+        try {
+            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile);
+            map.put(blockchainId, ImmutablePair.of(adapter, connectionProfile));
+            return Objects.requireNonNull(adapter);
+        } catch (Exception e) {
+            throw new BlockchainNodeUnreachableException("Failed to create a blockchain adapter. Reason: " + e.getMessage(), e);
         }
     }
 }
+;

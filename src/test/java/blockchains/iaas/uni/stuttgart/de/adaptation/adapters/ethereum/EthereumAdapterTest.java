@@ -15,16 +15,20 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.contracts.Permissions;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -47,6 +51,15 @@ class EthereumAdapterTest {
     private EthereumAdapter adapter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapterTest.class);
 
+    @BeforeAll
+    static void initAll() throws URISyntaxException {
+        final String DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME = "gatewayConfiguration.json";
+        final File file = new File(Objects.requireNonNull(
+                EthereumAdapterTest.class.getClassLoader().getResource(DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME)).toURI());
+        ConnectionProfilesManager manager = ConnectionProfilesManager.getInstance();
+        manager.resetConnectionProfiles();
+        manager.loadConnectionProfilesFromFile(file);
+    }
     @BeforeEach
     void init() {
         this.adapter = (EthereumAdapter) AdapterManager.getInstance().getAdapter(NETWORK_NAME);

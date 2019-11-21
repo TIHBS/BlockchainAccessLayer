@@ -1,6 +1,5 @@
-/********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,10 +7,13 @@
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+ *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
+import java.util.Objects;
 import java.util.Properties;
+
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 
 public class BitcoinConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "node.bitcoind.";
@@ -126,7 +128,7 @@ public class BitcoinConnectionProfile extends AbstractConnectionProfile {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(HTTP_AUTHENTICATION_SCHEME, this.httpAuthScheme);
         result.setProperty(NOTIFICATION_ALERT_PORT, this.notificationAlertPort);
         result.setProperty(NOTIFICATION_BLOCK_PORT, this.notificationBlockPort);
@@ -136,7 +138,7 @@ public class BitcoinConnectionProfile extends AbstractConnectionProfile {
         result.setProperty(RPC_PORT, this.rpcPort);
         result.setProperty(RPC_USER, this.rpcUser);
         result.setProperty(RPC_PROTOCOL, this.rpcProtocol);
-
         return result;
     }
+
 }

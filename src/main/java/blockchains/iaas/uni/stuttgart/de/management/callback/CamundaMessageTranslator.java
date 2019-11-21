@@ -24,7 +24,7 @@ import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaVariable;
 
 public class CamundaMessageTranslator extends MessageTranslator {
     @Override
-    public CallbackMessage convert(String subscriptionId, boolean isErrorMessage, Transaction transaction, TransactionState state) {
+    public CallbackMessage convert(String subscriptionId, Transaction transaction, TransactionState state, boolean isErrorMessage, int errorCode) {
         final CamundaMessage result = new CamundaMessage();
         final String processInstanceId = subscriptionId.substring(subscriptionId.indexOf('_') + 1);
         final String msgName = (isErrorMessage) ? "error_" : "message_" + subscriptionId;
