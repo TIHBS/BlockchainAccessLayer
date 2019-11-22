@@ -8,24 +8,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-public abstract class BalException extends RuntimeException {
+package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
-    public abstract int getCode();
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    public BalException() {
-    }
+@JsonRpcService
+public class BalService {
+    private static final Logger log = LoggerFactory.getLogger(BalService.class);
 
-    public BalException(String message) {
-        super(message);
-    }
+    public void Invoke() {
 
-    public BalException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public BalException(Throwable cause) {
-        super(cause);
     }
 }

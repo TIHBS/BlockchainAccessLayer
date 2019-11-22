@@ -29,6 +29,7 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
@@ -166,7 +167,9 @@ public class EthereumAdapter extends AbstractAdapter {
     private static CompletionException wrapEthereumExceptions(Throwable e) {
         if (e.getCause() instanceof IOException)
             e = new BlockchainNodeUnreachableException(e);
-        else if (e instanceof EthereumParameterDecodingException || e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
+        else if (e instanceof EthereumParameterDecodingException || e instanceof EthereumParameterEncodingException)
+            e = new ParameterException(e);
+        else if (e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
             e = new InvokeSmartContractFunctionFailure(e);
         else if (e.getCause() instanceof RuntimeException)
             e = new InvalidTransactionException(e);

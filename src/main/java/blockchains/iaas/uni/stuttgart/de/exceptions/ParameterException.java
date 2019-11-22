@@ -13,25 +13,25 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code=ExceptionCode.NotSupported,message="The requested operation is not supported by the underlying blockchain instance.")
-public class NotSupportedException extends  BalException {
-    public NotSupportedException() {
+@JsonRpcError(code=ExceptionCode.InvalidParameters,message="The passed function/event parameter names, order, or types are invalid.")
+public class ParameterException extends BalException {
+    @Override
+    public int getCode() {
+        return ExceptionCode.InvalidParameters;
     }
 
-    public NotSupportedException(String message) {
+    public ParameterException() {
+    }
+
+    public ParameterException(String message) {
         super(message);
     }
 
-    public NotSupportedException(String message, Throwable cause) {
+    public ParameterException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public NotSupportedException(Throwable cause) {
+    public ParameterException(Throwable cause) {
         super(cause);
-    }
-
-    @Override
-    public int getCode() {
-        return ExceptionCode.NotSupported;
     }
 }

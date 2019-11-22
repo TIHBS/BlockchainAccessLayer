@@ -11,11 +11,7 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-public class TransactionNotFoundException extends BalException {
-    @Override
-    public ExceptionCategory getCategory() {
-        return ExceptionCategory.NotFound;
-    }
+public class TransactionNotFoundException extends RuntimeException {
 
     public TransactionNotFoundException() {
     }

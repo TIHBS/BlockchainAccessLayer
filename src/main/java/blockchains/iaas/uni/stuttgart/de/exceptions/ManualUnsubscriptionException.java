@@ -11,6 +11,7 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
+
 public class ManualUnsubscriptionException extends RuntimeException {
     public ManualUnsubscriptionException() {
         super();

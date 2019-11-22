@@ -10,13 +10,16 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-    public class InvokeSmartContractFunctionFailure extends BalException {
-        @Override
-        public ExceptionCategory getCategory() {
-            return ExceptionCategory.ExecutionError;
-        }
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-        public InvokeSmartContractFunctionFailure() {
+@JsonRpcError(code=ExceptionCode.ExecutionError,message="The execution of the smart contract function resulted in an error.")
+public class InvokeSmartContractFunctionFailure extends BalException {
+    @Override
+    public int getCode() {
+        return ExceptionCode.ExecutionError;
+    }
+
+    public InvokeSmartContractFunctionFailure() {
     }
 
     public InvokeSmartContractFunctionFailure(String message) {
@@ -30,5 +33,4 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
     public InvokeSmartContractFunctionFailure(Throwable cause) {
         super(cause);
     }
-
 }
