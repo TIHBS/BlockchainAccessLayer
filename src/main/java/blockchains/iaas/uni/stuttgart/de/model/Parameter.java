@@ -8,28 +8,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
+package blockchains.iaas.uni.stuttgart.de.model;
 
-import java.util.List;
+import java.util.Objects;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
-// todo rethink type
-@XmlRootElement(name = "Parameters")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class ParameterList {
-    private List<Parameter> arguments;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    @XmlElement(name = "Argument")
-    public List<Parameter> getArguments() {
-        return arguments;
-    }
-
-    public void setArguments(List<Parameter> arguments) {
-        this.arguments = arguments;
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Parameter {
+    private String name;
+    private String type;
+    private String value;
 }

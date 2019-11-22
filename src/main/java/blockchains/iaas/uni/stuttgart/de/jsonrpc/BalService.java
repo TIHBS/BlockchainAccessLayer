@@ -11,15 +11,24 @@
 
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @JsonRpcService
+@AllArgsConstructor
 public class BalService {
     private static final Logger log = LoggerFactory.getLogger(BalService.class);
+    private final String blockchainType;
+    private final String blockchainId;
+    private final String smartContractPath;
 
-    public void Invoke() {
-
+    @JsonRpcMethod
+    public String Invoke() {
+        log.info("Invoke method is executed!");
+        log.info("blockchain type: {}, blockchain id: {}, smart contract path: {}", blockchainType, blockchainId, smartContractPath);
+        return "This is not implemented yet!";
     }
 }

@@ -10,14 +10,19 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
+import java.math.BigInteger;
+import java.math.RoundingMode;
+
+import com.google.common.math.BigIntegerMath;
+import com.google.common.math.LongMath;
+
 public class MathUtils {
     public static final double ACCEPTED_DOUBLE_ERROR = 0.000001;
     public static long factorial(int n) {
-        long fact = 1;
-        for (int i = 2; i <= n; i++) {
-            fact = fact * i;
-        }
-        return fact;
+        return  LongMath.factorial(n);
+    }
+    public static int log2(BigInteger n) throws ArithmeticException {
+        return BigIntegerMath.log2(n, RoundingMode.UNNECESSARY);
     }
 
     public static boolean doubleEquals(double lhs, double rhs) {

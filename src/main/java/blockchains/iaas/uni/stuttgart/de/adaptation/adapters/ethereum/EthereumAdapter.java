@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -25,15 +26,16 @@ import javax.naming.OperationNotSupportedException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.SmartContractNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionParameter;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -44,7 +46,6 @@ import org.slf4j.LoggerFactory;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.AbiTypes;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.CipherException;
@@ -186,7 +187,7 @@ public class EthereumAdapter extends AbstractAdapter {
         }
 
         try {
-            final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+            final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
@@ -210,7 +211,7 @@ public class EthereumAdapter extends AbstractAdapter {
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
 
-        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+        final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         final String myAddress = credentials.getAddress();
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Disposable newTransactionObservable = web3j.transactionFlowable().subscribe(tx -> {
@@ -232,7 +233,7 @@ public class EthereumAdapter extends AbstractAdapter {
 
     @Override
     public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) {
-        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+        final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         // only monitor the transition into the CONFIRMED state or the NOT_FOUND state
         return subscribeForTxEvent(transactionId, waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState)
@@ -252,39 +253,62 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> arguments, double requiredConfidence) {
+    public CompletableFuture<Transaction> invokeSmartContract(
+            String smartContractPath,
+            String functionIdentifier,
+            List<Parameter> inputs,
+            List<Parameter> outputs,
+            double requiredConfidence
+    ) throws NotSupportedException, ParameterException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
+        Objects.requireNonNull(smartContractPath);
+        Objects.requireNonNull(functionIdentifier);
+        Objects.requireNonNull(inputs);
+        Objects.requireNonNull(outputs);
+
         CompletableFuture<Transaction> result;
 
         try {
             long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
-            final ScipParser scip = ScipParser.parse(functionIdentifier);
+            final String[] pathSegments = SmartContractPathParser.parse(smartContractPath).getSmartContractPathSegments();
+
+            if (pathSegments.length != 1) {
+                throw new SmartContractNotFoundException("Malformed Ethereum path!");
+            }
+
+            if (!pathSegments[0].matches("^0x[a-fA-F0-9]{40}$")) {
+                throw new SmartContractNotFoundException("Malformed Ethereum address!");
+            }
+
+            final String smartContractAddress = pathSegments[0];
+
             List<TypeReference<?>> outputParameters;
 
-            if (scip.getReturnType().equals("void")) {
+            if (outputs.size() == 0) {
                 outputParameters = Collections.emptyList();
-            } else {
-                final Class<? extends Type> returnType = AbiTypes.getType(scip.getReturnType());
+            } else if (outputs.size() == 1) {
+                final Class<? extends Type> returnType = EthereumTypeMapper.getEthereumType(outputs.get(0).getType());
                 outputParameters = Collections.singletonList(TypeReference.create(returnType));
+            } else {
+                throw new ParameterException("Only single return values supported!");
             }
 
             final Function function = new Function(
-                    scip.getFunctionName(),  // function we're calling
-                    this.convertToSolidityTypes(scip.getParameterTypes(), arguments),  // Parameters to pass as Solidity Types
-                    outputParameters);//Type of returned value
+                    functionIdentifier,  // function we're calling
+                    this.convertToSolidityTypes(inputs),  // Parameters to pass as Solidity Types
+                    outputParameters); //Type of returned value
 
             final String encodedFunction = FunctionEncoder.encode(function);
-            final String scAddress = scip.getFunctionPathSegments()[0];
-            Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, scAddress, function.getOutputParameters());
+            Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, function.getOutputParameters());
 
             if (resultFromEthCall != null) {
                 return CompletableFuture.completedFuture(resultFromEthCall);
             }
 
-            return this.invokeFunctionByTransaction(waitFor, encodedFunction, scAddress);
+            return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
             result = new CompletableFuture<>();
@@ -345,19 +369,15 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
-    private List<Type> convertToSolidityTypes(List<SmartContractFunctionParameter> params, List<SmartContractFunctionArgument> arguments) throws EthereumParameterDecodingException {
-        if (params.size() == arguments.size()) {
-            List<Type> result = new ArrayList<>();
-            EthereumParameterDecoder decoder = new EthereumParameterDecoder();
+    private List<Type> convertToSolidityTypes(List<Parameter> params) throws EthereumParameterDecodingException {
+        List<Type> result = new ArrayList<>();
+        EthereumParameterDecoder decoder = new EthereumParameterDecoder();
 
-            for (int i = 0; i < params.size(); i++) {
-                result.add(decoder.decodeParameter(params.get(i).getType(), arguments.get(i).getValue()));
-            }
-
-            return result;
+        for (Parameter param : params) {
+            decoder.decodeParameter(param.getType(), param.getValue());
         }
 
-        throw new IllegalArgumentException("The passed arguments do not match the expected parameters!");
+        return result;
     }
 
     private CompletableFuture<BigInteger> retrieveNewNonce() {

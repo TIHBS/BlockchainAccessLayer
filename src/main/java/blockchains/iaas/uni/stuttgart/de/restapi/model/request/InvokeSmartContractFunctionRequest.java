@@ -10,14 +10,10 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 
 @XmlRootElement(name = "InvokeSmartContractRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)

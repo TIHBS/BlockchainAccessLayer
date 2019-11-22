@@ -10,7 +10,6 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
-import java.util.Objects;
 import java.util.Properties;
 
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
@@ -140,5 +139,4 @@ public class BitcoinConnectionProfile extends AbstractConnectionProfile {
         result.setProperty(RPC_PROTOCOL, this.rpcProtocol);
         return result;
     }
-
 }

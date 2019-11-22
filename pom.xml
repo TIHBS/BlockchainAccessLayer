@@ -195,6 +195,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        
     </dependencies>
     <properties>
         <jersey.version>2.9.1</jersey.version>

@@ -11,9 +11,6 @@
 
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
-import java.beans.XMLEncoder;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
@@ -21,12 +18,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// todo fix test
 class InvokeSmartContractFunctionRequestTest {
     private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionRequestTest.class);
 
@@ -39,7 +35,7 @@ class InvokeSmartContractFunctionRequestTest {
         theObject.setSubscriptionId("1200");
         ParameterList myList = new ParameterList();
         myList.setArguments(new ArrayList<>());
-        myList.getArguments().add(new SmartContractFunctionArgument("aaa", "13"));
+        // myList.getArguments().add(new Parameter("aaa", "13"));
         theObject.setParameterList(myList);
 
         //Create JAXB Context

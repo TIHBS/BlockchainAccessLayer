@@ -33,12 +33,13 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
         return getSubscriptions(SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION, uriInfo);
     }
 
+    // todo fix
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     public Response invokeSCFunction(InvokeSmartContractFunctionRequest request) {
         final BlockchainManager manager = new BlockchainManager();
-        manager.invokeSmartContractFunction(request.getSubscriptionId(), request.getScip(), request.getParameterList().getArguments(), request.getConfidence(),
-                request.getEpUrl());
+        //manager.invokeSmartContractFunction(request.getSubscriptionId(), request.getScip(), request.getParameterList().getArguments(), request.getConfidence(),
+        //        request.getEpUrl());
 
         return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
                 .build();

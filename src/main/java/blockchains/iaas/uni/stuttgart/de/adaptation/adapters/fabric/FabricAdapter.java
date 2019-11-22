@@ -20,11 +20,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -93,9 +94,9 @@ public class FabricAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) {
-        ScipParser parser = ScipParser.parse(functionIdentifier);
-        String[] pathSegments = parser.getFunctionPathSegments();
+    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
+        SmartContractPathParser parser = SmartContractPathParser.parse(smartContractPath);
+        String[] pathSegments = parser.getSmartContractPathSegments();
         String channelName;
         String chaincodeName;
         String smartContractName = null;
@@ -113,8 +114,6 @@ public class FabricAdapter implements BlockchainAdapter {
             if (pathSegments.length == 3) {
                 smartContractName = pathSegments[2];
             }
-
-            final String FUNCTION_NAME = parser.getFunctionName();
 
             // Load an existing wallet holding identities used to access the network.
             Path walletDirectory = Paths.get(walletPath);
@@ -142,8 +141,8 @@ public class FabricAdapter implements BlockchainAdapter {
                         contract = network.getContract(chaincodeName);
                     }
 
-                    String[] params = parameters.stream().map(SmartContractFunctionArgument::getValue).toArray(String[]::new);
-                    byte[] resultAsBytes = contract.submitTransaction(FUNCTION_NAME, params);
+                    String[] params = inputs.stream().map(Parameter::getValue).toArray(String[]::new);
+                    byte[] resultAsBytes = contract.submitTransaction(functionIdentifier, params);
 
                     String resultS = new String(resultAsBytes, StandardCharsets.UTF_8);
                     log.info(resultS);
@@ -161,4 +160,5 @@ public class FabricAdapter implements BlockchainAdapter {
 
         return result;
     }
+
 }

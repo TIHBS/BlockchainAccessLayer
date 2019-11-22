@@ -6,7 +6,8 @@ import java.util.concurrent.CompletableFuture;
 
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -72,11 +73,19 @@ public interface BlockchainAdapter {
     /**
      * invokes a smart contract function
      *
-     * @param functionIdentifier the scip identifier of the function to be invoked
-     * @param parameters         the arguments to be passed to the function being invoked
+     * @param smartContractPath  the path to the smart contract
+     * @param functionIdentifier the function name
+     * @param inputs             the input parameters of the function to be invoked
+     * @param outputs            the output parameters of the function to be invoked
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
      * @return a completable future that emits a new transaction object holding the result of the invocation.
      * @throws NotSupportedException if the underlying blockchain system does not support smart contracts.
      */
-    CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws NotSupportedException;
+    CompletableFuture<Transaction> invokeSmartContract(
+            String smartContractPath,
+            String functionIdentifier,
+            List<Parameter> inputs,
+            List<Parameter> outputs,
+            double requiredConfidence
+    ) throws NotSupportedException, ParameterException;
 }
