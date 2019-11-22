@@ -11,10 +11,14 @@
 
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
+import java.math.BigInteger;
+
+import javax.xml.bind.DatatypeConverter;
+
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.web3j.abi.datatypes.Address;
-import org.web3j.abi.datatypes.Bytes;
 import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
@@ -22,38 +26,51 @@ import org.web3j.abi.datatypes.generated.Bytes8;
 import org.web3j.abi.datatypes.generated.Int160;
 import org.web3j.abi.datatypes.generated.Uint160;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class EthereumTypeMapperTest {
+class ParameterEncoderTest {
     @Test
-    void testTypes(){
+    void testParameterEncoding() {
+        Parameter parameter = new Parameter();
+
         final String stringType = "{\n" +
                 "\t\"type\": \"string\"\n" +
                 "}";
-        Class<? extends Type> result = EthereumTypeMapper.getEthereumType(stringType);
-        Assertions.assertEquals(Utf8String.class, result);
+        parameter.setType(stringType);
+        parameter.setValue("hello world!");
+        Type result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Utf8String.class, result.getClass());
+        Assertions.assertEquals("hello world!", ((Utf8String) result).getValue());
+
         final String addressType = "{\n" +
                 "\t\"type\": \"string\",\n" +
                 "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
                 "}";
-        result = EthereumTypeMapper.getEthereumType(addressType);
-        Assertions.assertEquals(Address.class, result);
+        parameter.setType(addressType);
+        parameter.setValue("0x52908400098527886E0F7030069857D2E4169EE7");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Address.class, result.getClass());
+        Assertions.assertEquals("0x52908400098527886E0F7030069857D2E4169EE7".toLowerCase(), ((Address) result).getValue());
+
         final String uint160Type = "{\n" +
                 "\t\"type\": \"integer\",\n" +
                 " \t\"minimum\": 0,\n" +
                 " \t\"maximum\": 1461501637330902918203684832716283019655932542975\n" +
                 "}";
-        result = EthereumTypeMapper.getEthereumType(uint160Type);
-
-        Assertions.assertEquals(Uint160.class, result);
+        parameter.setType(uint160Type);
+        parameter.setValue("1");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Uint160.class, result.getClass());
+        Assertions.assertEquals("1", ((Uint160) result).getValue().toString(10));
 
         final String int160Type = "{\n" +
                 "\t\"type\": \"integer\",\n" +
                 " \t\"minimum\": -730750818665451459101842416358141509827966271488,\n" +
                 " \t\"maximum\": 730750818665451459101842416358141509827966271487\n" +
                 "}";
-        result = EthereumTypeMapper.getEthereumType(int160Type);
-        Assertions.assertEquals(Int160.class, result);
+        parameter.setType(int160Type);
+        parameter.setValue("-1");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Int160.class, result.getClass());
+        Assertions.assertEquals("-1", ((Int160) result).getValue().toString(10));
 
         final String bytes8 = "{\n" +
                 "\t\"type\": \"array\",\n" +
@@ -63,8 +80,11 @@ class EthereumTypeMapperTest {
                 "\t\t\"pattern\": \"^[a-fA-F0-9]{2}$\"\n" +
                 "\t}\n" +
                 "}";
-        result = EthereumTypeMapper.getEthereumType(bytes8);
-        Assertions.assertEquals(Bytes8.class, result);
+        parameter.setType(bytes8);
+        parameter.setValue("aabbccdd11223344");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Bytes8.class, result.getClass());
+        Assertions.assertArrayEquals(DatatypeConverter.parseHexBinary("aabbccdd11223344"), ((Bytes8) result).getValue());
 
         final String bytes = "{\n" +
                 "\t\"type\": \"array\",\n" +
@@ -73,8 +93,10 @@ class EthereumTypeMapperTest {
                 "\t\t\"pattern\": \"^[a-fA-F0-9]{2}$\"\n" +
                 "\t}\n" +
                 "}";
-        result = EthereumTypeMapper.getEthereumType(bytes);
-        Assertions.assertEquals(DynamicBytes.class, result);
+        parameter.setType(bytes);
+        parameter.setValue("aabbccdd11223344");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(DynamicBytes.class, result.getClass());
+        Assertions.assertArrayEquals(DatatypeConverter.parseHexBinary("aabbccdd11223344"), ((DynamicBytes) result).getValue());
     }
-
 }

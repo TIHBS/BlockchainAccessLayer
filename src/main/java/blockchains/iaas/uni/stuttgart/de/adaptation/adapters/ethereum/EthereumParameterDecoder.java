@@ -22,6 +22,7 @@ import org.web3j.abi.datatypes.Int;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.Utf8String;
+import org.web3j.abi.datatypes.generated.Bytes8;
 
 //todo support array types e.g., address[]
 /**

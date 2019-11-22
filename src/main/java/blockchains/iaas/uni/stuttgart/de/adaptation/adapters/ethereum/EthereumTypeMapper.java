@@ -21,6 +21,9 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.utils.MathUtils;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import org.web3j.abi.datatypes.AbiTypes;
 import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.Bytes;
+import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
 
@@ -32,12 +35,20 @@ public class EthereumTypeMapper {
 
             String type = jsonObject.getString("type");
 
+            if (type.equals("boolean")) {
+                    return Bool.class;
+            }
+
             if (type.equals("string")) {
                 return handleStringType(jsonObject);
             }
 
             if (type.equals("integer")) {
                 return handleIntegerType(jsonObject);
+            }
+
+            if (type.equals("array")) {
+                return handleArrayType(jsonObject);
             }
 
             throw new ParameterException("Unrecognized type " + type);
@@ -67,7 +78,7 @@ public class EthereumTypeMapper {
                 // this might be a uint<M>. Let's try to find M
                 if (maximum.compareTo(BigInteger.ZERO) > 0) {
                     // will throw an exception if not exact!
-                    int m = MathUtils.log2(maximum);
+                    int m = MathUtils.log2(maximum.add(BigInteger.ONE));
 
                     if (m % 8 == 0) {
                         return AbiTypes.getType("uint" + m);
@@ -88,4 +99,30 @@ public class EthereumTypeMapper {
 
         throw new ParameterException("Unrecognized integer type!");
     }
+
+    /**
+     * only bytes and byte<M> are supported at the moment
+     */
+    private static Class<? extends Type> handleArrayType(JsonObject outerJsonObject) {
+        if (outerJsonObject.containsKey("items")) {
+            // get the "items" schema, tuples are not yet supported!
+            JsonObject jsonObject = outerJsonObject.getJsonObject("items");
+
+            if (jsonObject.containsKey("type") && jsonObject.getString("type").equals("string")) {
+                if (jsonObject.containsKey("pattern") && jsonObject.getString("pattern").equals("^[a-fA-F0-9]{2}$")) {
+                    if (outerJsonObject.containsKey("maxItems")) {
+                        int maxSize = outerJsonObject.getInt("maxItems");
+                        if (maxSize > 0 && maxSize <= 32) {
+                            return AbiTypes.getType("bytes" + maxSize);
+                        }
+                    } else {
+                        return DynamicBytes.class;
+                    }
+                }
+            }
+        }
+
+        throw new ParameterException("Unrecognized array type!");
+    }
+
 }
