@@ -10,6 +10,8 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.model;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlElement;
 
 import lombok.Data;
@@ -20,5 +22,5 @@ public class Transaction {
     private TransactionState state;
 
     @XmlElement(name = "ReturnValue")
-    private String returnValue;
+    private List<String> returnValues;
 }

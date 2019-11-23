@@ -1,3 +1,15 @@
+/********************************************************************************
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
+ *
+ * This program and the accompanying materials are made available under the
+ * terms the Apache Software License 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
 package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
 
 import java.math.BigDecimal;
@@ -12,17 +24,6 @@ import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
 
-/********************************************************************************
- * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
- * University of Stuttgart
- * Author: Ghareeb Falazi
- *
- * This program and the accompanying materials are made available under the
- * terms the Apache Software License 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
 public interface BlockchainAdapter {
     /**
      * submits a transaction to the blockchain that transfers an amount of the native crypto-currency to some address.
@@ -88,4 +89,11 @@ public interface BlockchainAdapter {
             List<Parameter> outputs,
             double requiredConfidence
     ) throws NotSupportedException, ParameterException;
+
+    /**
+     * Tests the connection settings with the underlying blockchain
+     *
+     * @return true if the connection is successful, false otherwise.
+     */
+    boolean testConnection();
 }

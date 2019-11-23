@@ -12,6 +12,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 import java.math.BigInteger;
 
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Bytes;
@@ -23,8 +24,8 @@ import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.Utf8String;
 
 //todo support array types e.g., address[]
-public class EthereumReturnValueEncoder {
-    public String encodeValue(Type value) throws EthereumParameterEncodingException {
+public class ParameterDecoder {
+    public static String decode(Type value) throws ParameterException {
         try {
             if (value instanceof Utf8String || value instanceof Address)
                 return value.getValue().toString();
@@ -36,16 +37,16 @@ public class EthereumReturnValueEncoder {
                 return ((BigInteger) value.getValue()).toString(10);
 
             if (value instanceof DynamicBytes || value instanceof Bytes) {
-                if (((BytesType)value).getValue().length > 0) {
+                if (((BytesType) value).getValue().length > 0) {
                     return (new BigInteger(((BytesType) value).getValue())).toString(16);
                 }
                 return "empty";
             }
         } catch (Exception e) {
-            throw new EthereumParameterEncodingException("An error occurred while encoding return value. Reason: "
+            throw new ParameterException("An error occurred while encoding return value. Reason: "
                     + e.getMessage(), e);
         }
 
-        throw new EthereumParameterEncodingException("The passed type is not supported! " + value.getTypeAsString());
+        throw new ParameterException("The passed type is not supported! " + value.getTypeAsString());
     }
 }

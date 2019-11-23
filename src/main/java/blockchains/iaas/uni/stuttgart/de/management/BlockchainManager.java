@@ -412,4 +412,19 @@ public class BlockchainManager {
                     MessageTranslatorFactory.getCallbackAdapter().convert(correlationId, TransactionState.UNKNOWN, true, e.getCode()));
         }
     }
+
+    /**
+     * Tests whether the connection with the specified blockchain instance is functioning correctly
+     *
+     * @param blockchainIdentifier the identifier of the blockchain instance to test.
+     * @return true if the connection is functional, false otherwise.
+     */
+    public boolean testConnection(String blockchainIdentifier) {
+        try {
+            final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainIdentifier);
+            return adapter.testConnection();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

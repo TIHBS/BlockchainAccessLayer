@@ -18,28 +18,33 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "InvokeSmartContractRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class InvokeSmartContractFunctionRequest {
-    private String scip;
+    private String blockchainId;
+    private String smartContractPath;
+    private String functionIdentifier;
     private double confidence;
     private String subscriptionId;
     private String epUrl;
-    private ParameterList parameterList;
+    private ParameterList inputs;
+    private ParameterList outputs;
+    private long timeoutMillis;
+    private String signature;
 
-    @XmlElement(name = "Parameters")
-    public ParameterList getParameterList() {
-        return parameterList;
+    @XmlElement(name = "Inputs")
+    public ParameterList getInputs() {
+        return inputs;
     }
 
-    public void setParameterList(ParameterList parameterList) {
-        this.parameterList = parameterList;
+    public void setInputs(ParameterList inputs) {
+        this.inputs = inputs;
     }
 
-    @XmlElement(name = "Function")
-    public String getScip() {
-        return scip;
+    @XmlElement(name = "SmartContractPath")
+    public String getSmartContractPath() {
+        return smartContractPath;
     }
 
-    public void setScip(String scip) {
-        this.scip = scip;
+    public void setSmartContractPath(String smartContractPath) {
+        this.smartContractPath = smartContractPath;
     }
 
     @XmlElement(name = "Confidence")
@@ -67,5 +72,50 @@ public class InvokeSmartContractFunctionRequest {
 
     public void setEpUrl(String epUrl) {
         this.epUrl = epUrl;
+    }
+
+    @XmlElement(name = "FunctionIdentifier")
+    public String getFunctionIdentifier() {
+        return functionIdentifier;
+    }
+
+    public void setFunctionIdentifier(String functionIdentifier) {
+        this.functionIdentifier = functionIdentifier;
+    }
+
+    @XmlElement(name = "BlockchainId")
+    public String getBlockchainId() {
+        return blockchainId;
+    }
+
+    public void setBlockchainId(String blockchainId) {
+        this.blockchainId = blockchainId;
+    }
+
+    @XmlElement(name = "Outputs")
+    public ParameterList getOutputs() {
+        return outputs;
+    }
+
+    public void setOutputs(ParameterList outputs) {
+        this.outputs = outputs;
+    }
+
+    @XmlElement(name = "Timeout")
+    public long getTimeoutMillis() {
+        return timeoutMillis;
+    }
+
+    public void setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
+    @XmlElement(name = "Signature")
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 }

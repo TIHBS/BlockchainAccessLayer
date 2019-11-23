@@ -19,14 +19,20 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @Path("configure")
 public class ConnectionProfilesController {
+    @Context
+    protected UriInfo uriInfo;
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public void acceptConfiguration(Map<String, AbstractConnectionProfile> profiles) {
@@ -42,5 +48,12 @@ public class ConnectionProfilesController {
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfigurations() throws JsonProcessingException {
         return ConnectionProfilesManager.getInstance().getConnectionProfilesAsJson();
+    }
+
+    @Path("test")
+    @GET
+    public boolean testConnection() {
+        String blockchainId = this.uriInfo.getQueryParameters().getFirst("blockchain-id");
+        return (new BlockchainManager()).testConnection(blockchainId);
     }
 }

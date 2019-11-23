@@ -11,14 +11,13 @@
 
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
-import java.math.BigInteger;
-
 import javax.xml.bind.DatatypeConverter;
 
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
@@ -98,5 +97,12 @@ class ParameterEncoderTest {
         result = ParameterEncoder.encode(parameter);
         Assertions.assertEquals(DynamicBytes.class, result.getClass());
         Assertions.assertArrayEquals(DatatypeConverter.parseHexBinary("aabbccdd11223344"), ((DynamicBytes) result).getValue());
+
+        final String bool = "{\"type\": \"boolean\"}";
+        parameter.setType(bool);
+        parameter.setValue("true");
+        result = ParameterEncoder.encode(parameter);
+        Assertions.assertEquals(Bool.class, result.getClass());
+        Assertions.assertEquals(true, ((Bool) result).getValue());
     }
 }

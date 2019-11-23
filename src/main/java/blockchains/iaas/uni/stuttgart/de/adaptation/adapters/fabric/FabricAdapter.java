@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
@@ -72,8 +73,6 @@ public class FabricAdapter implements BlockchainAdapter {
     @Override
     public CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence
 
-
-
     ) throws InvalidTransactionException, NotSupportedException {
         throw new NotSupportedException("Fabric does not support submitting monetary transactions!");
     }
@@ -115,19 +114,8 @@ public class FabricAdapter implements BlockchainAdapter {
                 smartContractName = pathSegments[2];
             }
 
-            // Load an existing wallet holding identities used to access the network.
-            Path walletDirectory = Paths.get(walletPath);
-
             try {
-                Wallet wallet = Wallet.createFileSystemWallet(walletDirectory);
-
-                // Path to a connection profile describing the network.
-                Path networkConfigFile = Paths.get(this.connectionProfilePath);
-
-                // Configure the gateway connection used to access the network.
-                Gateway.Builder builder = Gateway.createBuilder()
-                        .identity(wallet, userName)
-                        .networkConfig(networkConfigFile);
+                Gateway.Builder builder = this.getGatewayBuilder();
 
                 // Create a gateway connection
                 try (Gateway gateway = builder.connect()) {
@@ -148,7 +136,7 @@ public class FabricAdapter implements BlockchainAdapter {
                     log.info(resultS);
                     result = new CompletableFuture<>();
                     Transaction resultT = new Transaction();
-                    resultT.setReturnValue(resultS);
+                    resultT.setReturnValues(Collections.singletonList(resultS));
                     resultT.setState(TransactionState.RETURN_VALUE);
                     result.complete(resultT);
                 }
@@ -161,4 +149,27 @@ public class FabricAdapter implements BlockchainAdapter {
         return result;
     }
 
+    private Gateway.Builder getGatewayBuilder() throws IOException {
+        // Load an existing wallet holding identities used to access the network.
+        Path walletDirectory = Paths.get(walletPath);
+
+        Wallet wallet = Wallet.createFileSystemWallet(walletDirectory);
+
+        // Path to a connection profile describing the network.
+        Path networkConfigFile = Paths.get(this.connectionProfilePath);
+
+        // Configure the gateway connection used to access the network.
+        return Gateway.createBuilder()
+                .identity(wallet, userName)
+                .networkConfig(networkConfigFile);
+    }
+
+    @Override
+    public boolean testConnection() {
+        try (Gateway gateway = this.getGatewayBuilder().connect()) {
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
 }

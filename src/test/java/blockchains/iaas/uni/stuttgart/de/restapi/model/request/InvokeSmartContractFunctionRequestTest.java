@@ -18,11 +18,12 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// todo fix test
+
 class InvokeSmartContractFunctionRequestTest {
     private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionRequestTest.class);
 
@@ -31,12 +32,17 @@ class InvokeSmartContractFunctionRequestTest {
         InvokeSmartContractFunctionRequest theObject = new InvokeSmartContractFunctionRequest();
         theObject.setConfidence(99.0);
         theObject.setEpUrl("http://localhost/test");
-        theObject.setScip("scip://eth-0/mysc/set?aaa=uint:void");
+        theObject.setSmartContractPath("mysc");
+        theObject.setSignature("!!!!!");
+        theObject.setTimeoutMillis(120021);
+        theObject.setFunctionIdentifier("invokeMePlease");
+        theObject.setBlockchainId("eth-0");
         theObject.setSubscriptionId("1200");
         ParameterList myList = new ParameterList();
         myList.setArguments(new ArrayList<>());
-        // myList.getArguments().add(new Parameter("aaa", "13"));
-        theObject.setParameterList(myList);
+        myList.getArguments().add(new Parameter("aaa", "type", "aaaaa"));
+        theObject.setInputs(myList);
+        theObject.setOutputs(myList);
 
         //Create JAXB Context
         JAXBContext jaxbContext = JAXBContext.newInstance(InvokeSmartContractFunctionRequest.class);

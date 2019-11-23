@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -168,8 +167,6 @@ public class EthereumAdapter extends AbstractAdapter {
     private static CompletionException wrapEthereumExceptions(Throwable e) {
         if (e.getCause() instanceof IOException)
             e = new BlockchainNodeUnreachableException(e);
-        else if (e instanceof EthereumParameterDecodingException || e instanceof EthereumParameterEncodingException)
-            e = new ParameterException(e);
         else if (e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
             e = new InvokeSmartContractFunctionFailure(e);
         else if (e.getCause() instanceof RuntimeException)
@@ -284,16 +281,12 @@ public class EthereumAdapter extends AbstractAdapter {
             }
 
             final String smartContractAddress = pathSegments[0];
+            List<TypeReference<?>> outputParameters = new ArrayList<>();
+            Class<? extends Type> currentReturnType;
 
-            List<TypeReference<?>> outputParameters;
-
-            if (outputs.size() == 0) {
-                outputParameters = Collections.emptyList();
-            } else if (outputs.size() == 1) {
-                final Class<? extends Type> returnType = EthereumTypeMapper.getEthereumType(outputs.get(0).getType());
-                outputParameters = Collections.singletonList(TypeReference.create(returnType));
-            } else {
-                throw new ParameterException("Only single return values supported!");
+            for (Parameter output : outputs) {
+                currentReturnType = EthereumTypeMapper.getEthereumType(output.getType());
+                outputParameters.add(TypeReference.create(currentReturnType));
             }
 
             final Function function = new Function(
@@ -302,10 +295,14 @@ public class EthereumAdapter extends AbstractAdapter {
                     outputParameters); //Type of returned value
 
             final String encodedFunction = FunctionEncoder.encode(function);
-            Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, function.getOutputParameters());
 
-            if (resultFromEthCall != null) {
-                return CompletableFuture.completedFuture(resultFromEthCall);
+            // if we are expecting a return value, we try to invoke as a method call, otherwise, we immediately try a transaciton
+            if (outputParameters.size() > 0) {
+                Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, function.getOutputParameters());
+
+                if (resultFromEthCall != null) {
+                    return CompletableFuture.completedFuture(resultFromEthCall);
+                }
             }
 
             return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
@@ -318,28 +315,34 @@ public class EthereumAdapter extends AbstractAdapter {
         return result;
     }
 
+    @Override
+    public boolean testConnection() {
+        return this.testConnectionToNode();
+    }
+
     private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress,
-                                                   List<TypeReference<Type>> returnType) {
+                                                   List<TypeReference<Type>> returnTypes) throws InvokeSmartContractFunctionFailure {
         try {
             org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
                     .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
             EthCall ethCall = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
-            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnType);
+            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnTypes);
 
-            if (decoded.size() > 0) {
-                final Transaction tx = new Transaction();
-                final Type type = decoded.get(0);
-                final EthereumReturnValueEncoder encoder = new EthereumReturnValueEncoder();
-                final String valueAsString = encoder.encodeValue(type);
-                tx.setReturnValue(type.getTypeAsString() + ":" + valueAsString);
-                tx.setState(TransactionState.RETURN_VALUE);
+            if (returnTypes.size() != decoded.size())
+                throw new InvokeSmartContractFunctionFailure("Failed to invoke function by ethCall");
+            List<String> decodedResults = new ArrayList<>();
+            Transaction tx = new LinearChainTransaction();
+            tx.setState(TransactionState.RETURN_VALUE);
+            tx.setReturnValues(decodedResults);
 
-                return tx;
-            } else {
-                throw new OperationNotSupportedException("Failed to invoke function by ethCall");
+            for (Type curr : decoded) {
+                decodedResults.add(ParameterDecoder.decode(curr));
             }
+
+            return tx;
         } catch (Exception e) {
             log.debug("Failed to execute smart contract function via eth_call. Reason: {}", e.getMessage());
+            // this is important so we know we should try a transaction
             return null;
         }
     }
@@ -369,12 +372,11 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
-    private List<Type> convertToSolidityTypes(List<Parameter> params) throws EthereumParameterDecodingException {
+    private List<Type> convertToSolidityTypes(List<Parameter> params) throws ParameterException {
         List<Type> result = new ArrayList<>();
-        EthereumParameterDecoder decoder = new EthereumParameterDecoder();
 
         for (Parameter param : params) {
-            decoder.decodeParameter(param.getType(), param.getValue());
+            result.add(ParameterEncoder.encode(param));
         }
 
         return result;

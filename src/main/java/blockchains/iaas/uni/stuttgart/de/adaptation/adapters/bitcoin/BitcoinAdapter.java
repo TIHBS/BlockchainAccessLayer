@@ -28,6 +28,7 @@ import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import com.google.common.base.Strings;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -271,5 +272,10 @@ public class BitcoinAdapter extends AbstractAdapter {
     @Override
     public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
         throw new NotSupportedException("Bitcoin does not support smart contract function invocations!");
+    }
+
+    @Override
+    public boolean testConnection() {
+        return !Strings.isNullOrEmpty(client.getNodeVersion());
     }
 }

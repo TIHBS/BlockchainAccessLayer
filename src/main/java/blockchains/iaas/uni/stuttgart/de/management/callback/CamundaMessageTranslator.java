@@ -13,8 +13,6 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.Map;
 
-import javax.sound.sampled.Line;
-
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -44,7 +42,7 @@ public class CamundaMessageTranslator extends MessageTranslator {
                 variables.put("value", new CamundaVariable(tx.getValueAsString(), "Long"));
                 variables.put("transactionId", new CamundaVariable(tx.getTransactionHash(), "String"));
             } else {
-                variables.put("returnValue", new CamundaVariable(transaction.getReturnValue(), "String"));
+                variables.put("returnValue0", new CamundaVariable(transaction.getReturnValues().get(0), "String"));
             }
 
             if (tx.getBlock() != null) { //it could be null if we are accepting transactions with 0 confirmations
