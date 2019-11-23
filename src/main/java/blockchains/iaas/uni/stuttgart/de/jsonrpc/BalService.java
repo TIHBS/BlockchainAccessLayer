@@ -11,7 +11,12 @@
 
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
+import java.util.List;
+
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -26,9 +31,21 @@ public class BalService {
     private final String smartContractPath;
 
     @JsonRpcMethod
-    public String Invoke() {
+    public String Invoke(
+            @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcParam("inputs") List<Parameter> inputs,
+            @JsonRpcParam("outputs") List<Parameter> outputs,
+            @JsonRpcParam("doc") double requiredConfidence,
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("timeout") long timeoutMillis,
+            @JsonRpcParam("correlationIdentifier") String correlationId,
+            @JsonRpcParam("signature") String signature
+    ) {
         log.info("Invoke method is executed!");
-        log.info("blockchain type: {}, blockchain id: {}, smart contract path: {}", blockchainType, blockchainId, smartContractPath);
-        return "This is not implemented yet!";
+        BlockchainManager manager = new BlockchainManager();
+        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+
+        return "OK";
     }
 }
