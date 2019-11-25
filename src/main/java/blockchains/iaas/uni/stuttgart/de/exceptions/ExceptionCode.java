@@ -11,15 +11,9 @@
 
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-import java.util.Arrays;
-
 public class ExceptionCode {
     public static final int UnknownError = 0;
-    public static final int JsonRpcParseError = -32700;
-    public static final int JsonRpcInvalidRequest = -32600;
-    public static final int JsonRpcMethodNotFound = -32601;
-    public static final int JsonRpcInvalidParams = -32602;
-    public static final int JsonRpcInternalError = -32603;
+
     /**
      * The blockchain instance, smart contract, event or function are not found
      */
@@ -45,7 +39,17 @@ public class ExceptionCode {
     /**
      * Connection to the underlying blockchain node is not possible.
      */
-    public static final int ConnectionException = -32008;
+    public static final int ConnectionException = -32005;
+    /**
+     * The transaction associated with an function invocation is invalidated after it was mined.
+     */
+    public static final int TransactionInvalidatedException = -32006;
+
+    /**
+     * A scip method parameter has an invalid value
+     */
+    public static final int InvalidScipParam = -32007;
+
     /**
      * A general error occurred when trying to invoke a smart contract function
      * This error is used when the specific cause of the error cannot be deteremined.
@@ -62,12 +66,11 @@ public class ExceptionCode {
     /**
      * The BAL instance is not authorized to performed the requested operation on the underlying blockchain.
      */
-    public static final int BalNotAuthorized = -32102;
+    public static final int BalNotAuthorized = -32103;
+
     /**
      * Timeout is reached before fulfilling the desired degree of confidence.
      * This is an asynchronous error.
      */
     public static final int Timeout = -32201;
-
-
 }

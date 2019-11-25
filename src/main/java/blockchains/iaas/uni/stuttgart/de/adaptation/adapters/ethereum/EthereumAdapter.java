@@ -26,6 +26,7 @@ import javax.naming.OperationNotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
@@ -165,14 +166,28 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     private static CompletionException wrapEthereumExceptions(Throwable e) {
-        if (e.getCause() instanceof IOException)
-            e = new BlockchainNodeUnreachableException(e);
-        else if (e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
-            e = new InvokeSmartContractFunctionFailure(e);
-        else if (e.getCause() instanceof RuntimeException)
-            e = new InvalidTransactionException(e);
+        return new CompletionException(mapEthereumException(e));
+    }
 
-        return new CompletionException(e);
+    private static BalException mapEthereumException(Throwable e) {
+        BalException result;
+
+        if (e instanceof BalException)
+            result = (BalException) e;
+        else if (e.getCause() instanceof BalException)
+            result = (BalException) e.getCause();
+        else if (e.getCause() instanceof IOException)
+            result = new BlockchainNodeUnreachableException(e.getMessage());
+        else if (e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
+            result = new InvokeSmartContractFunctionFailure(e.getMessage());
+        else if (e.getCause() instanceof RuntimeException)
+            result = new InvalidTransactionException(e.getMessage());
+        else {
+            log.error("Unexpected exception was thrown!");
+            result = new InvalidTransactionException(e.getMessage());
+        }
+
+        return result;
     }
 
     @Override
@@ -197,7 +212,7 @@ public class EthereumAdapter extends AbstractAdapter {
             final String msg = "An error occurred while trying to submit a new transaction to ethereum. Reason: " + e.getMessage();
             log.error(msg);
 
-            throw new InvalidTransactionException(msg, e);
+            throw new InvalidTransactionException(msg);
         }
     }
 
@@ -266,8 +281,6 @@ public class EthereumAdapter extends AbstractAdapter {
         Objects.requireNonNull(inputs);
         Objects.requireNonNull(outputs);
 
-        CompletableFuture<Transaction> result;
-
         try {
             long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
             final String[] pathSegments = SmartContractPathParser.parse(smartContractPath).getSmartContractPathSegments();
@@ -296,9 +309,9 @@ public class EthereumAdapter extends AbstractAdapter {
 
             final String encodedFunction = FunctionEncoder.encode(function);
 
-            // if we are expecting a return value, we try to invoke as a method call, otherwise, we immediately try a transaciton
+            // if we are expecting a return value, we try to invoke as a method call, otherwise, we immediately try a transaction
             if (outputParameters.size() > 0) {
-                Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, function.getOutputParameters());
+                Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, outputs, function.getOutputParameters());
 
                 if (resultFromEthCall != null) {
                     return CompletableFuture.completedFuture(resultFromEthCall);
@@ -308,11 +321,8 @@ public class EthereumAdapter extends AbstractAdapter {
             return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
-            result = new CompletableFuture<>();
-            result.completeExceptionally(wrapEthereumExceptions(e));
+            throw mapEthereumException(e);
         }
-
-        return result;
     }
 
     @Override
@@ -320,7 +330,7 @@ public class EthereumAdapter extends AbstractAdapter {
         return this.testConnectionToNode();
     }
 
-    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress,
+    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,
                                                    List<TypeReference<Type>> returnTypes) throws InvokeSmartContractFunctionFailure {
         try {
             org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
@@ -330,14 +340,20 @@ public class EthereumAdapter extends AbstractAdapter {
 
             if (returnTypes.size() != decoded.size())
                 throw new InvokeSmartContractFunctionFailure("Failed to invoke function by ethCall");
-            List<String> decodedResults = new ArrayList<>();
+
             Transaction tx = new LinearChainTransaction();
             tx.setState(TransactionState.RETURN_VALUE);
-            tx.setReturnValues(decodedResults);
+            List<Parameter> returnedValues = new ArrayList<>();
 
-            for (Type curr : decoded) {
-                decodedResults.add(ParameterDecoder.decode(curr));
+            for (int i = 0; i < decoded.size(); i++) {
+                returnedValues.add(Parameter
+                        .builder()
+                        .name(outputs.get(i).getName())
+                        .value(ParameterDecoder.decode(decoded.get(i)))
+                        .build());
             }
+
+            tx.setReturnValues(returnedValues);
 
             return tx;
         } catch (Exception e) {
@@ -396,6 +412,8 @@ public class EthereumAdapter extends AbstractAdapter {
         if (Arrays.asList(interesting).contains(detectedState)) {
             final LinearChainTransaction result = new LinearChainTransaction();
             result.setState(detectedState);
+            // it is important that this list is not null
+            result.setReturnValues(new ArrayList<>());
 
             if (transactionDetails.isPresent()) {
                 result.setBlock(new Block(transactionDetails.get().getBlockNumber(), transactionDetails.get().getBlockHash()));

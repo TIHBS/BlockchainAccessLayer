@@ -33,7 +33,7 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
         return getSubscriptions(SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION, uriInfo);
     }
 
-    // todo fix
+    // todo try if still working
     @POST
     @Consumes(MediaType.APPLICATION_XML)
     public Response invokeSCFunction(InvokeSmartContractFunctionRequest request) {

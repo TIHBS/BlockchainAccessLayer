@@ -25,7 +25,13 @@ public class MathUtils {
         return BigIntegerMath.log2(n, RoundingMode.UNNECESSARY);
     }
 
-    public static boolean doubleEquals(double lhs, double rhs) {
-       return Math.abs(lhs-rhs) < ACCEPTED_DOUBLE_ERROR;
+    public static int doubleCompare(double lhs, double rhs) {
+        if (Math.abs(lhs-rhs) < ACCEPTED_DOUBLE_ERROR)
+            return 0;
+        if(lhs-rhs > ACCEPTED_DOUBLE_ERROR)
+            return 1;
+        return -1;
     }
+
+
 }

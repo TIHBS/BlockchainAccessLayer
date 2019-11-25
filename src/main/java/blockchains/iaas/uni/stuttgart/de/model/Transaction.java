@@ -21,6 +21,6 @@ public class Transaction {
     @XmlElement(name = "TransactionState")
     private TransactionState state;
 
-    @XmlElement(name = "ReturnValue")
-    private List<String> returnValues;
+    @XmlElement(name = "ReturnValues")
+    private List<Parameter> returnValues;
 }

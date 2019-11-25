@@ -13,13 +13,8 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code= ExceptionCode.NotFound, message="The specified blockchain-id cannot be found")
+@JsonRpcError(code = ExceptionCode.NotFound, message = "The specified blockchain-id cannot be found")
 public class BlockchainIdNotFoundException extends BalException {
-
-    @Override
-    public int getCode() {
-        return ExceptionCode.NotFound;
-    }
 
     public BlockchainIdNotFoundException() {
         super();
@@ -29,12 +24,8 @@ public class BlockchainIdNotFoundException extends BalException {
         super(message);
     }
 
-    public BlockchainIdNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    @Override
+    public int getCode() {
+        return ExceptionCode.NotFound;
     }
-
-    public BlockchainIdNotFoundException(Throwable cause) {
-        super(cause);
-    }
-
 }

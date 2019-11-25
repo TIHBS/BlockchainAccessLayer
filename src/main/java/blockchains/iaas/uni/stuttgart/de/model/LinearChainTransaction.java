@@ -46,7 +46,7 @@ public class LinearChainTransaction extends Transaction {
 
     public LinearChainTransaction(String transactionHash,
                                   Block block,
-                                  String from, String to, BigInteger value, TransactionState state, List<String> returnValues) {
+                                  String from, String to, BigInteger value, TransactionState state, List<Parameter> returnValues) {
         this.setReturnValues(returnValues);
         this.setState(state);
         this.transactionHash = transactionHash;

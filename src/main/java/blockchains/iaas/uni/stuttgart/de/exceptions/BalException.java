@@ -12,8 +12,6 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 public abstract class BalException extends RuntimeException {
 
-    public abstract int getCode();
-
     public BalException() {
     }
 
@@ -28,4 +26,6 @@ public abstract class BalException extends RuntimeException {
     public BalException(Throwable cause) {
         super(cause);
     }
+
+    public abstract int getCode();
 }

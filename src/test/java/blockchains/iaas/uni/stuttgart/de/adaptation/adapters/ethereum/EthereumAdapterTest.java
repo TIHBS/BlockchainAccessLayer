@@ -40,8 +40,6 @@ import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.tx.gas.DefaultGasProvider;
 
-// todo fix test
-
 /**
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
@@ -107,7 +105,7 @@ class EthereumAdapterTest {
         inputs = Collections.singletonList(new Parameter("ethereumAddress", ADDRESS_TYPE, "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A"));
         outputs = Collections.singletonList(new Parameter("return", BYTES_TYPE, null));
         Transaction result = this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE).get();
-        String value = result.getReturnValues().get(0);
+        String value = result.getReturnValues().get(0).getValue();
         log.debug(value);
         String retrievedMessage = new String(new BigInteger(value, 16).toByteArray(), StandardCharsets.UTF_8);
         Assertions.assertEquals(MESSAGE, retrievedMessage);

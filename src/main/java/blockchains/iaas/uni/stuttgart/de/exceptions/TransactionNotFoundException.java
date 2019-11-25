@@ -11,7 +11,10 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-public class TransactionNotFoundException extends RuntimeException {
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
+
+@JsonRpcError(code = ExceptionCode.TransactionInvalidatedException, message = "The transaction associated with an function invocation is invalidated after it was mined.")
+public class TransactionNotFoundException extends BalException {
 
     public TransactionNotFoundException() {
     }
@@ -20,11 +23,8 @@ public class TransactionNotFoundException extends RuntimeException {
         super(message);
     }
 
-    public TransactionNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public TransactionNotFoundException(Throwable cause) {
-        super(cause);
+    @Override
+    public int getCode() {
+        return ExceptionCode.TransactionInvalidatedException;
     }
 }

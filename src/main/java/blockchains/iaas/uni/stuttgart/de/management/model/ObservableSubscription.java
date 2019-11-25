@@ -1,9 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.management.model;
-
-import io.reactivex.disposables.Disposable;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -13,7 +9,11 @@ import io.reactivex.disposables.Disposable;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class ObservableSubscription extends  Subscription {
+package blockchains.iaas.uni.stuttgart.de.management.model;
+
+import io.reactivex.disposables.Disposable;
+
+public class ObservableSubscription extends Subscription {
     private Disposable subscription;
 
     public ObservableSubscription(Disposable subscription, SubscriptionType type) {

@@ -13,13 +13,8 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code=ExceptionCode.InvocationError, message = "An error occurred while trying to invoke the smart contract function.")
+@JsonRpcError(code = ExceptionCode.InvocationError, message = "An error occurred while trying to invoke the smart contract function.")
 public class InvalidTransactionException extends BalException {
-
-    @Override
-    public int getCode() {
-        return ExceptionCode.InvocationError;
-    }
 
     public InvalidTransactionException() {
     }
@@ -28,12 +23,8 @@ public class InvalidTransactionException extends BalException {
         super(message);
     }
 
-    public InvalidTransactionException(String message, Throwable cause) {
-        super(message, cause);
+    @Override
+    public int getCode() {
+        return ExceptionCode.InvocationError;
     }
-
-    public InvalidTransactionException(Throwable cause) {
-        super(cause);
-    }
-
 }

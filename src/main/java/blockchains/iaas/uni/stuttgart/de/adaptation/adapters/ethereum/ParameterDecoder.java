@@ -44,7 +44,7 @@ public class ParameterDecoder {
             }
         } catch (Exception e) {
             throw new ParameterException("An error occurred while encoding return value. Reason: "
-                    + e.getMessage(), e);
+                    + e.getMessage());
         }
 
         throw new ParameterException("The passed type is not supported! " + value.getTypeAsString());

@@ -172,9 +172,9 @@ public class BitcoinAdapter extends AbstractAdapter {
                         handleDetectedState(tx, block, TransactionState.CONFIRMED, observedStates, result);
                     }
                 } catch (BitcoindException e) {
-                    result.completeExceptionally(new InvalidTransactionException(e));
+                    result.completeExceptionally(new InvalidTransactionException(e.getMessage()));
                 } catch (CommunicationException e) {
-                    result.completeExceptionally(new BlockchainNodeUnreachableException(e));
+                    result.completeExceptionally(new BlockchainNodeUnreachableException(e.getMessage()));
                 }
             }
         };
@@ -206,9 +206,9 @@ public class BitcoinAdapter extends AbstractAdapter {
 
             return result;
         } catch (BitcoindException e) {
-            throw new InvalidTransactionException(e);
+            throw new InvalidTransactionException(e.getMessage());
         } catch (CommunicationException e) {
-            throw new BlockchainNodeUnreachableException(e);
+            throw new BlockchainNodeUnreachableException(e.getMessage());
         }
     }
 

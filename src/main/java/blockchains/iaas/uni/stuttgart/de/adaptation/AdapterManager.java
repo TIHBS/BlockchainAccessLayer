@@ -67,7 +67,7 @@ public class AdapterManager {
             map.put(blockchainId, ImmutablePair.of(adapter, connectionProfile));
             return Objects.requireNonNull(adapter);
         } catch (Exception e) {
-            throw new BlockchainNodeUnreachableException("Failed to create a blockchain adapter. Reason: " + e.getMessage(), e);
+            throw new BlockchainNodeUnreachableException("Failed to create a blockchain adapter. Reason: " + e.getMessage());
         }
     }
 }

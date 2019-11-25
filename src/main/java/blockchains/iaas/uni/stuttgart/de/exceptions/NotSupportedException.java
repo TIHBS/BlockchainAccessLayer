@@ -13,21 +13,13 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code=ExceptionCode.NotSupported,message="The requested operation is not supported by the underlying blockchain instance.")
-public class NotSupportedException extends  BalException {
+@JsonRpcError(code = ExceptionCode.NotSupported, message = "The requested operation is not supported by the underlying blockchain instance.")
+public class NotSupportedException extends BalException {
     public NotSupportedException() {
     }
 
     public NotSupportedException(String message) {
         super(message);
-    }
-
-    public NotSupportedException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public NotSupportedException(Throwable cause) {
-        super(cause);
     }
 
     @Override

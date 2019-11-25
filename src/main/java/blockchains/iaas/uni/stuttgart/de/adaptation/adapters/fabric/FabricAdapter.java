@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
@@ -93,19 +94,21 @@ public class FabricAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
+    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, BalException {
         SmartContractPathParser parser = SmartContractPathParser.parse(smartContractPath);
         String[] pathSegments = parser.getSmartContractPathSegments();
         String channelName;
         String chaincodeName;
         String smartContractName = null;
-        CompletableFuture<Transaction> result;
+
+        if (outputs.size() > 1) {
+            throw new ParameterException("Hyperledger Fabric supports only at most a single return value.");
+        }
 
         if (pathSegments.length != 3 && pathSegments.length != 2) {
             String message = String.format("Unable to identify the path to the requested function. Expected path segements: 3 or 2. Found path segments: %s", pathSegments.length);
             log.error(message);
-            result = new CompletableFuture<>();
-            result.completeExceptionally(new InvokeSmartContractFunctionFailure(message));
+            throw new InvokeSmartContractFunctionFailure(message);
         } else {
             channelName = pathSegments[0];
             chaincodeName = pathSegments[1];
@@ -132,21 +135,30 @@ public class FabricAdapter implements BlockchainAdapter {
                     String[] params = inputs.stream().map(Parameter::getValue).toArray(String[]::new);
                     byte[] resultAsBytes = contract.submitTransaction(functionIdentifier, params);
 
-                    String resultS = new String(resultAsBytes, StandardCharsets.UTF_8);
-                    log.info(resultS);
-                    result = new CompletableFuture<>();
+                    CompletableFuture<Transaction> result = new CompletableFuture<>();
                     Transaction resultT = new Transaction();
-                    resultT.setReturnValues(Collections.singletonList(resultS));
+
+                    if (outputs.size() == 1) {
+                        Parameter resultP = Parameter
+                                .builder()
+                                .name(outputs.get(0).getName())
+                                .value(new String(resultAsBytes, StandardCharsets.UTF_8))
+                                .build();
+                        resultT.setReturnValues(Collections.singletonList(resultP));
+                        log.info(resultP.getValue());
+                    } else if (outputs.size() == 0) {
+                        log.info("Fabric transaction without a return value executed!");
+                        resultT.setReturnValues(Collections.emptyList());
+                    }
+
                     resultT.setState(TransactionState.RETURN_VALUE);
                     result.complete(resultT);
+                    return result;
                 }
             } catch (IOException | ContractException | TimeoutException | InterruptedException e) {
-                result = new CompletableFuture<>();
-                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e));
+                throw new InvokeSmartContractFunctionFailure(e.getMessage());
             }
         }
-
-        return result;
     }
 
     private Gateway.Builder getGatewayBuilder() throws IOException {

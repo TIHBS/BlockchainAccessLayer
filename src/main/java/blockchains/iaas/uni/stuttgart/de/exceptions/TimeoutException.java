@@ -8,21 +8,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
+
 package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
+import lombok.Getter;
+import lombok.Setter;
 
-@JsonRpcError(code = ExceptionCode.ExecutionError, message = "The execution of the smart contract function resulted in an error.")
-public class InvokeSmartContractFunctionFailure extends BalException {
-    public InvokeSmartContractFunctionFailure() {
+@JsonRpcError(code = ExceptionCode.Timeout, message = "Timeout was reached before the desired DoC was fulfilled.")
+@Setter
+@Getter
+public class TimeoutException extends BalException {
+    private String transactionHash;
+    private double doc;
+
+    public TimeoutException() {
     }
 
-    public InvokeSmartContractFunctionFailure(String message) {
+    public TimeoutException(String message, String transactionHash, double doc) {
         super(message);
+        this.transactionHash = transactionHash;
+        this.doc = doc;
     }
 
     @Override
     public int getCode() {
-        return ExceptionCode.ExecutionError;
+        return ExceptionCode.Timeout;
     }
 }

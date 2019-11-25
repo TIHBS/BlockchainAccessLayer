@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.management.model;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,20 +9,17 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.management.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public abstract class Subscription {
     private SubscriptionType type;
-
-    public Subscription(final SubscriptionType type){
-        this.type = type;
-    }
-
-    public SubscriptionType getType() {
-        return type;
-    }
-
-    public void setType(SubscriptionType type) {
-        this.type = type;
-    }
 
     public abstract void unsubscribe();
 }

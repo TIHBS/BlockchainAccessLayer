@@ -13,13 +13,8 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code=ExceptionCode.InvalidParameters,message="The passed function/event parameter names, order, or types are invalid.")
+@JsonRpcError(code = ExceptionCode.InvalidParameters, message = "The passed function/event parameter names, order, or types are invalid.")
 public class ParameterException extends BalException {
-    @Override
-    public int getCode() {
-        return ExceptionCode.InvalidParameters;
-    }
-
     public ParameterException() {
     }
 
@@ -27,11 +22,8 @@ public class ParameterException extends BalException {
         super(message);
     }
 
-    public ParameterException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ParameterException(Throwable cause) {
-        super(cause);
+    @Override
+    public int getCode() {
+        return ExceptionCode.InvalidParameters;
     }
 }

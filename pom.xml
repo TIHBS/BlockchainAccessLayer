@@ -187,7 +187,7 @@
         <dependency>
             <groupId>com.github.arteam</groupId>
             <artifactId>simple-json-rpc-server</artifactId>
-            <version>0.10</version>
+            <version>${jsonrpc.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -199,11 +199,23 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.github.arteam</groupId>
+            <artifactId>simple-json-rpc-client</artifactId>
+            <version>${jsonrpc.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
     </dependencies>
     <properties>
         <jersey.version>2.9.1</jersey.version>
         <jackson.version>[2.9.9.2,)</jackson.version>
+        <jsonrpc.version>0.10</jsonrpc.version>
         <org.slf4j>1.7.25</org.slf4j>
         <ch.qos.logback.logback-classic.version>1.2.3</ch.qos.logback.logback-classic.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

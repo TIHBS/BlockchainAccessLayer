@@ -22,7 +22,6 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import org.web3j.abi.datatypes.AbiTypes;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
-import org.web3j.abi.datatypes.Bytes;
 import org.web3j.abi.datatypes.DynamicBytes;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
@@ -36,7 +35,7 @@ public class EthereumTypeMapper {
             String type = jsonObject.getString("type");
 
             if (type.equals("boolean")) {
-                    return Bool.class;
+                return Bool.class;
             }
 
             if (type.equals("string")) {
@@ -52,8 +51,8 @@ public class EthereumTypeMapper {
             }
 
             throw new ParameterException("Unrecognized type " + type);
-        } catch (ArithmeticException e) {
-            throw new ParameterException(e);
+        } catch (Exception e) {
+            throw new ParameterException(e.getMessage());
         }
     }
 
@@ -124,5 +123,4 @@ public class EthereumTypeMapper {
 
         throw new ParameterException("Unrecognized array type!");
     }
-
 }

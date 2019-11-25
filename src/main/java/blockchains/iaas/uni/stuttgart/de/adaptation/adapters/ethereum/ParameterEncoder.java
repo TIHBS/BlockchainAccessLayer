@@ -11,7 +11,6 @@
 
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 
 import javax.xml.bind.DatatypeConverter;
@@ -30,24 +29,23 @@ import org.web3j.abi.datatypes.Utf8String;
 public class ParameterEncoder {
     public static Type encode(Parameter parameter) throws ParameterException {
         Class<? extends Type> typeClass = EthereumTypeMapper.getEthereumType(parameter.getType());
-
-        if (typeClass == Bool.class) {
-            return new Bool(Boolean.parseBoolean(parameter.getValue()));
-        }
-
-        if (typeClass == Address.class) {
-            return new Address(parameter.getValue());
-        }
-
-        if (typeClass == Utf8String.class) {
-            return new Utf8String(parameter.getValue());
-        }
-
-        if (typeClass == DynamicBytes.class) {
-            return new DynamicBytes(DatatypeConverter.parseHexBinary(parameter.getValue()));
-        }
-
         try {
+            if (typeClass == Bool.class) {
+                return new Bool(Boolean.parseBoolean(parameter.getValue()));
+            }
+
+            if (typeClass == Address.class) {
+                return new Address(parameter.getValue());
+            }
+
+            if (typeClass == Utf8String.class) {
+                return new Utf8String(parameter.getValue());
+            }
+
+            if (typeClass == DynamicBytes.class) {
+                return new DynamicBytes(DatatypeConverter.parseHexBinary(parameter.getValue()));
+            }
+
             if (typeClass.getSuperclass() == Int.class) {
                 return typeClass.getDeclaredConstructor(BigInteger.class)
                         .newInstance(new BigInteger(parameter.getValue(), 10));
@@ -65,9 +63,11 @@ public class ParameterEncoder {
             }
 
             throw new ParameterException("Unrecognized parameter type!");
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | IllegalArgumentException e) {
-            // we should never reach here!
-            throw new ParameterException(e);
+        } catch (Exception e) {
+            if (e instanceof ParameterException)
+                throw (ParameterException) e;
+
+            throw new ParameterException(e.getMessage());
         }
     }
 }

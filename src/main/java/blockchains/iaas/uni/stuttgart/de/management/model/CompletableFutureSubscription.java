@@ -1,11 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.management.model;
-
-import blockchains.iaas.uni.stuttgart.de.exceptions.ManualUnsubscriptionException;
-
-import java.util.concurrent.CompletableFuture;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -15,6 +9,12 @@ import java.util.concurrent.CompletableFuture;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.management.model;
+
+import java.util.concurrent.CompletableFuture;
+
+import blockchains.iaas.uni.stuttgart.de.exceptions.ManualUnsubscriptionException;
+
 public class CompletableFutureSubscription<T> extends Subscription {
     private CompletableFuture<T> future;
 

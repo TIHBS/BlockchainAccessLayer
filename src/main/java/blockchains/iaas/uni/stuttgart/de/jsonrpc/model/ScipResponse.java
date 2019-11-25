@@ -8,29 +8,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.model;
 
-import java.util.Objects;
+package blockchains.iaas.uni.stuttgart.de.jsonrpc.model;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
-import lombok.AllArgsConstructor;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Builder
 @Setter
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Parameter {
-    private String name;
-    private String type;
-    private String value;
+public class ScipResponse extends CallbackMessage {
+    private String correlationIdentifier;
+    private List<Parameter> parameters;
+    private String isoTimestamp;
+    private List<Occurrence> occurrences;
+    private BalException exception;
 }
