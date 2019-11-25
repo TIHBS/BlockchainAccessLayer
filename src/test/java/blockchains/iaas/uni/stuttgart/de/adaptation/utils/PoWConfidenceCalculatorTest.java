@@ -31,7 +31,7 @@ class PoWConfidenceCalculatorTest {
         calculator.setAdversaryRatio(Q);
         double result = calculator.getCurrentConfidence(transactionEth);
         double ETH_EXPECTED_CONFIDENCE = 0.99970567;
-        Assertions.assertTrue( MathUtils.doubleEquals(result, ETH_EXPECTED_CONFIDENCE));
+        Assertions.assertEquals(0, MathUtils.doubleCompare(result, ETH_EXPECTED_CONFIDENCE));
     }
 
     @Test
