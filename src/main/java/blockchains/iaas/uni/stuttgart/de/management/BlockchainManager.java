@@ -13,6 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.management;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,8 +31,10 @@ import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
@@ -94,12 +97,12 @@ public class BlockchainManager {
                     }).
                     whenComplete((r, e) -> {
                         // remove subscription from subscription list
-                        SubscriptionManager.getInstance().removeSubscription(correlationId);
+                        SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     });
 
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
-            SubscriptionManager.getInstance().createSubscription(correlationId, subscription);
+            SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (InvalidTransactionException e) {
             // This (should only) happen when something is wrong with the transaction data
             CallbackManager.getInstance().sendCallbackAsync(epUrl,
@@ -134,7 +137,7 @@ public class BlockchainManager {
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
                         // remove subscription from subscription list
-                        SubscriptionManager.getInstance().removeSubscription(correlationId);
+                        SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
                     .doOnError(throwable -> log.error("Failed to receive transaction. Reason:{}", throwable.getMessage()))
                     .subscribe(transaction -> {
@@ -148,7 +151,7 @@ public class BlockchainManager {
 
             // Add subscription to the list of subscriptions
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTIONS);
-            SubscriptionManager.getInstance().createSubscription(correlationId, sub);
+            SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
         } catch (BlockchainIdNotFoundException e) {
             // This (should only) happen when the blockchainId is not found
             log.error("blockchainId ({}) is not recognized, but no error callback is sent to endpoint!", blockchainId);
@@ -182,7 +185,7 @@ public class BlockchainManager {
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
                         // remove subscription from subscription list
-                        SubscriptionManager.getInstance().removeSubscription(correlationId);
+                        SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
                     .doOnError(throwable -> {
                         log.error("Failed to receive transaction. Reason: " + throwable.getMessage());
@@ -207,7 +210,7 @@ public class BlockchainManager {
 
             // Add subscription to the list of subscriptions
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTION);
-            SubscriptionManager.getInstance().createSubscription(correlationId, sub);
+            SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
@@ -257,11 +260,11 @@ public class BlockchainManager {
                     }).
                     whenComplete((r, e) -> {
                         // remove subscription from subscription list
-                        SubscriptionManager.getInstance().removeSubscription(correlationId);
+                        SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     });
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.DETECT_ORPHANED_TRANSACTION);
-            SubscriptionManager.getInstance().createSubscription(correlationId, subscription);
+            SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
@@ -317,11 +320,11 @@ public class BlockchainManager {
                     }).
                     whenComplete((r, e) -> {
                         // remove subscription from subscription list
-                        SubscriptionManager.getInstance().removeSubscription(correlationId);
+                        SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     });
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
-            SubscriptionManager.getInstance().createSubscription(correlationId, subscription);
+            SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
             // This (should only) happen when the blockchainId is not found Or
             // if trying to monitor a monetary transaction via, e.g., Fabric
@@ -412,12 +415,12 @@ public class BlockchainManager {
                 }).
                 whenComplete((r, e) -> {
                     // remove subscription from subscription list
-                    SubscriptionManager.getInstance().removeSubscription(correlationId);
+                    SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainIdentifier, smartContractPath);
                 });
 
         // Add subscription to the list of subscriptions
         final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION);
-        SubscriptionManager.getInstance().createSubscription(correlationId, subscription);
+        SubscriptionManager.getInstance().createSubscription(correlationId, blockchainIdentifier, smartContractPath, subscription);
     }
 
     public void subscribeToEvent(
@@ -444,7 +447,7 @@ public class BlockchainManager {
                 .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
                 .doFinally(() -> {
                     // remove subscription from subscription list
-                    SubscriptionManager.getInstance().removeSubscription(correlationIdentifier);
+                    SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
                 })
                 .doOnError(throwable -> log.error("Failed to detect an occurrence. Reason:{}", throwable.getMessage()))
                 .subscribe(occurrence -> {
@@ -457,8 +460,30 @@ public class BlockchainManager {
                 });
 
         // Add subscription to the list of subscriptions
-        final Subscription subscription = new ObservableSubscription(result, SubscriptionType.EVENT_OCCURRENCES);
-        SubscriptionManager.getInstance().createSubscription(correlationIdentifier, subscription);
+        final Subscription subscription = new MonitorOccurrencesSubscription(result, SubscriptionType.EVENT_OCCURRENCES, eventIdentifier, outputParameters);
+        SubscriptionManager.getInstance().createSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath, subscription);
+    }
+
+    public void cancelEventSubscriptions(String blockchainId, String smartContractId, String correlationId, String eventIdentifier, List<Parameter> parameters) {
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainId) || Strings.isNullOrEmpty(smartContractId)) {
+            throw new InvalidScipParameterException();
+        }
+
+        // get all subscription keys with the specified eventId and params of the current blockchain and smart contract.
+        Collection<SubscriptionKey> keys = SubscriptionManager.getInstance().getAllSubscriptionIdsOfEvent(blockchainId, smartContractId, eventIdentifier, parameters);
+        this.cancelSubscriptions(correlationId, keys);
+    }
+
+    public void cancelFunctionSubscriptions(String blockchainId, String smartContractId, String correlationId, String functionIdentifier, List<Parameter> parameters) {
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainId) || Strings.isNullOrEmpty(smartContractId)) {
+            throw new InvalidScipParameterException();
+        }
+
+        // get all subscription keys with the specified eventId and params of the current blockchain and smart contract.
+        Collection<SubscriptionKey> keys = SubscriptionManager.getInstance().getAllSubscriptionIdsOfFunction(blockchainId, smartContractId, functionIdentifier, parameters);
+        this.cancelSubscriptions(correlationId, keys);
     }
 
     /**
@@ -473,6 +498,20 @@ public class BlockchainManager {
             return adapter.testConnection();
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private void cancelSubscriptions(String correlationId, Collection<SubscriptionKey> keys) {
+        // here, we just unsubscribe. The Blockchain Manager removes subscriptions from the list.
+        for (SubscriptionKey key : keys) {
+            // if the correlation id is provided, only remove subscriptions that has it.
+            if (!Strings.isNullOrEmpty(correlationId)) {
+                if (key.getCorrelationId().equals(correlationId)) {
+                    SubscriptionManager.getInstance().getSubscription(key.getCorrelationId(), key.getBlockchainId(), key.getSmartContractPath()).unsubscribe();
+                }
+            } else {
+                SubscriptionManager.getInstance().getSubscription(key.getCorrelationId(), key.getBlockchainId(), key.getSmartContractPath()).unsubscribe();
+            }
         }
     }
 }

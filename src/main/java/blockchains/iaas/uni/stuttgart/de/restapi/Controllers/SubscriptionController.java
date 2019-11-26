@@ -1,10 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import blockchains.iaas.uni.stuttgart.de.management.SubscriptionManager;
-import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.LinkCollectionResponse;
-import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
+import java.util.Collection;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -13,7 +9,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Collection;
+
+import blockchains.iaas.uni.stuttgart.de.management.SubscriptionManager;
+import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.response.LinkCollectionResponse;
+import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -33,35 +35,34 @@ public abstract class SubscriptionController {
 
     Response getSubscriptions(final SubscriptionType type, final UriInfo uriInfo) {
         final SubscriptionManager manager = SubscriptionManager.getInstance();
-        final Collection<String> subscriptions = manager.getAllSubscriptionIdsOfType(type);
+        final Collection<SubscriptionKey> subscriptions = manager.getAllSubscriptionKeysOfType(type);
         final LinkCollectionResponse response = new LinkCollectionResponse();
 
-        for (final String subscriptionId : subscriptions) {
-            response.add(UriUtil.generateSubResourceLink(uriInfo, subscriptionId, false, "self"));
+        for (final SubscriptionKey subscriptionKey : subscriptions) {
+            response.add(UriUtil.generateSubResourceLink(uriInfo, subscriptionKey.getCorrelationId(), false, "self"));
         }
 
         return Response.ok(response).build();
     }
 
-    private Response getSubscription(final String subscriptionId){
+    private Response getSubscription(final String subscriptionId, final String blockchainId, final String smartContractPath) {
         final SubscriptionManager manager = SubscriptionManager.getInstance();
-        final Subscription subscription = manager.getSubscription(subscriptionId);
+        final Subscription subscription = manager.getSubscription(subscriptionId, blockchainId, smartContractPath);
 
-        if(subscription != null) {
+        if (subscription != null) {
             final LinkCollectionResponse response = new LinkCollectionResponse();
             response.add(UriUtil.generateSelfLink(uriInfo));
             return Response.ok(response).build();
-        }
-        else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
 
-    Response removeSubscription(final String subscriptionId){
+    Response removeSubscription(final String subscriptionId, final String blockchainId, final String smartContractPath) {
         final SubscriptionManager manager = SubscriptionManager.getInstance();
-        final Subscription subscription = manager.getSubscription(subscriptionId);
+        final Subscription subscription = manager.getSubscription(subscriptionId, blockchainId, smartContractPath);
 
-        if(subscription!= null){
+        if (subscription != null) {
             subscription.unsubscribe();
             // removing the subscription from the list is done elsewhere (in the BlockchainManager)
         }
@@ -71,13 +72,27 @@ public abstract class SubscriptionController {
 
     @DELETE
     @Path("/{subscriptionId}")
-    public Response removeSubscriptionOperation(@PathParam("subscriptionId")final String subscriptionId){
-        return this.removeSubscription(subscriptionId);
+    public Response removeSubscriptionOperation(@PathParam("subscriptionId") final String subscriptionId) {
+        String blockchainId = uriInfo.getQueryParameters().getFirst("blockchain-id");
+        String smartContractPath = uriInfo.getQueryParameters().getFirst("address");
+
+        if (smartContractPath == null) {
+            smartContractPath = "";
+        }
+
+        return this.removeSubscription(subscriptionId, blockchainId, smartContractPath);
     }
 
     @GET
     @Path("/{subscriptionId}")
-    public Response getSubscriptionDetails(@PathParam("subscriptionId")final String subscriptionId){
-        return this.getSubscription(subscriptionId);
+    public Response getSubscriptionDetails(@PathParam("subscriptionId") final String subscriptionId) {
+        String blockchainId = uriInfo.getQueryParameters().getFirst("blockchain-id");
+        String smartContractPath = uriInfo.getQueryParameters().getFirst("address");
+
+        if (smartContractPath == null) {
+            smartContractPath = "";
+        }
+
+        return this.getSubscription(subscriptionId, blockchainId, smartContractPath);
     }
 }

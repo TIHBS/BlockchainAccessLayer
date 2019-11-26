@@ -54,8 +54,8 @@ public class BalService {
 
     @JsonRpcMethod
     public String Subscribe(
-            @JsonRpcOptional@JsonRpcParam("functionIdentifier") String functionIdentifier,
-            @JsonRpcOptional@JsonRpcParam("eventIdentifier") String eventIdentifier,
+            @JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
             @JsonRpcParam("parameters") List<Parameter> outputParameters,
             @JsonRpcParam("doc") double degreeOfConfidence,
             @JsonRpcParam("filter") String filter,
@@ -70,6 +70,30 @@ public class BalService {
 
         if (!Strings.isNullOrEmpty(eventIdentifier)) {
             manager.subscribeToEvent(blockchainId, smartContractPath, eventIdentifier, outputParameters, degreeOfConfidence, filter, callbackUrl, correlationId);
+        }
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String Cancel(@JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
+                         @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
+                         @JsonRpcParam("parameters") List<Parameter> parameters,
+                         @JsonRpcParam("correlationIdentifier") String correlationId) {
+        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
+            throw new InvalidScipParameterException();
+        }
+
+        if (Strings.isNullOrEmpty(functionIdentifier) && Strings.isNullOrEmpty(eventIdentifier) && parameters != null) {
+            throw new InvalidScipParameterException();
+        }
+
+        BlockchainManager manager = new BlockchainManager();
+
+        if (!Strings.isNullOrEmpty(functionIdentifier)) {
+            manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
+        } else {
+            manager.cancelEventSubscriptions(blockchainId, smartContractPath, correlationId, eventIdentifier, parameters);
         }
 
         return "OK";
