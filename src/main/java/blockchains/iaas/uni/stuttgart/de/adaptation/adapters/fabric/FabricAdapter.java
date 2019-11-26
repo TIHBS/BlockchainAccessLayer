@@ -27,6 +27,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -159,6 +160,11 @@ public class FabricAdapter implements BlockchainAdapter {
                 throw new InvokeSmartContractFunctionFailure(e.getMessage());
             }
         }
+    }
+
+    @Override
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        return null;
     }
 
     private Gateway.Builder getGatewayBuilder() throws IOException {

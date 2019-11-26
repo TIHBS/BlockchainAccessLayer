@@ -13,6 +13,9 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import javax.naming.OperationNotSupportedException;
 
@@ -35,6 +39,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.SmartContractNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -43,9 +48,12 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.abi.EventEncoder;
+import org.web3j.abi.EventValues;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Event;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.CipherException;
@@ -53,10 +61,13 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.Contract;
 import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Convert;
@@ -65,11 +76,13 @@ public class EthereumAdapter extends AbstractAdapter {
     private Credentials credentials;
     private final String nodeUrl;
     private final Web3j web3j;
+    private final DateTimeFormatter formatter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
 
     public EthereumAdapter(final String nodeUrl) {
         this.nodeUrl = nodeUrl;
         this.web3j = Web3j.build(new HttpService(this.nodeUrl));
+        this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
     public Web3j getWeb3j() {
@@ -326,8 +339,67 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(degreeOfConfidence);
+        List<TypeReference<?>> types = this.convertTypes(outputParameters);
+        final Event event = new Event(eventIdentifier, types);
+        final EthFilter ethFilter = this.generateFilter(smartContractAddress, event, types);
+        final PublishSubject<Occurrence> result = PublishSubject.create();
+
+        Disposable newEventObservable = web3j.ethLogFlowable(ethFilter).subscribe(log -> {
+            final EventValues values = Contract.staticExtractEventParameters(event, log);
+            List<Parameter> parameters = new ArrayList<>();
+
+            for (int i = 0; i < outputParameters.size(); i++) {
+                parameters.add(Parameter.builder()
+                        .name(outputParameters.get(i).getName())
+                        .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
+                        .build());
+            }
+
+            EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+
+            subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
+                    .thenAccept(tx -> {
+                        LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
+                        String timestampS = formatter.format(timestamp);
+                        result.onNext(Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build());
+                    })
+                    .exceptionally(error -> {
+                        result.onError(wrapEthereumExceptions(error));
+                        return null;
+                    });
+        }, e -> result.onError(wrapEthereumExceptions(e)));
+
+        return result.doFinally(newEventObservable::dispose);
+    }
+
+    @Override
     public boolean testConnection() {
         return this.testConnectionToNode();
+    }
+
+    private List<TypeReference<?>> convertTypes(List<Parameter> parameters) {
+        return parameters
+                .stream()
+                .map(param -> (EthereumTypeMapper.getEthereumType(param.getType())))
+                .map(TypeReference::create)
+                .collect(Collectors.toList());
+    }
+
+    private EthFilter generateFilter(String smartContractAddress, Event event, List<TypeReference<?>> types) {
+
+        EthFilter filter = new EthFilter(
+                DefaultBlockParameterName.LATEST,
+                DefaultBlockParameterName.LATEST,
+                smartContractAddress).
+                addSingleTopic(EventEncoder.encode(event));
+        // for each parameter, we add a null topic
+        for (TypeReference t : types) {
+            filter = filter.addNullTopic();
+        }
+
+        return filter;
     }
 
     private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,

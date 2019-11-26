@@ -16,9 +16,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -88,7 +89,22 @@ public interface BlockchainAdapter {
             List<Parameter> inputs,
             List<Parameter> outputs,
             double requiredConfidence
-    ) throws NotSupportedException, ParameterException;
+    ) throws NotSupportedException, BalException;
+
+    /**
+     * Monitors the occurrences of a given blockchain event.
+     *
+     * @param smartContractAddress the address of the smart contract that contains the event.
+     * @param eventIdentifier      the name of the event to be monitored.
+     * @param outputParameters     the list of output parameter names and types of the event to be monitored.
+     * @param degreeOfConfidence   the degree of confidence required for the transactions triggering the events.
+     * @param filter               C-style filter for the events that uses the output parameters.
+     * @return An observable that emits matching occurrences.
+     */
+    Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier,
+                                            List<Parameter> outputParameters,
+                                            double degreeOfConfidence,
+                                            String filter) throws BalException;
 
     /**
      * Tests the connection settings with the underlying blockchain

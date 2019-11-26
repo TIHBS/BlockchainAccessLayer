@@ -19,12 +19,14 @@ import java.util.concurrent.CompletableFuture;
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -272,6 +274,11 @@ public class BitcoinAdapter extends AbstractAdapter {
     @Override
     public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
         throw new NotSupportedException("Bitcoin does not support smart contract function invocations!");
+    }
+
+    @Override
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        return null;
     }
 
     @Override

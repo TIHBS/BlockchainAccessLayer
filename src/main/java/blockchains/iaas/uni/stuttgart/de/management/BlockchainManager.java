@@ -420,6 +420,47 @@ public class BlockchainManager {
         SubscriptionManager.getInstance().createSubscription(correlationId, subscription);
     }
 
+    public void subscribeToEvent(
+            final String blockchainIdentifier,
+            final String smartContractPath,
+            final String eventIdentifier,
+            final List<Parameter> outputParameters,
+            final double degreeOfConfidence,
+            final String filter,
+            final String callbackUrl,
+            final String correlationIdentifier) {
+
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainIdentifier)
+                || Strings.isNullOrEmpty(smartContractPath)
+                || Strings.isNullOrEmpty(eventIdentifier)
+                || MathUtils.doubleCompare(degreeOfConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(degreeOfConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
+        Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
+                .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
+                .doFinally(() -> {
+                    // remove subscription from subscription list
+                    SubscriptionManager.getInstance().removeSubscription(correlationIdentifier);
+                })
+                .doOnError(throwable -> log.error("Failed to detect an occurrence. Reason:{}", throwable.getMessage()))
+                .subscribe(occurrence -> {
+                    if (occurrence != null) {
+                        CallbackManager.getInstance().sendCallback(callbackUrl,
+                                ScipMessageTranslator.getSubscriptionResponseMessage(correlationIdentifier, occurrence.getParameters(), occurrence.getIsoTimestamp()));
+                    } else {
+                        log.error("detected occurrence is null!");
+                    }
+                });
+
+        // Add subscription to the list of subscriptions
+        final Subscription subscription = new ObservableSubscription(result, SubscriptionType.EVENT_OCCURRENCES);
+        SubscriptionManager.getInstance().createSubscription(correlationIdentifier, subscription);
+    }
+
     /**
      * Tests whether the connection with the specified blockchain instance is functioning correctly
      *

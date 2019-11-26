@@ -13,11 +13,14 @@ package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
 import java.util.List;
 
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +48,29 @@ public class BalService {
         BlockchainManager manager = new BlockchainManager();
         manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
                 requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String Subscribe(
+            @JsonRpcOptional@JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcOptional@JsonRpcParam("eventIdentifier") String eventIdentifier,
+            @JsonRpcParam("parameters") List<Parameter> outputParameters,
+            @JsonRpcParam("doc") double degreeOfConfidence,
+            @JsonRpcParam("filter") String filter,
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationIdentifier") String correlationId) {
+        log.info("Subscribe method is executed!");
+        BlockchainManager manager = new BlockchainManager();
+
+        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
+            throw new InvalidScipParameterException();
+        }
+
+        if (!Strings.isNullOrEmpty(eventIdentifier)) {
+            manager.subscribeToEvent(blockchainId, smartContractPath, eventIdentifier, outputParameters, degreeOfConfidence, filter, callbackUrl, correlationId);
+        }
 
         return "OK";
     }
