@@ -282,7 +282,11 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public boolean testConnection() {
-        return !Strings.isNullOrEmpty(client.getNodeVersion());
+    public String testConnection() {
+        try {
+            return String.valueOf(!Strings.isNullOrEmpty(client.getNodeVersion()));
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 }

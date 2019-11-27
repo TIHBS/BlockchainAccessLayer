@@ -106,14 +106,14 @@ public class EthereumAdapter extends AbstractAdapter {
         }
     }
 
-    boolean testConnectionToNode() {
+    String testConnectionToNode() {
         try {
             log.info("Connected to Ethereum client: URL: {}, Version: {}", this.nodeUrl, this.web3j.web3ClientVersion().send().getWeb3ClientVersion());
-            return true;
+            return "true";
         } catch (IOException e) {
             log.error("Failed to connect to Ethereum client at URL: {}. Reason: {}", this.nodeUrl, e.getMessage());
 
-            return false;
+            return e.getMessage();
         }
     }
 
@@ -375,7 +375,7 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public boolean testConnection() {
+    public String testConnection() {
         return this.testConnectionToNode();
     }
 

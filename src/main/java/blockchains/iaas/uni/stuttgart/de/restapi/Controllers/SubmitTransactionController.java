@@ -38,7 +38,6 @@ public class SubmitTransactionController extends SubscriptionController {
     @Path("/dummy")
     @Consumes( {MediaType.APPLICATION_JSON})
     public Response dummyEndPoint(Object response) {
-
         log.info("dummy path received the following response: {}", response.toString());
         return Response.accepted().build();
     }

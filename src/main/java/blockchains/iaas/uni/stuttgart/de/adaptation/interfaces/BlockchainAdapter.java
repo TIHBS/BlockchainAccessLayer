@@ -111,5 +111,5 @@ public interface BlockchainAdapter {
      *
      * @return true if the connection is successful, false otherwise.
      */
-    boolean testConnection();
+    String testConnection();
 }

@@ -492,12 +492,12 @@ public class BlockchainManager {
      * @param blockchainIdentifier the identifier of the blockchain instance to test.
      * @return true if the connection is functional, false otherwise.
      */
-    public boolean testConnection(String blockchainIdentifier) {
+    public String testConnection(String blockchainIdentifier) {
         try {
             final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainIdentifier);
             return adapter.testConnection();
         } catch (Exception e) {
-            return false;
+            return e.getMessage();
         }
     }
 

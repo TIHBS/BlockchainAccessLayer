@@ -52,7 +52,7 @@ public class ConnectionProfilesController {
 
     @Path("test")
     @GET
-    public boolean testConnection() {
+    public String testConnection() {
         String blockchainId = this.uriInfo.getQueryParameters().getFirst("blockchain-id");
         return (new BlockchainManager()).testConnection(blockchainId);
     }

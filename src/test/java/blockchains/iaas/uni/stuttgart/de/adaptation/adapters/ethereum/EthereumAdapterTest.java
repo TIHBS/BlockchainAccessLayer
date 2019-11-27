@@ -79,7 +79,7 @@ class EthereumAdapterTest {
 
     @Test
     void testConnectionToNode() {
-        Assertions.assertTrue(this.adapter.testConnectionToNode());
+        Assertions.assertEquals("true", this.adapter.testConnectionToNode());
     }
 
     @Test

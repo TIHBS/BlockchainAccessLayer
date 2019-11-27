@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
@@ -34,7 +33,6 @@ import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
 import lombok.Builder;
 import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
 import org.hyperledger.fabric.gateway.Gateway;
 import org.hyperledger.fabric.gateway.Network;
 import org.hyperledger.fabric.gateway.Wallet;
@@ -101,6 +99,7 @@ public class FabricAdapter implements BlockchainAdapter {
         String channelName;
         String chaincodeName;
         String smartContractName = null;
+        CompletableFuture<Transaction> result = new CompletableFuture<>();
 
         if (outputs.size() > 1) {
             throw new ParameterException("Hyperledger Fabric supports only at most a single return value.");
@@ -134,9 +133,11 @@ public class FabricAdapter implements BlockchainAdapter {
                     }
 
                     String[] params = inputs.stream().map(Parameter::getValue).toArray(String[]::new);
-                    byte[] resultAsBytes = contract.submitTransaction(functionIdentifier, params);
 
-                    CompletableFuture<Transaction> result = new CompletableFuture<>();
+                    byte[] resultAsBytes;
+
+                    resultAsBytes = contract.submitTransaction(functionIdentifier, params);
+
                     Transaction resultT = new Transaction();
 
                     if (outputs.size() == 1) {
@@ -153,17 +154,21 @@ public class FabricAdapter implements BlockchainAdapter {
                     }
 
                     resultT.setState(TransactionState.RETURN_VALUE);
+
                     result.complete(resultT);
-                    return result;
                 }
-            } catch (IOException | ContractException | TimeoutException | InterruptedException e) {
-                throw new InvokeSmartContractFunctionFailure(e.getMessage());
+            } catch (Exception e) {
+                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e.getMessage()));
             }
+
+            return result;
         }
     }
 
     @Override
-    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String
+            eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws
+            BalException {
         return null;
     }
 
@@ -183,11 +188,11 @@ public class FabricAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public boolean testConnection() {
+    public String testConnection() {
         try (Gateway gateway = this.getGatewayBuilder().connect()) {
-            return true;
+            return String.valueOf(true);
         } catch (IOException e) {
-            return false;
+            return e.getMessage();
         }
     }
 }
