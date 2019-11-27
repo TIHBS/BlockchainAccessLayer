@@ -39,14 +39,14 @@ public class BlockchainAdapterFactory {
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
-    public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile) throws Exception {
+    public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile, String blockchainId) throws Exception {
         try {
             if (connectionProfile instanceof EthereumConnectionProfile) {
                 return createEthereumAdapter((EthereumConnectionProfile) connectionProfile);
             } else if (connectionProfile instanceof BitcoinConnectionProfile) {
                 return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
             } else if (connectionProfile instanceof FabricConnectionProfile) {
-                return createFabricAdapter((FabricConnectionProfile) connectionProfile);
+                return createFabricAdapter((FabricConnectionProfile) connectionProfile, blockchainId);
             } else {
                 log.error("Invalid connectionProfile type!");
                 return null;
@@ -81,11 +81,9 @@ public class BlockchainAdapterFactory {
         return result;
     }
 
-    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway) {
+    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway, String blockchainId) {
         return FabricAdapter.builder()
-                .connectionProfilePath(gateway.getConnectionProfilePath())
-                .userName(gateway.getUserName())
-                .walletPath(gateway.getWalletPath())
+                .blockchainId(blockchainId)
                 .build();
     }
 }

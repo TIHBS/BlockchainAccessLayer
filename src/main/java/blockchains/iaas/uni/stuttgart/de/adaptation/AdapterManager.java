@@ -63,7 +63,7 @@ public class AdapterManager {
         }
 
         try {
-            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile);
+            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile, blockchainId);
             map.put(blockchainId, ImmutablePair.of(adapter, connectionProfile));
             return Objects.requireNonNull(adapter);
         } catch (Exception e) {

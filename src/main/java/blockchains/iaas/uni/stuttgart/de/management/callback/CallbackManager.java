@@ -109,7 +109,7 @@ public class CallbackManager {
             }
 
             if (response.getIsoTimestamp() != null) {
-                builder = builder.param("timeout", response.getIsoTimestamp());
+                builder = builder.param("timestamp", response.getIsoTimestamp());
             }
 
             if (response.getOccurrences() != null) {

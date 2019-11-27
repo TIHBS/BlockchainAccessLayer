@@ -34,6 +34,7 @@ public class ConnectionProfilesManager {
     private static final Logger log = LoggerFactory.getLogger(ConnectionProfilesManager.class);
     public static final Path initialConfigurationFilePath = Paths.get(System.getProperty("user.home"), ".bal", "connectionProfiles.json");
     private static ConnectionProfilesManager instance;
+    private ConnectionProfileListener listener;
 
     private Map<String, AbstractConnectionProfile> connectionProfilesMap;
     private ObjectReader reader;
@@ -62,10 +63,18 @@ public class ConnectionProfilesManager {
      */
     public void loadConnectionProfiles(Map<String, AbstractConnectionProfile> newMap) {
         this.connectionProfilesMap.putAll(newMap);
+
+        if (listener != null) {
+            listener.connectionProfileChanged();
+        }
     }
 
     public void resetConnectionProfiles() {
         this.connectionProfilesMap.clear();
+
+        if (listener != null) {
+            listener.connectionProfileChanged();
+        }
     }
 
     public void loadConnectionProfilesFromFile(File file) {
@@ -86,14 +95,6 @@ public class ConnectionProfilesManager {
         }
     }
 
-    private void loadInitialConnectionProfilesIfExist() {
-        File initialFile = initialConfigurationFilePath.toFile();
-
-        if (initialFile.exists() && initialFile.isFile()) {
-            this.loadConnectionProfilesFromFile(initialFile);
-        }
-    }
-
     public static ConnectionProfilesManager getInstance() {
         if (instance == null) {
             instance = new ConnectionProfilesManager();
@@ -103,11 +104,23 @@ public class ConnectionProfilesManager {
         return instance;
     }
 
+    public void setListener(ConnectionProfileListener listener) {
+        this.listener = listener;
+    }
+
     /**
      * Should only be used for testing purposes!
      */
     protected static void resetInstance() {
         instance = null;
+    }
+
+    private void loadInitialConnectionProfilesIfExist() {
+        File initialFile = initialConfigurationFilePath.toFile();
+
+        if (initialFile.exists() && initialFile.isFile()) {
+            this.loadConnectionProfilesFromFile(initialFile);
+        }
     }
 
     // TODO separate keystore management from gateway management
