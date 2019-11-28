@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BooleanExpressionEvaluator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
@@ -125,7 +126,8 @@ public class FabricAdapter implements BlockchainAdapter {
             String smartContractAddress,
             String eventIdentifier,
             List<Parameter> outputParameters,
-            double degreeOfConfidence, String filter) throws BalException {
+            double degreeOfConfidence,
+            String filter) throws BalException {
         SmartContractPathElements path = this.parsePathElements(smartContractAddress);
         Contract contract = GatewayManager.getInstance().getContract(blockchainId, path.channel, path.chaincode);
         final PublishSubject<Occurrence> result = PublishSubject.create();
@@ -145,11 +147,18 @@ public class FabricAdapter implements BlockchainAdapter {
                     parameters.add(parameter);
                 }
 
-                result.onNext(Occurrence
-                        .builder()
-                        .parameters(parameters)
-                        .isoTimestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC")).format(event.getTransactionEvent().getTimestamp().toInstant()))
-                        .build());
+                try {
+                    if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
+
+                        result.onNext(Occurrence
+                                .builder()
+                                .parameters(parameters)
+                                .isoTimestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC")).format(event.getTransactionEvent().getTimestamp().toInstant()))
+                                .build());
+                    }
+                } catch (Exception e) {
+                    result.onError(new InvalidScipParameterException(e.getMessage()));
+                }
             }
         });
 

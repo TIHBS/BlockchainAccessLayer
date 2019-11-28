@@ -55,7 +55,7 @@ class FabricAdapterTest {
     public void initialize() {
         String connectionProfile = "{ \"fabric-0\" : {\n" +
                 "    \"@type\": \"fabric\",\n" +
-                "    \"walletPath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\fabcar\\\\javascript\\\\wallet\",\n" +
+                "    \"walletPath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\ems\\\\javascript\\\\wallet\",\n" +
                 "    \"userName\": \"user1\",\n" +
                 "    \"connectionProfilePath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\first-network\\\\connection-org1.json\"\n" +
                 "  }}";

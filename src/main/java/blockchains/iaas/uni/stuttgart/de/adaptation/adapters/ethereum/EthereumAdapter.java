@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import javax.naming.OperationNotSupportedException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BooleanExpressionEvaluator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
@@ -357,18 +358,21 @@ public class EthereumAdapter extends AbstractAdapter {
                         .build());
             }
 
-            EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+            if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
 
-            subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
-                    .thenAccept(tx -> {
-                        LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
-                        String timestampS = formatter.format(timestamp);
-                        result.onNext(Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build());
-                    })
-                    .exceptionally(error -> {
-                        result.onError(wrapEthereumExceptions(error));
-                        return null;
-                    });
+                EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+
+                subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
+                        .thenAccept(tx -> {
+                            LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
+                            String timestampS = formatter.format(timestamp);
+                            result.onNext(Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build());
+                        })
+                        .exceptionally(error -> {
+                            result.onError(wrapEthereumExceptions(error));
+                            return null;
+                        });
+            }
         }, e -> result.onError(wrapEthereumExceptions(e)));
 
         return result.doFinally(newEventObservable::dispose);

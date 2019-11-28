@@ -18,6 +18,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,10 @@ public class BooleanExpressionEvaluator {
     private static final Logger log = LoggerFactory.getLogger(BooleanExpressionEvaluator.class);
 
     public static boolean evaluate(String expression, List<Parameter> parameters) throws Exception {
-
+        if (Strings.isNullOrEmpty(expression)) {
+            return true;
+        }
+        
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine jsEngine = mgr.getEngineByName("JavaScript");
 
