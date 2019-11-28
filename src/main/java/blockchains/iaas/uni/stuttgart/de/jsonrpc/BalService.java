@@ -76,10 +76,10 @@ public class BalService {
     }
 
     @JsonRpcMethod
-    public String Cancel(@JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
-                         @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
-                         @JsonRpcParam("parameters") List<Parameter> parameters,
-                         @JsonRpcParam("correlationIdentifier") String correlationId) {
+    public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
+                              @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
+                              @JsonRpcParam("parameters") List<Parameter> parameters,
+                              @JsonRpcParam("correlationIdentifier") String correlationId) {
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
         }
