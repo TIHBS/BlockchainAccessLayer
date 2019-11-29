@@ -142,6 +142,7 @@ public class FabricAdapter implements BlockchainAdapter {
                     Parameter parameter = Parameter
                             .builder()
                             .name(outputParameters.get(0).getName())
+                            .type(outputParameters.get(0).getType())
                             .value(new String(event.getPayload().get(), StandardCharsets.UTF_8))
                             .build();
                     parameters.add(parameter);

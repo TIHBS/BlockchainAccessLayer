@@ -354,14 +354,13 @@ public class EthereumAdapter extends AbstractAdapter {
             for (int i = 0; i < outputParameters.size(); i++) {
                 parameters.add(Parameter.builder()
                         .name(outputParameters.get(i).getName())
+                        .type(outputParameters.get(i).getType())
                         .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
                         .build());
             }
 
             if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
-
                 EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
-
                 subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
                         .thenAccept(tx -> {
                             LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);

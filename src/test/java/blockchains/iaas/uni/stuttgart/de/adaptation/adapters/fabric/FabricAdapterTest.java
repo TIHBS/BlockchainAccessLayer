@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  *
  * This ensures that the SDK is able to find the orderer and network peers.
  */
-
+@Disabled
 class FabricAdapterTest {
     private static final String NETWORK_NAME = "fabric-0";
     private static final String CHANNEL_NAME = "mychannel";

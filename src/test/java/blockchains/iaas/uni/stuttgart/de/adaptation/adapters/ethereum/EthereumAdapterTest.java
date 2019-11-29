@@ -44,6 +44,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
  */
+@Disabled
 class EthereumAdapterTest {
     private static final String NETWORK_NAME = "eth-0";
     private static final String MESSAGE = "This was not a difficult task!";
