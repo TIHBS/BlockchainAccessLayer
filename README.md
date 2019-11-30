@@ -1,6 +1,6 @@
 # Blockchain Access Layer (BAL)
 
-The project is a Java 8 web application that uses Jersey to expose a RESTful API.
+The project is a Java 8 web application that uses Jersey to expose a RESTful and a JSON-RPC APIs.
 
 ## Configuration
 
@@ -25,12 +25,9 @@ mvn install
 Then, the WAR file (which can be found in the folder 'target' generated after 
 a successful build) can be deployed on an Apache Tomcat server.
 
-**Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core node. [The used library](https://github.com/pythonmax/btcd-cli4j)
-is forked from an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions
-of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide
-a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
+**Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core node. [The used library](https://github.com/pythonmax/btcd-cli4j) is forked from an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
 
-## Accessing the API
+## Accessing the RESTful API
 
 The application exposes an asynchronous RESTful API to subscribe and unsubscribe from the provided operations.
 
@@ -132,6 +129,7 @@ ensure the following:
 
 ## Case Study (For BlockME)
 
+[Blockchain Modeling Extension (BlockME)](https://link.springer.com/article/10.1007/s00450-019-00399-5) is an extension to BPMN 2.0 that allows business processes to communicate with heterogeneous blockchains.
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
 
