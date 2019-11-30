@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // todo this class should persist subscriptions to stable storage!
+// todo rethink subscription logic!
 public class SubscriptionManager {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
     private static SubscriptionManager instance = null;
@@ -48,7 +49,9 @@ public class SubscriptionManager {
     public void createSubscription(String subscriptionId, String blockchainId, String smartContractPath, Subscription subscription) {
         SubscriptionKey key = SubscriptionKey.builder().smartContractPath(smartContractPath).blockchainId(blockchainId).correlationId(subscriptionId).build();
         if (this.subscriptions.containsKey(key)) {
-            log.error("subscription-id <{}> already exists!", key);
+            log.error("Subscription key <{}> already exists! Not subscribing!", key);
+            // to not keep any loose ends
+            subscription.unsubscribe();
         } else {
             this.subscriptions.put(key, subscription);
         }
@@ -97,12 +100,18 @@ public class SubscriptionManager {
         return this.getAllSubscriptionIdsOfIdentifiable(blockchainId, smartContractPath, id, inputs, SubscriptionType.EVENT_OCCURRENCES);
     }
 
+    Map<SubscriptionKey, Subscription> getAllSubscriptions() {
+        return this.subscriptions;
+    }
+
     private Collection<SubscriptionKey> getAllSubscriptionIdsOfIdentifiable(String blockchainId, String smartContractPath, String id, List<Parameter> inputs, SubscriptionType type) {
         return this.subscriptions
                 .keySet()
                 .stream()
                 .filter(subscriptionKey -> {
-                            if (subscriptionKey.getBlockchainId().equals(blockchainId) && subscriptionKey.getSmartContractPath().equals(smartContractPath)) {
+                            if (subscriptionKey.getBlockchainId().equals(blockchainId)
+                                    && subscriptionKey.getSmartContractPath().equals(smartContractPath)
+                                    && this.subscriptions.get(subscriptionKey) instanceof MonitorOccurrencesSubscription) {
                                 MonitorOccurrencesSubscription subscription = (MonitorOccurrencesSubscription) this.subscriptions.get(subscriptionKey);
                                 if (subscription.getType().equals(type)) {
                                     if (id == null || inputs == null)

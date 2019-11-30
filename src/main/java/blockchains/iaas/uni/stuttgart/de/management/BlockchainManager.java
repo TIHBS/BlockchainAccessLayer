@@ -443,6 +443,9 @@ public class BlockchainManager {
         }
 
         final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
+
+        // first, we cancel previous identical subscriptions.
+        this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
         Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
                 .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
                 .doFinally(() -> {
