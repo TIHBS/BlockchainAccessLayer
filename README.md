@@ -1,7 +1,9 @@
 # Blockchain Access Layer
-The project is a Java 8 web application that uses Jersey to expose a RESTful API.
+
+The project is a Java 8 web application that uses Jersey to expose a RESTful and a JSON-RPC APIs.
 
 ## Configuration
+
 The blockchain access layer needs to be able to communicate with a [geth node](https://github.com/ethereum/go-ethereum)
 which has RPC connections enabled.
 Furthermore, the layer directly accesses the keystore file holding the private key of an Ethereum account used for sending
@@ -14,6 +16,7 @@ The configuration file that can be used to configure these aspects (communicatio
 
 
 ## Building and Deployment
+
 After cloning, you can build the project and package it into a WAR
 file using the following command:
 ```
@@ -22,12 +25,10 @@ mvn install
 Then, the WAR file (which can be found in the folder 'target' generated after 
 a successful build) can be deployed on an Apache Tomcat server.
 
-**Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core node. [The used library](https://github.com/pythonmax/btcd-cli4j)
-is forked from an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions
-of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide
-a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
+**Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core node. [The used library](https://github.com/pythonmax/btcd-cli4j) is forked from an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
 
-## Accessing the API
+## Accessing the RESTful API
+
 The application exposes an asynchronous RESTful API to subscribe and unsubscribe from the provided operations.
 
 **To summarize:**
@@ -59,6 +60,7 @@ paths to manually delete the corresponding subscription:
 ```
 
 ## Running a Local geth Node
+
 A geth node is used to access the Ethereum network. For development purposes, it is advised
 not to connect to the main Ethereum network, but rather to one of the testnets.
 (another, more difficult option would be to run a local private Ethereum network).
@@ -84,6 +86,7 @@ To start a geth node in the fast-sync mode, execute the following command:
 please replace _localhost_ with the ip address of the computer running the node.
 
 ## Running a Local Bitcoin Core Node
+
 A Bitcoin Core node (or _bitcoind_ node) is used to access the Bitcoin network. For development purposes, it is advised
 not to connect to the main Bitcoin network, but rather to one of the testnets.
 (another, more difficult option would be to run a local private Bitcoin network).
@@ -104,9 +107,11 @@ connection, and the availability of peers).
 bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the node> -rpcuser=<rpc username> -rpcpassword=<rpc password>
 ```
 ## Setting-up a Hyperledger Fabric Network
+
 Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
 ### Note
+
 The included Fabric unit test depends on the [FabCar official example](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html), so in order to run it
 ensure the following:
 
@@ -122,6 +127,8 @@ ensure the following:
    This ensures that the SDK is able to find the orderer and network peers.
 
 ## Case Study (For BlockME)
+
+[Blockchain Modeling Extension (BlockME)](https://link.springer.com/article/10.1007/s00450-019-00399-5) is an extension to BPMN 2.0 that allows business processes to communicate with heterogeneous blockchains.
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
 
@@ -167,6 +174,3 @@ You can find the details about the resulting testnet3 Bitcoin transaction [here]
 * a _bitcoind_ (Bitcoin Core) node is running on a virtual machine in a VSphere accessible from the local network.
 * The blockchain access layer is running in a local Tomcat server listening to port 8081
 * The camunda engine is running in a local Tomcat server litening to port 8080
-
-## Case Study (For BlockME2)
-Detailed case study for BlockME2 coming soon!
