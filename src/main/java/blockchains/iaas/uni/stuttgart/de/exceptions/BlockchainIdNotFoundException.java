@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.exceptions;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,7 +9,13 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class BlockchainIdNotFoundException extends RuntimeException {
+package blockchains.iaas.uni.stuttgart.de.exceptions;
+
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
+
+@JsonRpcError(code = ExceptionCode.NotFound, message = "The specified blockchain-id cannot be found")
+public class BlockchainIdNotFoundException extends BalException {
+
     public BlockchainIdNotFoundException() {
         super();
     }
@@ -20,15 +24,8 @@ public class BlockchainIdNotFoundException extends RuntimeException {
         super(message);
     }
 
-    public BlockchainIdNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public BlockchainIdNotFoundException(Throwable cause) {
-        super(cause);
-    }
-
-    protected BlockchainIdNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    @Override
+    public int getCode() {
+        return ExceptionCode.NotFound;
     }
 }

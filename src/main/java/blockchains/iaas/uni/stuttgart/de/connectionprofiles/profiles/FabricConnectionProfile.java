@@ -8,11 +8,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
 import java.util.Properties;
 
-public class FabricGateway extends AbstractGateway {
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+
+public class FabricConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "hyperledger.fabric.";
     private static final String WALLET_PATH = PREFIX + "walletPath";
     private static final String USER_NAME = PREFIX + "userName";
@@ -21,10 +23,10 @@ public class FabricGateway extends AbstractGateway {
     private String userName;
     private String connectionProfilePath;
 
-    public FabricGateway() {
+    public FabricConnectionProfile() {
     }
 
-    public FabricGateway(String walletPath, String userName, String connectionProfilePath) {
+    public FabricConnectionProfile(String walletPath, String userName, String connectionProfilePath) {
         this.walletPath = walletPath;
         this.userName = userName;
         this.connectionProfilePath = connectionProfilePath;
@@ -56,7 +58,7 @@ public class FabricGateway extends AbstractGateway {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(WALLET_PATH, this.walletPath);
         result.setProperty(USER_NAME, this.userName);
         result.setProperty(CONNECTION_PROFILE_PATH, this.connectionProfilePath);

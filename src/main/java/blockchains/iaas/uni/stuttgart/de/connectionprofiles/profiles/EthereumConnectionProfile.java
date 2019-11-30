@@ -1,6 +1,5 @@
-/********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,12 +7,14 @@
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+ *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
 import java.util.Properties;
 
-public class EthereumGateway extends AbstractGateway {
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+
+public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
     public static final String NODE_URL = PREFIX + "nodeUrl";
     public static final String KEYSTORE_PATH = PREFIX + "keystorePath";
@@ -22,10 +23,10 @@ public class EthereumGateway extends AbstractGateway {
     private String keystorePath;
     private String keystorePassword;
 
-    public EthereumGateway() {
+    public EthereumConnectionProfile() {
     }
 
-    public EthereumGateway(String nodeUrl, String keystorePath, String keystorePassword) {
+    public EthereumConnectionProfile(String nodeUrl, String keystorePath, String keystorePassword) {
         this.nodeUrl = nodeUrl;
         this.keystorePath = keystorePath;
         this.keystorePassword = keystorePassword;
@@ -57,11 +58,13 @@ public class EthereumGateway extends AbstractGateway {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(NODE_URL, this.nodeUrl);
         result.setProperty(KEYSTORE_PASSWORD, this.keystorePassword);
         result.setProperty(KEYSTORE_PATH, this.keystorePath);
 
         return result;
     }
+
+
 }

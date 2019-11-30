@@ -10,155 +10,204 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BooleanExpressionEvaluator;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import org.apache.http.MethodNotSupportedException;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.ContractException;
+import org.hyperledger.fabric.gateway.ContractEvent;
 import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Builder
 public class FabricAdapter implements BlockchainAdapter {
-    private String walletPath;
-    private String userName;
-    private String connectionProfilePath;
+    private String blockchainId;
     private static final Logger log = LoggerFactory.getLogger(FabricAdapter.class);
-
-    public String getWalletPath() {
-        return walletPath;
-    }
-
-    public void setWalletPath(String walletPath) {
-        this.walletPath = walletPath;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getConnectionProfilePath() {
-        return connectionProfilePath;
-    }
-
-    public void setConnectionProfilePath(String connectionProfilePath) {
-        this.connectionProfilePath = connectionProfilePath;
-    }
 
     @Override
     public CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence
 
-
-
-    ) throws InvalidTransactionException, MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support submitting monetary transactions!");
+    ) throws InvalidTransactionException, NotSupportedException {
+        throw new NotSupportedException("Fabric does not support submitting monetary transactions!");
     }
 
     @Override
-    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support receiving monetary transactions!");
+    public Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support receiving monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support monetary transactions!");
+    public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Fabric does not support monetary transactions!");
+    public CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws NotSupportedException {
+        throw new NotSupportedException("Fabric does not support monetary transactions!");
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) {
-        ScipParser parser = ScipParser.parse(functionIdentifier);
-        String[] pathSegments = parser.getFunctionPathSegments();
-        String channelName;
-        String chaincodeName;
-        String smartContractName = null;
-        CompletableFuture<Transaction> result;
+    public CompletableFuture<Transaction> invokeSmartContract(
+            String smartContractPath,
+            String functionIdentifier,
+            List<Parameter> inputs,
+            List<Parameter> outputs,
+            double requiredConfidence) throws BalException {
+        if (outputs.size() > 1) {
+            throw new ParameterException("Hyperledger Fabric supports only at most a single return value.");
+        }
+        CompletableFuture<Transaction> result = new CompletableFuture<>();
+        SmartContractPathElements path = this.parsePathElements(smartContractPath);
 
-        if (pathSegments.length != 3 && pathSegments.length != 2) {
-            String message = String.format("Unable to identify the path to the requested function. Expected path segements: 3 or 2. Found path segments: %s", pathSegments.length);
-            log.error(message);
-            result = new CompletableFuture<>();
-            result.completeExceptionally(new InvokeSmartContractFunctionFailure(message));
-        } else {
-            channelName = pathSegments[0];
-            chaincodeName = pathSegments[1];
-
-            if (pathSegments.length == 3) {
-                smartContractName = pathSegments[2];
-            }
-
-            final String FUNCTION_NAME = parser.getFunctionName();
-
-            // Load an existing wallet holding identities used to access the network.
-            Path walletDirectory = Paths.get(walletPath);
+        try {
+            Contract contract = GatewayManager.getInstance().getContract(blockchainId, path.channel, path.chaincode);
+            String[] params = inputs.stream().map(Parameter::getValue).toArray(String[]::new);
 
             try {
-                Wallet wallet = Wallet.createFileSystemWallet(walletDirectory);
+                byte[] resultAsBytes = contract.submitTransaction(functionIdentifier, params);
+                Transaction resultT = new Transaction();
 
-                // Path to a connection profile describing the network.
-                Path networkConfigFile = Paths.get(this.connectionProfilePath);
-
-                // Configure the gateway connection used to access the network.
-                Gateway.Builder builder = Gateway.createBuilder()
-                        .identity(wallet, userName)
-                        .networkConfig(networkConfigFile);
-
-                // Create a gateway connection
-                try (Gateway gateway = builder.connect()) {
-                    // Obtain a smart contract deployed on the network.
-                    Network network = gateway.getNetwork(channelName);
-                    Contract contract;
-
-                    if (smartContractName != null) {
-                        contract = network.getContract(chaincodeName, smartContractName);
-                    } else {
-                        contract = network.getContract(chaincodeName);
-                    }
-
-                    String[] params = parameters.stream().map(SmartContractFunctionArgument::getValue).toArray(String[]::new);
-                    byte[] resultAsBytes = contract.submitTransaction(FUNCTION_NAME, params);
-
-                    String resultS = new String(resultAsBytes, StandardCharsets.UTF_8);
-                    log.info(resultS);
-                    result = new CompletableFuture<>();
-                    Transaction resultT = new Transaction();
-                    resultT.setReturnValue(resultS);
-                    resultT.setState(TransactionState.RETURN_VALUE);
-                    result.complete(resultT);
+                if (outputs.size() == 1) {
+                    Parameter resultP = Parameter
+                            .builder()
+                            .name(outputs.get(0).getName())
+                            .value(new String(resultAsBytes, StandardCharsets.UTF_8))
+                            .build();
+                    resultT.setReturnValues(Collections.singletonList(resultP));
+                    log.info(resultP.getValue());
+                } else if (outputs.size() == 0) {
+                    log.info("Fabric transaction without a return value executed!");
+                    resultT.setReturnValues(Collections.emptyList());
                 }
-            } catch (IOException | ContractException | TimeoutException | InterruptedException e) {
-                result = new CompletableFuture<>();
-                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e));
+
+                resultT.setState(TransactionState.RETURN_VALUE);
+                result.complete(resultT);
+            } catch (Exception e) {
+                // exceptions at this level are invocation exceptions. They should be sent asynchronously to the client app.
+                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e.getMessage()));
             }
+        } catch (Exception e) {
+            // this is a synchronous exception.
+            throw new BlockchainNodeUnreachableException(e.getMessage());
         }
 
         return result;
+    }
+
+    @Override
+    public Observable<Occurrence> subscribeToEvent(
+            String smartContractAddress,
+            String eventIdentifier,
+            List<Parameter> outputParameters,
+            double degreeOfConfidence,
+            String filter) throws BalException {
+        SmartContractPathElements path = this.parsePathElements(smartContractAddress);
+        Contract contract = GatewayManager.getInstance().getContract(blockchainId, path.channel, path.chaincode);
+        final PublishSubject<Occurrence> result = PublishSubject.create();
+
+        Consumer<ContractEvent> consumer = contract.addContractListener(event -> {
+            log.info(event.toString());
+            if (event.getName().equals(eventIdentifier)) {
+                // todo try to parse the returned value according to the outputParameters
+                List<Parameter> parameters = new ArrayList<>();
+
+                if (event.getPayload().isPresent() && outputParameters.size() > 0) {
+                    Parameter parameter = Parameter
+                            .builder()
+                            .name(outputParameters.get(0).getName())
+                            .type(outputParameters.get(0).getType())
+                            .value(new String(event.getPayload().get(), StandardCharsets.UTF_8))
+                            .build();
+                    parameters.add(parameter);
+                }
+
+                try {
+                    if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
+
+                        result.onNext(Occurrence
+                                .builder()
+                                .parameters(parameters)
+                                .isoTimestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC")).format(event.getTransactionEvent().getTimestamp().toInstant()))
+                                .build());
+                    }
+                } catch (Exception e) {
+                    result.onError(new InvalidScipParameterException(e.getMessage()));
+                }
+            }
+        });
+
+        return result.doFinally(() -> contract.removeContractListener(consumer));
+    }
+
+    @Override
+    public String testConnection() {
+        try {
+            Gateway gateway = GatewayManager.getInstance().getGateway(blockchainId);
+            if (gateway.getIdentity() != null)
+                return "true";
+            else
+                return "Cannot get gateway identity!";
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    private SmartContractPathElements parsePathElements(String smartContractPath) throws InvokeSmartContractFunctionFailure {
+        SmartContractPathParser parser = SmartContractPathParser.parse(smartContractPath);
+        String[] pathSegments = parser.getSmartContractPathSegments();
+
+        if (pathSegments.length != 3 && pathSegments.length != 2) {
+            String message = String.format("Unable to identify the path to the requested function. Expected path segments: 3 or 2. Found path segments: %s", pathSegments.length);
+            log.error(message);
+            throw new InvalidScipParameterException(message);
+        }
+
+        SmartContractPathElements.SmartContractPathElementsBuilder builder = SmartContractPathElements
+                .builder()
+                .channel(pathSegments[0])
+                .chaincode(pathSegments[1]);
+
+        if (pathSegments.length == 3) {
+            builder = builder.smartContract(pathSegments[2]);
+        }
+
+        return builder.build();
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class SmartContractPathElements {
+        private String channel;
+        private String chaincode;
+        private String smartContract;
     }
 }

@@ -20,6 +20,6 @@ public enum TransactionState {
     CONFIRMED,
     NOT_FOUND,
     INVALID,
-    // transactions which are only place holders for read-only
+    // transactions which are only place holders for read-only function invocation result
     RETURN_VALUE
 }

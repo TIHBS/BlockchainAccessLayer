@@ -13,8 +13,6 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.Map;
 
-import javax.sound.sampled.Line;
-
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
@@ -22,9 +20,8 @@ import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaVariable;
 
-public class CamundaMessageTranslator extends MessageTranslator {
-    @Override
-    public CallbackMessage convert(String subscriptionId, boolean isErrorMessage, Transaction transaction, TransactionState state) {
+public class CamundaMessageTranslator {
+    public static CallbackMessage convert(String subscriptionId, Transaction transaction, TransactionState state, boolean isErrorMessage, int errorCode) {
         final CamundaMessage result = new CamundaMessage();
         final String processInstanceId = subscriptionId.substring(subscriptionId.indexOf('_') + 1);
         final String msgName = (isErrorMessage) ? "error_" : "message_" + subscriptionId;
@@ -44,7 +41,9 @@ public class CamundaMessageTranslator extends MessageTranslator {
                 variables.put("value", new CamundaVariable(tx.getValueAsString(), "Long"));
                 variables.put("transactionId", new CamundaVariable(tx.getTransactionHash(), "String"));
             } else {
-                variables.put("returnValue", new CamundaVariable(transaction.getReturnValue(), "String"));
+                for (int i = 0; i < transaction.getReturnValues().size(); i++) {
+                    variables.put("returnValue_" + i, new CamundaVariable(transaction.getReturnValues().get(0).getValue(), "String"));
+                }
             }
 
             if (tx.getBlock() != null) { //it could be null if we are accepting transactions with 0 confirmations
@@ -57,5 +56,13 @@ public class CamundaMessageTranslator extends MessageTranslator {
         }
 
         return result;
+    }
+
+    public static CallbackMessage convert(String subscriptionId, Transaction transaction, boolean isErrorMessage) {
+        return convert(subscriptionId, transaction, transaction.getState(), isErrorMessage, 0);
+    }
+
+    public static CallbackMessage convert(String subscriptionId, TransactionState state, boolean isErrorMessage, int errorCode) {
+        return convert(subscriptionId, null, state, isErrorMessage, errorCode);
     }
 }

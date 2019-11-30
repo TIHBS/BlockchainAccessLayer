@@ -1,4 +1,4 @@
-# Blockchain Access Layer
+# Blockchain Access Layer (BAL)
 
 The project is a Java 8 web application that uses Jersey to expose a RESTful and a JSON-RPC APIs.
 
@@ -106,6 +106,7 @@ connection, and the availability of peers).
 ```
 bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the node> -rpcuser=<rpc username> -rpcpassword=<rpc password>
 ```
+
 ## Setting-up a Hyperledger Fabric Network
 
 Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
@@ -173,4 +174,12 @@ You can find the details about the resulting testnet3 Bitcoin transaction [here]
 * a _geth_ node is running on a virtual machine in a VSphere accessible from the local network.
 * a _bitcoind_ (Bitcoin Core) node is running on a virtual machine in a VSphere accessible from the local network.
 * The blockchain access layer is running in a local Tomcat server listening to port 8081
-* The camunda engine is running in a local Tomcat server litening to port 8080
+* The camunda engine is running in a local Tomcat server listening to port 8080
+
+## BAL as a Smart Contract Invocation Protocol (SCIP) Gateway
+
+The BAL provides a JSON-RPC API as a prototypical implementation of the [SCIP protocol](https://github.com/lampajr/scip) playing the role of a SCIP gateway.
+
+### SCIP Case Study
+
+A case study that demonstrates the usage of the BAL as a SCIP gateway [can be found here](https://github.com/ghareeb-falazi/SCIP-CaseStudy). 

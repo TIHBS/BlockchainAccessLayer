@@ -8,25 +8,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-public class EthereumParameterDecodingException extends Exception {
-    public EthereumParameterDecodingException() {
+public abstract class BalException extends RuntimeException {
+
+    public BalException() {
     }
 
-    public EthereumParameterDecodingException(String message) {
+    public BalException(String message) {
         super(message);
     }
 
-    public EthereumParameterDecodingException(String message, Throwable cause) {
+    public BalException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EthereumParameterDecodingException(Throwable cause) {
+    public BalException(Throwable cause) {
         super(cause);
     }
 
-    public EthereumParameterDecodingException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+    public abstract int getCode();
 }

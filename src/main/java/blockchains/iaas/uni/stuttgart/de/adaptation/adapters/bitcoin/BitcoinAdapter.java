@@ -19,13 +19,18 @@ import java.util.concurrent.CompletableFuture;
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import com.google.common.base.Strings;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -37,7 +42,6 @@ import com.neemre.btcdcli4j.daemon.event.BlockListener;
 import com.neemre.btcdcli4j.daemon.event.WalletListener;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
-import org.apache.http.MethodNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,9 +174,9 @@ public class BitcoinAdapter extends AbstractAdapter {
                         handleDetectedState(tx, block, TransactionState.CONFIRMED, observedStates, result);
                     }
                 } catch (BitcoindException e) {
-                    result.completeExceptionally(new InvalidTransactionException(e));
+                    result.completeExceptionally(new InvalidTransactionException(e.getMessage()));
                 } catch (CommunicationException e) {
-                    result.completeExceptionally(new BlockchainNodeUnreachableException(e));
+                    result.completeExceptionally(new BlockchainNodeUnreachableException(e.getMessage()));
                 }
             }
         };
@@ -204,9 +208,9 @@ public class BitcoinAdapter extends AbstractAdapter {
 
             return result;
         } catch (BitcoindException e) {
-            throw new InvalidTransactionException(e);
+            throw new InvalidTransactionException(e.getMessage());
         } catch (CommunicationException e) {
-            throw new BlockchainNodeUnreachableException(e);
+            throw new BlockchainNodeUnreachableException(e.getMessage());
         }
     }
 
@@ -268,7 +272,21 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws MethodNotSupportedException {
-        throw new MethodNotSupportedException("Bitcoin does not support smart contract function invocations!");
+    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
+        throw new NotSupportedException("Bitcoin does not support smart contract function invocations!");
+    }
+
+    @Override
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        return null;
+    }
+
+    @Override
+    public String testConnection() {
+        try {
+            return String.valueOf(!Strings.isNullOrEmpty(client.getNodeVersion()));
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 }

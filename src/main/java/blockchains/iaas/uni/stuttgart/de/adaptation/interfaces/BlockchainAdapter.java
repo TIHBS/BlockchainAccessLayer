@@ -1,18 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-import io.reactivex.Observable;
-import org.apache.http.MethodNotSupportedException;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -22,6 +9,22 @@ import org.apache.http.MethodNotSupportedException;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import io.reactivex.Observable;
+
 public interface BlockchainAdapter {
     /**
      * submits a transaction to the blockchain that transfers an amount of the native crypto-currency to some address.
@@ -37,7 +40,7 @@ public interface BlockchainAdapter {
      * @throws InvalidTransactionException if the submitted transaction causes an immediate validation error, e.g.,
      *                                     insufficient funds, or incorrect receiverAddress (this seems to never be thrown)
      */
-    CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence) throws InvalidTransactionException, MethodNotSupportedException;
+    CompletableFuture<Transaction> submitTransaction(String receiverAddress, BigDecimal value, double requiredConfidence) throws InvalidTransactionException, NotSupportedException;
 
     /**
      * receives transactions addressed to us (potentially from a specific sender)
@@ -46,7 +49,7 @@ public interface BlockchainAdapter {
      * @param senderId           an optional address of the sender. If specified, only transactions from this sender are considered
      * @return an observable that emits a summary of the received transaction whenever one is detected
      */
-    Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws MethodNotSupportedException;
+    Observable<Transaction> receiveTransactions(String senderId, double requiredConfidence) throws NotSupportedException;
 
     /**
      * ensures that a transaction receives enough block-confirmations
@@ -57,7 +60,7 @@ public interface BlockchainAdapter {
      * number of block-confirmations got received, or NOT_FOUND if the transaction got invalidated).
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable
      */
-    CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws MethodNotSupportedException;
+    CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) throws NotSupportedException;
 
     /**
      * detects that the given transaction got orphaned
@@ -67,16 +70,46 @@ public interface BlockchainAdapter {
      * block, i.e., it is orphaned)
      * The future should exceptionally complete with an exception of type BlockchainNodeUnreachableException if the blockchain node is not reachable
      */
-    CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws MethodNotSupportedException;
+    CompletableFuture<TransactionState> detectOrphanedTransaction(String transactionId) throws NotSupportedException;
 
     /**
      * invokes a smart contract function
      *
-     * @param functionIdentifier the scip identifier of the function to be invoked
-     * @param parameters         the arguments to be passed to the function being invoked
+     * @param smartContractPath  the path to the smart contract
+     * @param functionIdentifier the function name
+     * @param inputs             the input parameters of the function to be invoked
+     * @param outputs            the output parameters of the function to be invoked
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
      * @return a completable future that emits a new transaction object holding the result of the invocation.
-     * @throws MethodNotSupportedException if the underlying blockchain system does not support smart contracts.
+     * @throws NotSupportedException if the underlying blockchain system does not support smart contracts.
      */
-    CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> parameters, double requiredConfidence) throws MethodNotSupportedException;
+    CompletableFuture<Transaction> invokeSmartContract(
+            String smartContractPath,
+            String functionIdentifier,
+            List<Parameter> inputs,
+            List<Parameter> outputs,
+            double requiredConfidence
+    ) throws NotSupportedException, BalException;
+
+    /**
+     * Monitors the occurrences of a given blockchain event.
+     *
+     * @param smartContractAddress the address of the smart contract that contains the event.
+     * @param eventIdentifier      the name of the event to be monitored.
+     * @param outputParameters     the list of output parameter names and types of the event to be monitored.
+     * @param degreeOfConfidence   the degree of confidence required for the transactions triggering the events.
+     * @param filter               C-style filter for the events that uses the output parameters.
+     * @return An observable that emits matching occurrences.
+     */
+    Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier,
+                                            List<Parameter> outputParameters,
+                                            double degreeOfConfidence,
+                                            String filter) throws BalException;
+
+    /**
+     * Tests the connection settings with the underlying blockchain
+     *
+     * @return true if the connection is successful, false otherwise.
+     */
+    String testConnection();
 }

@@ -15,16 +15,21 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.contracts.Permissions;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -39,13 +44,34 @@ import org.web3j.tx.gas.DefaultGasProvider;
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
  */
+@Disabled
 class EthereumAdapterTest {
     private static final String NETWORK_NAME = "eth-0";
     private static final String MESSAGE = "This was not a difficult task!";
-    private static final String SENDER_ADDRESS = "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A";
-    private static final double REQUIRED_CONFIDENCE = 0.9;
+    private final String BYTES_TYPE = "{\n" +
+            "\t\"type\": \"array\",\n" +
+            "\t\"items\": {\n" +
+            "\t\t\"type\": \"string\",\n" +
+            "\t\t\"pattern\": \"^[a-fA-F0-9]{2}$\"\n" +
+            "\t}\n" +
+            "}";
+    private final String ADDRESS_TYPE = "{\n" +
+            "\t\"type\": \"string\",\n" +
+            "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
+            "}";
+    private static final double REQUIRED_CONFIDENCE = 0.6;
     private EthereumAdapter adapter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapterTest.class);
+
+    @BeforeAll
+    static void initAll() throws URISyntaxException {
+        final String DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME = "gatewayConfiguration.json";
+        final File file = new File(Objects.requireNonNull(
+                EthereumAdapterTest.class.getClassLoader().getResource(DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME)).toURI());
+        ConnectionProfilesManager manager = ConnectionProfilesManager.getInstance();
+        manager.resetConnectionProfiles();
+        manager.loadConnectionProfilesFromFile(file);
+    }
 
     @BeforeEach
     void init() {
@@ -54,7 +80,7 @@ class EthereumAdapterTest {
 
     @Test
     void testConnectionToNode() {
-        Assertions.assertTrue(this.adapter.testConnectionToNode());
+        Assertions.assertEquals("true", this.adapter.testConnectionToNode());
     }
 
     @Test
@@ -68,20 +94,23 @@ class EthereumAdapterTest {
     @Test
     void testInvokeSmartContract() throws Exception {
         Permissions contract = this.deployContract();
-        String scip = String.format("scip://%s/%s/setPublicKey?publicKey=bytes:void", NETWORK_NAME, contract.getContractAddress());
+        String smartContractPath = contract.getContractAddress();
+        String functionIdentifier = "setPublicKey";
         byte[] bytes = MESSAGE.getBytes();
         String argument = new BigInteger(bytes).toString(16);
-        List<SmartContractFunctionArgument> argumentList = Collections.singletonList(new SmartContractFunctionArgument("publicKey", argument));
-        this.adapter.invokeSmartContract(scip, argumentList, REQUIRED_CONFIDENCE).get();
-
-//        byte[] result = contract.getPublicKey("0x90645Dc507225d61cB81cF83e7470F5a6AA1215A").send();
-//        log.debug(new String(result));
-        scip = String.format("scip://%s/%s/getPublicKey?ethereumAddress=address:bytes", NETWORK_NAME, contract.getContractAddress());
-        //String scip = "scip://eth-0/0x14E8548A45551d4a052884d68bd3F924AE13c7F4/getPublicKey?ethereumAddress=address:bytes";
-        Transaction result =  this.adapter.invokeSmartContract(scip,
-                Collections.singletonList(new SmartContractFunctionArgument("ethereumAddress", "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A")), REQUIRED_CONFIDENCE).get();
-        String value = result.getReturnValue();
+        List<Parameter> inputs = Collections.singletonList(new Parameter("publicKey", BYTES_TYPE, argument));
+        List<Parameter> outputs = Collections.emptyList();
+        LinearChainTransaction init = (LinearChainTransaction) this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE).get();
+        log.info("initial transaction {}", init.getTransactionHash());
+        functionIdentifier = "getPublicKey";
+        inputs = Collections.singletonList(new Parameter("ethereumAddress", ADDRESS_TYPE, "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A"));
+        outputs = Collections.singletonList(new Parameter("return", BYTES_TYPE, null));
+        Transaction result = this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE).get();
+        String value = result.getReturnValues().get(0).getValue();
         log.debug(value);
+        String retrievedMessage = new String(new BigInteger(value, 16).toByteArray(), StandardCharsets.UTF_8);
+        Assertions.assertEquals(MESSAGE, retrievedMessage);
+        log.debug(retrievedMessage);
     }
 
     @Test
@@ -93,13 +122,6 @@ class EthereumAdapterTest {
         final String privateKey = "6871412854632d2ccd9c99901f5a0a3d838b31dbc6bfecae5f2382d6b7658bbf";
         ECKeyPair pair = ECKeyPair.create(new BigInteger(privateKey, 16));
         WalletUtils.generateWalletFile(password, pair, file, false);
-    }
-
-    @Test
-    @Disabled
-    void testDepoloyContract() throws InterruptedException, ExecutionException, IOException {
-        Permissions permissions = this.deployContract();
-        log.debug("Deployed smart contract. Address: {}", permissions.getContractAddress());
     }
 
     Permissions deployContract() throws ExecutionException, InterruptedException, IOException {

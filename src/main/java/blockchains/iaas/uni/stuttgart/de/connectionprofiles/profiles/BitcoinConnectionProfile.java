@@ -1,6 +1,5 @@
-/********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
- * University of Stuttgart
+/*******************************************************************************
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,12 +7,14 @@
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: Apache-2.0
- ********************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.gateways;
+ *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
 
 import java.util.Properties;
 
-public class BitcoinGateway extends AbstractGateway {
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+
+public class BitcoinConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "node.bitcoind.";
     // Configuration parameters for the 'bitcoind' JSON-RPC client ('BtcdClient')
     public static final String RPC_PROTOCOL = "rpc.protocol";
@@ -37,10 +38,10 @@ public class BitcoinGateway extends AbstractGateway {
     private String notificationBlockPort;
     private String notificationWalletPort;
 
-    public BitcoinGateway() {
+    public BitcoinConnectionProfile() {
     }
 
-    public BitcoinGateway(String rpcProtocol, String rpcHost, String rpcPort, String rpcUser, String rpcPassword, String httpAuthScheme, String notificationAlertPort, String notificationBlockPort, String notificationWalletPort) {
+    public BitcoinConnectionProfile(String rpcProtocol, String rpcHost, String rpcPort, String rpcUser, String rpcPassword, String httpAuthScheme, String notificationAlertPort, String notificationBlockPort, String notificationWalletPort) {
         this.rpcProtocol = rpcProtocol;
         this.rpcHost = rpcHost;
         this.rpcPort = rpcPort;
@@ -126,7 +127,7 @@ public class BitcoinGateway extends AbstractGateway {
 
     @Override
     public Properties getAsProperties() {
-        final Properties result = new Properties();
+        final Properties result = super.getAsProperties();
         result.setProperty(HTTP_AUTHENTICATION_SCHEME, this.httpAuthScheme);
         result.setProperty(NOTIFICATION_ALERT_PORT, this.notificationAlertPort);
         result.setProperty(NOTIFICATION_BLOCK_PORT, this.notificationBlockPort);
@@ -136,7 +137,6 @@ public class BitcoinGateway extends AbstractGateway {
         result.setProperty(RPC_PORT, this.rpcPort);
         result.setProperty(RPC_USER, this.rpcUser);
         result.setProperty(RPC_PROTOCOL, this.rpcProtocol);
-
         return result;
     }
 }

@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.exceptions;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,7 +9,13 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-public class BlockchainNodeUnreachableException extends RuntimeException {
+package blockchains.iaas.uni.stuttgart.de.exceptions;
+
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
+
+@JsonRpcError(code = ExceptionCode.ConnectionException, message = "The blockchain node cannot be reached.")
+public class BlockchainNodeUnreachableException extends BalException {
+
     public BlockchainNodeUnreachableException() {
     }
 
@@ -19,15 +23,8 @@ public class BlockchainNodeUnreachableException extends RuntimeException {
         super(message);
     }
 
-    public BlockchainNodeUnreachableException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public BlockchainNodeUnreachableException(Throwable cause) {
-        super(cause);
-    }
-
-    public BlockchainNodeUnreachableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+    @Override
+    public int getCode() {
+        return ExceptionCode.ConnectionException;
     }
 }

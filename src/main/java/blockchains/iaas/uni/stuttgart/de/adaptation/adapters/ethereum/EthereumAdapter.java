@@ -13,26 +13,35 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import javax.naming.OperationNotSupportedException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.AbstractAdapter;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.BooleanExpressionEvaluator;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.PoWConfidenceCalculator;
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.ScipParser;
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.SmartContractPathParser;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.SmartContractNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionParameter;
+import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -40,21 +49,26 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.abi.EventEncoder;
+import org.web3j.abi.EventValues;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Event;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
-import org.web3j.abi.datatypes.generated.AbiTypes;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.Contract;
 import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Convert;
@@ -63,11 +77,13 @@ public class EthereumAdapter extends AbstractAdapter {
     private Credentials credentials;
     private final String nodeUrl;
     private final Web3j web3j;
+    private final DateTimeFormatter formatter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
 
     public EthereumAdapter(final String nodeUrl) {
         this.nodeUrl = nodeUrl;
         this.web3j = Web3j.build(new HttpService(this.nodeUrl));
+        this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
     public Web3j getWeb3j() {
@@ -91,14 +107,14 @@ public class EthereumAdapter extends AbstractAdapter {
         }
     }
 
-    boolean testConnectionToNode() {
+    String testConnectionToNode() {
         try {
             log.info("Connected to Ethereum client: URL: {}, Version: {}", this.nodeUrl, this.web3j.web3ClientVersion().send().getWeb3ClientVersion());
-            return true;
+            return "true";
         } catch (IOException e) {
             log.error("Failed to connect to Ethereum client at URL: {}. Reason: {}", this.nodeUrl, e.getMessage());
 
-            return false;
+            return e.getMessage();
         }
     }
 
@@ -164,14 +180,28 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     private static CompletionException wrapEthereumExceptions(Throwable e) {
-        if (e.getCause() instanceof IOException)
-            e = new BlockchainNodeUnreachableException(e);
-        else if (e instanceof EthereumParameterDecodingException || e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
-            e = new InvokeSmartContractFunctionFailure(e);
-        else if (e.getCause() instanceof RuntimeException)
-            e = new InvalidTransactionException(e);
+        return new CompletionException(mapEthereumException(e));
+    }
 
-        return new CompletionException(e);
+    private static BalException mapEthereumException(Throwable e) {
+        BalException result;
+
+        if (e instanceof BalException)
+            result = (BalException) e;
+        else if (e.getCause() instanceof BalException)
+            result = (BalException) e.getCause();
+        else if (e.getCause() instanceof IOException)
+            result = new BlockchainNodeUnreachableException(e.getMessage());
+        else if (e instanceof IllegalArgumentException || e instanceof OperationNotSupportedException)
+            result = new InvokeSmartContractFunctionFailure(e.getMessage());
+        else if (e.getCause() instanceof RuntimeException)
+            result = new InvalidTransactionException(e.getMessage());
+        else {
+            log.error("Unexpected exception was thrown!");
+            result = new InvalidTransactionException(e.getMessage());
+        }
+
+        return result;
     }
 
     @Override
@@ -183,7 +213,7 @@ public class EthereumAdapter extends AbstractAdapter {
         }
 
         try {
-            final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+            final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
@@ -196,7 +226,7 @@ public class EthereumAdapter extends AbstractAdapter {
             final String msg = "An error occurred while trying to submit a new transaction to ethereum. Reason: " + e.getMessage();
             log.error(msg);
 
-            throw new InvalidTransactionException(msg, e);
+            throw new InvalidTransactionException(msg);
         }
     }
 
@@ -207,7 +237,7 @@ public class EthereumAdapter extends AbstractAdapter {
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
 
-        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+        final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         final String myAddress = credentials.getAddress();
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Disposable newTransactionObservable = web3j.transactionFlowable().subscribe(tx -> {
@@ -229,7 +259,7 @@ public class EthereumAdapter extends AbstractAdapter {
 
     @Override
     public CompletableFuture<TransactionState> ensureTransactionState(String transactionId, double requiredConfidence) {
-        final long waitFor = ((PoWConfidenceCalculator)this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
+        final long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
         // only monitor the transition into the CONFIRMED state or the NOT_FOUND state
         return subscribeForTxEvent(transactionId, waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND)
                 .thenApply(Transaction::getState)
@@ -249,70 +279,161 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String functionIdentifier, List<SmartContractFunctionArgument> arguments, double requiredConfidence) {
+    public CompletableFuture<Transaction> invokeSmartContract(
+            String smartContractPath,
+            String functionIdentifier,
+            List<Parameter> inputs,
+            List<Parameter> outputs,
+            double requiredConfidence
+    ) throws NotSupportedException, ParameterException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
-        CompletableFuture<Transaction> result;
+        Objects.requireNonNull(smartContractPath);
+        Objects.requireNonNull(functionIdentifier);
+        Objects.requireNonNull(inputs);
+        Objects.requireNonNull(outputs);
 
         try {
             long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(requiredConfidence);
-            final ScipParser scip = ScipParser.parse(functionIdentifier);
-            List<TypeReference<?>> outputParameters;
+            final String[] pathSegments = SmartContractPathParser.parse(smartContractPath).getSmartContractPathSegments();
 
-            if (scip.getReturnType().equals("void")) {
-                outputParameters = Collections.emptyList();
-            } else {
-                final Class<? extends Type> returnType = AbiTypes.getType(scip.getReturnType());
-                outputParameters = Collections.singletonList(TypeReference.create(returnType));
+            if (pathSegments.length != 1) {
+                throw new SmartContractNotFoundException("Malformed Ethereum path!");
+            }
+
+            if (!pathSegments[0].matches("^0x[a-fA-F0-9]{40}$")) {
+                throw new SmartContractNotFoundException("Malformed Ethereum address!");
+            }
+
+            final String smartContractAddress = pathSegments[0];
+            List<TypeReference<?>> outputParameters = new ArrayList<>();
+            Class<? extends Type> currentReturnType;
+
+            for (Parameter output : outputs) {
+                currentReturnType = EthereumTypeMapper.getEthereumType(output.getType());
+                outputParameters.add(TypeReference.create(currentReturnType));
             }
 
             final Function function = new Function(
-                    scip.getFunctionName(),  // function we're calling
-                    this.convertToSolidityTypes(scip.getParameterTypes(), arguments),  // Parameters to pass as Solidity Types
-                    outputParameters);//Type of returned value
+                    functionIdentifier,  // function we're calling
+                    this.convertToSolidityTypes(inputs),  // Parameters to pass as Solidity Types
+                    outputParameters); //Type of returned value
 
             final String encodedFunction = FunctionEncoder.encode(function);
-            final String scAddress = scip.getFunctionPathSegments()[0];
-            Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, scAddress, function.getOutputParameters());
 
-            if (resultFromEthCall != null) {
-                return CompletableFuture.completedFuture(resultFromEthCall);
+            // if we are expecting a return value, we try to invoke as a method call, otherwise, we immediately try a transaction
+            if (outputParameters.size() > 0) {
+                Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, outputs, function.getOutputParameters());
+
+                if (resultFromEthCall != null) {
+                    return CompletableFuture.completedFuture(resultFromEthCall);
+                }
             }
 
-            return this.invokeFunctionByTransaction(waitFor, encodedFunction, scAddress);
+            return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
-            result = new CompletableFuture<>();
-            result.completeExceptionally(wrapEthereumExceptions(e));
+            throw mapEthereumException(e);
         }
-
-        return result;
     }
 
-    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress,
-                                                   List<TypeReference<Type>> returnType) {
+    @Override
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(degreeOfConfidence);
+        List<TypeReference<?>> types = this.convertTypes(outputParameters);
+        final Event event = new Event(eventIdentifier, types);
+        final EthFilter ethFilter = this.generateFilter(smartContractAddress, event, types);
+        final PublishSubject<Occurrence> result = PublishSubject.create();
+
+        Disposable newEventObservable = web3j.ethLogFlowable(ethFilter).subscribe(log -> {
+            final EventValues values = Contract.staticExtractEventParameters(event, log);
+            List<Parameter> parameters = new ArrayList<>();
+
+            for (int i = 0; i < outputParameters.size(); i++) {
+                parameters.add(Parameter.builder()
+                        .name(outputParameters.get(i).getName())
+                        .type(outputParameters.get(i).getType())
+                        .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
+                        .build());
+            }
+
+            if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
+                EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+                subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
+                        .thenAccept(tx -> {
+                            LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
+                            String timestampS = formatter.format(timestamp);
+                            result.onNext(Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build());
+                        })
+                        .exceptionally(error -> {
+                            result.onError(wrapEthereumExceptions(error));
+                            return null;
+                        });
+            }
+        }, e -> result.onError(wrapEthereumExceptions(e)));
+
+        return result.doFinally(newEventObservable::dispose);
+    }
+
+    @Override
+    public String testConnection() {
+        return this.testConnectionToNode();
+    }
+
+    private List<TypeReference<?>> convertTypes(List<Parameter> parameters) {
+        return parameters
+                .stream()
+                .map(param -> (EthereumTypeMapper.getEthereumType(param.getType())))
+                .map(TypeReference::create)
+                .collect(Collectors.toList());
+    }
+
+    private EthFilter generateFilter(String smartContractAddress, Event event, List<TypeReference<?>> types) {
+
+        EthFilter filter = new EthFilter(
+                DefaultBlockParameterName.LATEST,
+                DefaultBlockParameterName.LATEST,
+                smartContractAddress).
+                addSingleTopic(EventEncoder.encode(event));
+        // for each parameter, we add a null topic
+        for (TypeReference t : types) {
+            filter = filter.addNullTopic();
+        }
+
+        return filter;
+    }
+
+    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,
+                                                   List<TypeReference<Type>> returnTypes) throws InvokeSmartContractFunctionFailure {
         try {
             org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
                     .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
             EthCall ethCall = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
-            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnType);
+            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnTypes);
 
-            if (decoded.size() > 0) {
-                final Transaction tx = new Transaction();
-                final Type type = decoded.get(0);
-                final EthereumReturnValueEncoder encoder = new EthereumReturnValueEncoder();
-                final String valueAsString = encoder.encodeValue(type);
-                tx.setReturnValue(type.getTypeAsString() + ":" + valueAsString);
-                tx.setState(TransactionState.RETURN_VALUE);
+            if (returnTypes.size() != decoded.size())
+                throw new InvokeSmartContractFunctionFailure("Failed to invoke function by ethCall");
 
-                return tx;
-            } else {
-                throw new OperationNotSupportedException("Failed to invoke function by ethCall");
+            Transaction tx = new LinearChainTransaction();
+            tx.setState(TransactionState.RETURN_VALUE);
+            List<Parameter> returnedValues = new ArrayList<>();
+
+            for (int i = 0; i < decoded.size(); i++) {
+                returnedValues.add(Parameter
+                        .builder()
+                        .name(outputs.get(i).getName())
+                        .value(ParameterDecoder.decode(decoded.get(i)))
+                        .build());
             }
+
+            tx.setReturnValues(returnedValues);
+
+            return tx;
         } catch (Exception e) {
             log.debug("Failed to execute smart contract function via eth_call. Reason: {}", e.getMessage());
+            // this is important so we know we should try a transaction
             return null;
         }
     }
@@ -342,19 +463,14 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
-    private List<Type> convertToSolidityTypes(List<SmartContractFunctionParameter> params, List<SmartContractFunctionArgument> arguments) throws EthereumParameterDecodingException {
-        if (params.size() == arguments.size()) {
-            List<Type> result = new ArrayList<>();
-            EthereumParameterDecoder decoder = new EthereumParameterDecoder();
+    private List<Type> convertToSolidityTypes(List<Parameter> params) throws ParameterException {
+        List<Type> result = new ArrayList<>();
 
-            for (int i = 0; i < params.size(); i++) {
-                result.add(decoder.decodeParameter(params.get(i).getType(), arguments.get(i).getValue()));
-            }
-
-            return result;
+        for (Parameter param : params) {
+            result.add(ParameterEncoder.encode(param));
         }
 
-        throw new IllegalArgumentException("The passed arguments do not match the expected parameters!");
+        return result;
     }
 
     private CompletableFuture<BigInteger> retrieveNewNonce() {
@@ -371,6 +487,8 @@ public class EthereumAdapter extends AbstractAdapter {
         if (Arrays.asList(interesting).contains(detectedState)) {
             final LinearChainTransaction result = new LinearChainTransaction();
             result.setState(detectedState);
+            // it is important that this list is not null
+            result.setReturnValues(new ArrayList<>());
 
             if (transactionDetails.isPresent()) {
                 result.setBlock(new Block(transactionDetails.get().getBlockNumber(), transactionDetails.get().getBlockHash()));

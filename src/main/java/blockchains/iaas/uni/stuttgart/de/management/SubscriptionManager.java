@@ -1,16 +1,3 @@
-package blockchains.iaas.uni.stuttgart.de.management;
-
-import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 /********************************************************************************
  * Copyright (c) 2019 Institute for the Architecture of Application System -
  * University of Stuttgart
@@ -22,11 +9,30 @@ import java.util.stream.Collectors;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.management;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 // todo this class should persist subscriptions to stable storage!
+// todo rethink subscription logic!
 public class SubscriptionManager {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
     private static SubscriptionManager instance = null;
-    private Map<String, Subscription> subscriptions = Collections.synchronizedMap(new HashMap<>());
+    private Map<SubscriptionKey, Subscription> subscriptions = Collections.synchronizedMap(new HashMap<>());
 
     private SubscriptionManager() {
 
@@ -40,37 +46,90 @@ public class SubscriptionManager {
         return instance;
     }
 
-    public void createSubscription(String subscriptionId, Subscription subscription) {
-        if (this.subscriptions.containsKey(subscriptionId)) {
-            log.error("subscription-id <{}> already exists!");
+    public void createSubscription(String subscriptionId, String blockchainId, String smartContractPath, Subscription subscription) {
+        SubscriptionKey key = SubscriptionKey.builder().smartContractPath(smartContractPath).blockchainId(blockchainId).correlationId(subscriptionId).build();
+        if (this.subscriptions.containsKey(key)) {
+            log.error("Subscription key <{}> already exists! Not subscribing!", key);
+            // to not keep any loose ends
+            subscription.unsubscribe();
         } else {
-            this.subscriptions.put(subscriptionId, subscription);
+            this.subscriptions.put(key, subscription);
         }
     }
 
-    public Subscription getSubscription(String subscriptionId){
-        if(this.subscriptions.containsKey(subscriptionId)){
-            return this.subscriptions.get(subscriptionId);
-        }else{
-            log.info("trying to retrieve a non-existent subscription: <{}>! null is returned");
+    public void createSubscription(String subscriptionId, String blockchainId, Subscription subscription) {
+        this.createSubscription(subscriptionId, blockchainId, "", subscription);
+    }
+
+    public Subscription getSubscription(String subscriptionId, String blockchainId, String smartContractPath) {
+        SubscriptionKey key = SubscriptionKey.builder().smartContractPath(smartContractPath).blockchainId(blockchainId).correlationId(subscriptionId).build();
+        if (this.subscriptions.containsKey(key)) {
+            return this.subscriptions.get(key);
+        } else {
+            log.info("trying to retrieve a non-existent subscription: <{}>! null is returned", key);
             return null;
         }
     }
 
-    public void removeSubscription(String subscriptionId){
-        if(this.subscriptions.containsKey(subscriptionId)){
-            this.subscriptions.remove(subscriptionId);
-        }else{
-            log.info("trying to remove a non-existent subscription: <{}>! nothing is removed");
+    public void removeSubscription(String subscriptionId, String blockchainId, String smartContractPath) {
+        SubscriptionKey key = SubscriptionKey.builder().smartContractPath(smartContractPath).blockchainId(blockchainId).correlationId(subscriptionId).build();
+        if (this.subscriptions.containsKey(key)) {
+            this.subscriptions.remove(key);
+        } else {
+            log.info("trying to remove a non-existent subscription: <{}>! nothing is removed", subscriptionId);
         }
     }
 
-    public Collection<String> getAllSubscriptionIdsOfType(SubscriptionType type){
+    public void removeSubscription(String subscriptionId, String blockchainId) {
+        this.removeSubscription(subscriptionId, blockchainId, "");
+    }
+
+    public Collection<SubscriptionKey> getAllSubscriptionKeysOfType(SubscriptionType type) {
         return this.subscriptions
                 .keySet()
                 .stream()
-                .filter(subscriptionId -> this.subscriptions.get(subscriptionId).getType()==type)
+                .filter(subscriptionKey -> this.subscriptions.get(subscriptionKey).getType() == type)
                 .collect(Collectors.toList());
     }
 
+    public Collection<SubscriptionKey> getAllSubscriptionIdsOfFunction(String blockchainId, String smartContractPath, String id, List<Parameter> inputs) {
+        return this.getAllSubscriptionIdsOfIdentifiable(blockchainId, smartContractPath, id, inputs, SubscriptionType.FUNCTION_INVOCATIONS);
+    }
+
+    public Collection<SubscriptionKey> getAllSubscriptionIdsOfEvent(String blockchainId, String smartContractPath, String id, List<Parameter> inputs) {
+        return this.getAllSubscriptionIdsOfIdentifiable(blockchainId, smartContractPath, id, inputs, SubscriptionType.EVENT_OCCURRENCES);
+    }
+
+    Map<SubscriptionKey, Subscription> getAllSubscriptions() {
+        return this.subscriptions;
+    }
+
+    private Collection<SubscriptionKey> getAllSubscriptionIdsOfIdentifiable(String blockchainId, String smartContractPath, String id, List<Parameter> inputs, SubscriptionType type) {
+        return this.subscriptions
+                .keySet()
+                .stream()
+                .filter(subscriptionKey -> {
+                            if (subscriptionKey.getBlockchainId().equals(blockchainId)
+                                    && subscriptionKey.getSmartContractPath().equals(smartContractPath)
+                                    && this.subscriptions.get(subscriptionKey) instanceof MonitorOccurrencesSubscription) {
+                                MonitorOccurrencesSubscription subscription = (MonitorOccurrencesSubscription) this.subscriptions.get(subscriptionKey);
+                                if (subscription.getType().equals(type)) {
+                                    if (id == null || inputs == null)
+                                        return true;
+                                    if (subscription.getIdentifier().equals(id)) {
+                                        for (int i = 0; i < inputs.size(); i++) {
+                                            if (!subscription.getParameters().get(i).getType().equals(inputs.get(i).getType())) {
+                                                return false;
+                                            }
+                                        }
+
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        }
+                )
+                .collect(Collectors.toList());
+    }
 }

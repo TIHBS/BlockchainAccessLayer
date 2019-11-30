@@ -11,9 +11,6 @@
 
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
-import java.beans.XMLEncoder;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
@@ -21,11 +18,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import blockchains.iaas.uni.stuttgart.de.model.SmartContractFunctionArgument;
-import org.junit.jupiter.api.BeforeEach;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 class InvokeSmartContractFunctionRequestTest {
     private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionRequestTest.class);
@@ -35,12 +32,17 @@ class InvokeSmartContractFunctionRequestTest {
         InvokeSmartContractFunctionRequest theObject = new InvokeSmartContractFunctionRequest();
         theObject.setConfidence(99.0);
         theObject.setEpUrl("http://localhost/test");
-        theObject.setScip("scip://eth-0/mysc/set?aaa=uint:void");
+        theObject.setSmartContractPath("mysc");
+        theObject.setSignature("!!!!!");
+        theObject.setTimeoutMillis(120021);
+        theObject.setFunctionIdentifier("invokeMePlease");
+        theObject.setBlockchainId("eth-0");
         theObject.setSubscriptionId("1200");
         ParameterList myList = new ParameterList();
         myList.setArguments(new ArrayList<>());
-        myList.getArguments().add(new SmartContractFunctionArgument("aaa", "13"));
-        theObject.setParameterList(myList);
+        myList.getArguments().add(new Parameter("aaa", "type", "aaaaa"));
+        theObject.setInputs(myList);
+        theObject.setOutputs(myList);
 
         //Create JAXB Context
         JAXBContext jaxbContext = JAXBContext.newInstance(InvokeSmartContractFunctionRequest.class);

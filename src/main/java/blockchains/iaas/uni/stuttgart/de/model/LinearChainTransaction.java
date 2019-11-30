@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.math.BigInteger;
+import java.util.List;
 
 import lombok.Builder;
 
@@ -45,8 +46,8 @@ public class LinearChainTransaction extends Transaction {
 
     public LinearChainTransaction(String transactionHash,
                                   Block block,
-                                  String from, String to, BigInteger value, TransactionState state, String returnValue) {
-        this.setReturnValue(returnValue);
+                                  String from, String to, BigInteger value, TransactionState state, List<Parameter> returnValues) {
+        this.setReturnValues(returnValues);
         this.setState(state);
         this.transactionHash = transactionHash;
         this.block = block;
