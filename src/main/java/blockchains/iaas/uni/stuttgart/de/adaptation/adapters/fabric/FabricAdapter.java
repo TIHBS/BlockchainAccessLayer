@@ -32,6 +32,8 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -164,6 +166,11 @@ public class FabricAdapter implements BlockchainAdapter {
         });
 
         return result.doFinally(() -> contract.removeContractListener(consumer));
+    }
+
+    @Override
+    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
+        return null;
     }
 
     @Override

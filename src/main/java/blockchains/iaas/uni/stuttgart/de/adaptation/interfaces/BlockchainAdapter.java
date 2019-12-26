@@ -13,6 +13,7 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
 
 import java.math.BigDecimal;
+import java.time.Period;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -21,6 +22,8 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import io.reactivex.Observable;
@@ -89,7 +92,7 @@ public interface BlockchainAdapter {
             List<Parameter> inputs,
             List<Parameter> outputs,
             double requiredConfidence
-    ) throws NotSupportedException, BalException;
+    ) throws BalException;
 
     /**
      * Monitors the occurrences of a given blockchain event.
@@ -107,9 +110,21 @@ public interface BlockchainAdapter {
                                             String filter) throws BalException;
 
     /**
+     * Queries previous occurrences of a given blockchain event
+     *
+     * @param smartContractAddress the address of the smart contract that contains the event.
+     * @param eventIdentifier      the name of the event to be monitored.
+     * @param outputParameters     the list of output parameter names and types of the event to be monitored.
+     * @param filter               C-style filter for the events that uses the output parameters.
+     * @param timeFrame            The timeFrame in which to consider event occurrences.
+     * @return A completable future containing a list of matching occurrences.
+     */
+    CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters,
+                                               String filter, TimeFrame timeFrame) throws BalException;
+    /**
      * Tests the connection settings with the underlying blockchain
      *
-     * @return true if the connection is successful, false otherwise.
+     * @return true if the connection is successful, an error message otherwise.
      */
     String testConnection();
 }
