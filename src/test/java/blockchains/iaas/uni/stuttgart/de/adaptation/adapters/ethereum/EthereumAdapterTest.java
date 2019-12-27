@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +46,6 @@ import org.web3j.tx.gas.DefaultGasProvider;
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
  */
-@Disabled
 class EthereumAdapterTest {
     private static final String NETWORK_NAME = "eth-0";
     private static final String MESSAGE = "This was not a difficult task!";
@@ -122,6 +123,29 @@ class EthereumAdapterTest {
         final String privateKey = "6871412854632d2ccd9c99901f5a0a3d838b31dbc6bfecae5f2382d6b7658bbf";
         ECKeyPair pair = ECKeyPair.create(new BigInteger(privateKey, 16));
         WalletUtils.generateWalletFile(password, pair, file, false);
+    }
+
+    @Test
+    void testBlockNumbers() throws IOException {
+        LocalDateTime from = LocalDateTime.of(2019, 12, 27, 10, 50);
+        LocalDateTime to = LocalDateTime.of(2019, 12, 27, 10, 56);
+        long fromBlockNumber = this.adapter.getBlockAfterIsoDate(from);
+        long toBlockNumber = this.adapter.getBlockAfterIsoDate(to) - 1;
+        // sanity check
+        Assertions.assertTrue((toBlockNumber - fromBlockNumber) * 12 < Duration.between(from, to).getSeconds() * 2);
+        log.info("From: {} to: {}", fromBlockNumber, toBlockNumber);
+    }
+
+    @Test
+    void testExtremeBlockNumbers() throws IOException {
+        LocalDateTime from = LocalDateTime.of(2001, 12, 27, 10, 50);
+        LocalDateTime to = LocalDateTime.of(2029, 12, 27, 10, 56);
+        long fromBlockNumber = this.adapter.getBlockAfterIsoDate(from);
+        long toBlockNumber = this.adapter.getBlockAfterIsoDate(to);
+        // sanity check
+        Assertions.assertEquals(0, fromBlockNumber);
+        Assertions.assertEquals(Long.MAX_VALUE, toBlockNumber);
+        log.info("From: {} to: {}", fromBlockNumber, toBlockNumber);
     }
 
     Permissions deployContract() throws ExecutionException, InterruptedException, IOException {

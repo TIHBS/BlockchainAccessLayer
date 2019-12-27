@@ -1,7 +1,7 @@
 {
   "eth-0": {
     "@type": "ethereum",
-    "nodeUrl":"http://localhost:8545",
+    "nodeUrl":"http://localhost:7545",
     "keystorePath":"C:\\Ethereum\\keystore\\UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json",
     "keystorePassword":"123456789",
     "adversaryVotingRatio": "0.2"

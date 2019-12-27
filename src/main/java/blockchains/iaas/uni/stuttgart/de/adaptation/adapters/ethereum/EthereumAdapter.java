@@ -425,22 +425,39 @@ public class EthereumAdapter extends AbstractAdapter {
             LocalDateTime toDateTime = LocalDateTime.parse(timeFrame.getEndIsoTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             long toBlockNumber = this.getBlockAfterIsoDate(toDateTime);
 
-            if (toBlockNumber > 0)
-                toBlockNumber--;
-            else
-                throw new InvalidScipParameterException();
-            to = new DefaultBlockParameterNumber(toBlockNumber);
+            // this indicates the specified date is after the last block
+            if (toBlockNumber == Long.MAX_VALUE) {
+                to = DefaultBlockParameterName.LATEST;
+            } else {
+                if (toBlockNumber > 0)
+                    toBlockNumber--;
+                else
+                    throw new InvalidScipParameterException();
+
+                to = new DefaultBlockParameterNumber(toBlockNumber);
+            }
         }
 
         return this.generateFilter(smartContractAddress, event, parameterCount, from, to);
     }
 
-    private long getBlockAfterIsoDate(final LocalDateTime dateTime) throws IOException {
+    long getBlockAfterIsoDate(final LocalDateTime dateTime) throws IOException {
         final long seconds = Duration.between(dateTime, LocalDateTime.now()).getSeconds();
-        final long estimatedBlockDepth = seconds / AVERAGE_BLOCK_TIME_SECONDS;
-        assert estimatedBlockDepth > 0;
+        long estimatedBlockLag = seconds / AVERAGE_BLOCK_TIME_SECONDS;
+
+        // if the block is in the future
+        if (estimatedBlockLag < 0) {
+            estimatedBlockLag = 0;
+        }
+
         final long latestBlockNumber = web3j.ethBlockNumber().send().getBlockNumber().longValue();
-        long blockNumber = latestBlockNumber - estimatedBlockDepth;
+        long blockNumber = latestBlockNumber - estimatedBlockLag;
+
+        // if the estimated block is before the genesis
+        if (blockNumber < 0) {
+            blockNumber = 0;
+        }
+
         BigInteger blockTimeStamp = web3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), false).send().getBlock().getTimestamp();
         LocalDateTime blockDateTime = LocalDateTime.ofEpochSecond(blockTimeStamp.longValue(), 0, ZoneOffset.UTC);
 
@@ -467,7 +484,7 @@ public class EthereumAdapter extends AbstractAdapter {
             }
         }
 
-        return latestBlockNumber;
+        return Long.MAX_VALUE;
     }
 
     private EthFilter generateFilter(String smartContractAddress, Event event, int parameterCount, DefaultBlockParameter from, DefaultBlockParameter to) {
