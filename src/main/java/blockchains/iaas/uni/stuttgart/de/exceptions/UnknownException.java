@@ -9,20 +9,14 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.model;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@Builder
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class TimeFrame {
-    private String from;
-    private String to;
+@JsonRpcError(code = ExceptionCode.UnknownError, message = "Unknown server error occurred.")
+public class UnknownException extends BalException {
+    @Override
+    public int getCode() {
+        return ExceptionCode.UnknownError;
+    }
 }

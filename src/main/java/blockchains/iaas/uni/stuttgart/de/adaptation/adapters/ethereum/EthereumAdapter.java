@@ -73,7 +73,9 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.core.methods.response.EthTransaction;
+import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.tx.Transfer;
@@ -348,7 +350,8 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+    public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier,
+                                                   List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
         long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(degreeOfConfidence);
         List<TypeReference<?>> types = this.convertTypes(outputParameters);
         final Event event = new Event(eventIdentifier, types);
@@ -356,25 +359,12 @@ public class EthereumAdapter extends AbstractAdapter {
         final PublishSubject<Occurrence> result = PublishSubject.create();
 
         Disposable newEventObservable = web3j.ethLogFlowable(ethFilter).subscribe(log -> {
-            final EventValues values = Contract.staticExtractEventParameters(event, log);
-            List<Parameter> parameters = new ArrayList<>();
+            Occurrence occurrence = this.handleLog(log, event, outputParameters, filter);
 
-            for (int i = 0; i < outputParameters.size(); i++) {
-                parameters.add(Parameter.builder()
-                        .name(outputParameters.get(i).getName())
-                        .type(outputParameters.get(i).getType())
-                        .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
-                        .build());
-            }
-
-            if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
-                EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
-                subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
-                        .thenAccept(tx -> {
-                            LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
-                            String timestampS = formatter.format(timestamp);
-                            result.onNext(Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build());
-                        })
+            // if the result is null, then the filter has evaluated to false.
+            if (occurrence != null) {
+                this.subscribeForTxEvent(log.getTransactionHash(), waitFor, TransactionState.CONFIRMED)
+                        .thenAccept(tx -> result.onNext(occurrence))
                         .exceptionally(error -> {
                             result.onError(wrapEthereumExceptions(error));
                             return null;
@@ -386,8 +376,35 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
-        return null;
+    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier,
+                                                      List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
+        List<TypeReference<?>> types = this.convertTypes(outputParameters);
+        final Event event = new Event(eventIdentifier, types);
+        try {
+            final EthFilter ethFilter = this.generateQueryFilter(smartContractAddress, event, types.size(), timeFrame);
+            return web3j.ethGetLogs(ethFilter)
+                    .sendAsync()
+                    .thenApply(result -> {
+                        try {
+                            List<Occurrence> finalResult = new ArrayList<>();
+
+                            for (EthLog.LogResult logResult : result.getLogs()) {
+                                Log log = (Log) logResult.get();
+                                Occurrence occurrence = this.handleLog(log, event, outputParameters, filter);
+
+                                if (occurrence != null) {
+                                    finalResult.add(occurrence);
+                                }
+                            }
+
+                            return QueryResult.builder().occurrences(finalResult).build();
+                        } catch (Exception e) {
+                            throw new CompletionException(new InvalidScipParameterException("The filter script is invalid: " + e.getMessage()));
+                        }
+                    });
+        } catch (IOException e) {
+            throw new BlockchainNodeUnreachableException(e.getMessage());
+        }
     }
 
     @Override
@@ -403,6 +420,29 @@ public class EthereumAdapter extends AbstractAdapter {
                 .collect(Collectors.toList());
     }
 
+    private Occurrence handleLog(Log log, Event event, List<Parameter> outputParameters, String filter) throws Exception {
+        final EventValues values = Contract.staticExtractEventParameters(event, log);
+        List<Parameter> parameters = new ArrayList<>();
+
+        for (int i = 0; i < outputParameters.size(); i++) {
+            parameters.add(Parameter.builder()
+                    .name(outputParameters.get(i).getName())
+                    .type(outputParameters.get(i).getType())
+                    .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
+                    .build());
+        }
+
+        if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
+            EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+            LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
+            String timestampS = formatter.format(timestamp);
+
+            return Occurrence.builder().parameters(parameters).isoTimestamp(timestampS).build();
+        }
+
+        return null;
+    }
+
     private EthFilter generateSubscriptionFilter(String smartContractAddress, Event event, int parameterCount) {
         return this.generateFilter(smartContractAddress, event, parameterCount, DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST);
     }
@@ -411,30 +451,36 @@ public class EthereumAdapter extends AbstractAdapter {
         DefaultBlockParameter from;
         DefaultBlockParameter to;
 
-        if (Strings.isNullOrEmpty(timeFrame.getStartIsoTimestamp())) {
+        if (timeFrame == null) {
             from = DefaultBlockParameterName.EARLIEST;
-        } else {
-            LocalDateTime fromDateTime = LocalDateTime.parse(timeFrame.getStartIsoTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-            long fromBlockNumber = this.getBlockAfterIsoDate(fromDateTime);
-            from = new DefaultBlockParameterNumber(fromBlockNumber);
-        }
-
-        if (Strings.isNullOrEmpty(timeFrame.getEndIsoTimestamp())) {
             to = DefaultBlockParameterName.LATEST;
         } else {
-            LocalDateTime toDateTime = LocalDateTime.parse(timeFrame.getEndIsoTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-            long toBlockNumber = this.getBlockAfterIsoDate(toDateTime);
 
-            // this indicates the specified date is after the last block
-            if (toBlockNumber == Long.MAX_VALUE) {
+            if (Strings.isNullOrEmpty(timeFrame.getFrom())) {
+                from = DefaultBlockParameterName.EARLIEST;
+            } else {
+                LocalDateTime fromDateTime = LocalDateTime.parse(timeFrame.getFrom(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                long fromBlockNumber = this.getBlockAfterIsoDate(fromDateTime);
+                from = new DefaultBlockParameterNumber(fromBlockNumber);
+            }
+
+            if (Strings.isNullOrEmpty(timeFrame.getTo())) {
                 to = DefaultBlockParameterName.LATEST;
             } else {
-                if (toBlockNumber > 0)
-                    toBlockNumber--;
-                else
-                    throw new InvalidScipParameterException();
+                LocalDateTime toDateTime = LocalDateTime.parse(timeFrame.getTo(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                long toBlockNumber = this.getBlockAfterIsoDate(toDateTime);
 
-                to = new DefaultBlockParameterNumber(toBlockNumber);
+                // this indicates the specified date is after the last block
+                if (toBlockNumber == Long.MAX_VALUE) {
+                    to = DefaultBlockParameterName.LATEST;
+                } else {
+                    if (toBlockNumber > 0)
+                        toBlockNumber--;
+                    else
+                        throw new InvalidScipParameterException();
+
+                    to = new DefaultBlockParameterNumber(toBlockNumber);
+                }
             }
         }
 

@@ -16,6 +16,8 @@ import java.util.List;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -97,5 +99,27 @@ public class BalService {
         }
 
         return "OK";
+    }
+
+    @JsonRpcMethod
+    public QueryResult Query(
+            @JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
+            @JsonRpcOptional @JsonRpcParam("filter") String filter,
+            @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame,
+            @JsonRpcParam("parameters") List<Parameter> outputParameters) {
+        log.info("Query method is executed!");
+
+        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
+            throw new InvalidScipParameterException();
+        }
+
+        BlockchainManager manager = new BlockchainManager();
+
+        if (!Strings.isNullOrEmpty(eventIdentifier)) {
+            return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);
+        }
+
+        throw new InvalidScipParameterException();
     }
 }

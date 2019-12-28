@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
@@ -27,6 +28,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterExceptio
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.TransactionNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.UnknownException;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
@@ -37,6 +39,8 @@ import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import com.google.common.base.Strings;
@@ -487,6 +491,33 @@ public class BlockchainManager {
         // get all subscription keys with the specified eventId and params of the current blockchain and smart contract.
         Collection<SubscriptionKey> keys = SubscriptionManager.getInstance().getAllSubscriptionIdsOfFunction(blockchainId, smartContractId, functionIdentifier, parameters);
         this.cancelSubscriptions(correlationId, keys);
+    }
+
+    public QueryResult queryEvents(final String blockchainIdentifier,
+                                   final String smartContractPath,
+                                   final String eventIdentifier,
+                                   final List<Parameter> outputParameters,
+                                   final String filter,
+                                   final TimeFrame timeFrame) {
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainIdentifier)
+                || Strings.isNullOrEmpty(smartContractPath)
+                || Strings.isNullOrEmpty(eventIdentifier)) {
+            throw new InvalidScipParameterException();
+        }
+
+        try {
+            return AdapterManager.getInstance()
+                    .getAdapter(blockchainIdentifier)
+                    .queryEvents(smartContractPath, eventIdentifier, outputParameters, filter, timeFrame)
+                    .join();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof BalException)
+                throw (BalException) e.getCause();
+
+            log.error("caught a non-BALException! " + e.getCause().getClass().getName());
+            throw new UnknownException();
+        }
     }
 
     /**
