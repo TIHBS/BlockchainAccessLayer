@@ -250,7 +250,7 @@ public class FabricAdapter implements BlockchainAdapter {
         try {
             Gateway gateway = GatewayManager.getInstance().getGateway(blockchainId);
             if (gateway.getIdentity() != null)
-                return "true";
+                return "true1";
             else
                 return "Cannot get gateway identity!";
         } catch (Exception e) {
