@@ -168,7 +168,7 @@ public class FabricAdapter implements BlockchainAdapter {
             final long latestBlockNumber = network
                     .getChannel()
                     .queryBlockchainInfo()
-                    .getHeight();
+                    .getHeight() - 1;
             final CompletableFuture<QueryResult> result = new CompletableFuture<>();
             final QueryResult queryResult = QueryResult.builder().occurrences(new ArrayList<>()).build();
             log.info("latest Fabric block number: {}", latestBlockNumber);
@@ -255,7 +255,7 @@ public class FabricAdapter implements BlockchainAdapter {
         try {
             Gateway gateway = GatewayManager.getInstance().getGateway(blockchainId);
             if (gateway.getIdentity() != null)
-                return "true2";
+                return "true";
             else
                 return "Cannot get gateway identity!";
         } catch (Exception e) {
