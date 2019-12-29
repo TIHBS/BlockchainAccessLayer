@@ -11,6 +11,12 @@
 
 package blockchains.iaas.uni.stuttgart.de.model;
 
+import java.sql.Time;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+import blockchains.iaas.uni.stuttgart.de.adaptation.utils.TimeUtils;
+import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,4 +31,13 @@ import lombok.Setter;
 public class TimeFrame {
     private String from;
     private String to;
+
+    public LocalDateTime getFromLocalDateTime() {
+        return TimeUtils.getTimestampObject(from);
+    }
+
+    public LocalDateTime getToLocalDateTime() {
+        return TimeUtils.getTimestampObject(to);
+    }
+
 }

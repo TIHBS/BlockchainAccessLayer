@@ -12,6 +12,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -45,6 +46,12 @@ import lombok.NoArgsConstructor;
 import org.hyperledger.fabric.gateway.Contract;
 import org.hyperledger.fabric.gateway.ContractEvent;
 import org.hyperledger.fabric.gateway.Gateway;
+import org.hyperledger.fabric.gateway.Network;
+import org.hyperledger.fabric.gateway.impl.event.ContractEventImpl;
+import org.hyperledger.fabric.sdk.BlockEvent;
+import org.hyperledger.fabric.sdk.ChaincodeEvent;
+import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
+import org.hyperledger.fabric.sdk.exception.ProposalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,41 +143,106 @@ public class FabricAdapter implements BlockchainAdapter {
 
         Consumer<ContractEvent> consumer = contract.addContractListener(event -> {
             log.info(event.toString());
-            if (event.getName().equals(eventIdentifier)) {
-                // todo try to parse the returned value according to the outputParameters
-                List<Parameter> parameters = new ArrayList<>();
 
-                if (event.getPayload().isPresent() && outputParameters.size() > 0) {
-                    Parameter parameter = Parameter
-                            .builder()
-                            .name(outputParameters.get(0).getName())
-                            .type(outputParameters.get(0).getType())
-                            .value(new String(event.getPayload().get(), StandardCharsets.UTF_8))
-                            .build();
-                    parameters.add(parameter);
+            try {
+                Occurrence occurrence = this.handleEvent(event, outputParameters, filter);
+
+                if (occurrence != null) {
+                    result.onNext(occurrence);
                 }
-
-                try {
-                    if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
-
-                        result.onNext(Occurrence
-                                .builder()
-                                .parameters(parameters)
-                                .isoTimestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC")).format(event.getTransactionEvent().getTimestamp().toInstant()))
-                                .build());
-                    }
-                } catch (Exception e) {
-                    result.onError(new InvalidScipParameterException(e.getMessage()));
-                }
+            } catch (InvalidScipParameterException e) {
+                result.onError(e);
             }
-        });
+        }, eventIdentifier);
 
         return result.doFinally(() -> contract.removeContractListener(consumer));
     }
 
     @Override
     public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
-        return null;
+        try {
+            final SmartContractPathElements path = this.parsePathElements(smartContractAddress);
+            final LocalDateTime fromDateTime = timeFrame.getFromLocalDateTime();
+            final LocalDateTime toDateTime = timeFrame.getToLocalDateTime();
+            final Network network = GatewayManager.getInstance().getChannel(blockchainId, path.channel);
+            final long latestBlockNumber = network
+                    .getChannel()
+                    .queryBlockchainInfo()
+                    .getHeight();
+            final CompletableFuture<QueryResult> result = new CompletableFuture<>();
+            final QueryResult queryResult = QueryResult.builder().occurrences(new ArrayList<>()).build();
+
+            // the listening is over either when the block number is past the latest block number at the time of invocation,
+            // or when the "to" timestamp is exceeded by the transaction timestamp.
+            // using the provided ContractListener does not work since we cannot tell when past events are done in the replay!
+            final Consumer<BlockEvent> consumer = network.addBlockListener(0, blockEvent -> {
+                if (blockEvent.getBlockNumber() > latestBlockNumber) {
+                    result.complete(queryResult);
+                } else {
+
+                    blockEvent.getTransactionEvents().forEach(tE -> {
+                        final LocalDateTime transactionDateTime = tE.getTimestamp().toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime();
+                        // we could be already done!
+                        if (toDateTime != null && toDateTime.isBefore(transactionDateTime)) {
+                            result.complete(queryResult);
+                        } else {
+                            // ensure we are not before the first permitted timestamp
+                            if (fromDateTime == null || fromDateTime.isBefore(transactionDateTime)) {
+                                // iterate over events of this transaction
+                                tE.getTransactionActionInfos().forEach(tAI -> {
+                                    ChaincodeEvent cE = tAI.getEvent();
+                                    // check if name matches
+                                    if (cE.getEventName().equals(eventIdentifier)) {
+                                        // check if filter evaluates to true
+                                        Occurrence occurrence = this.handleEvent(new ContractEventImpl(tE, cE), outputParameters, filter);
+
+                                        if (occurrence != null) {
+                                            // we found a matching occurrence
+                                            queryResult.getOccurrences().add(occurrence);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+            return result.whenComplete((res, error) -> network.removeBlockListener(consumer));
+        } catch (ProposalException | InvalidArgumentException e) {
+            throw new BlockchainNodeUnreachableException(e.getMessage());
+        }
+    }
+
+    private Occurrence handleEvent(ContractEvent event, List<Parameter> outputParameters, String filter) throws InvalidScipParameterException {
+        // todo try to parse the returned value according to the outputParameters
+        List<Parameter> parameters = new ArrayList<>();
+
+        if (event.getPayload().isPresent() && outputParameters.size() > 0) {
+            Parameter parameter = Parameter
+                    .builder()
+                    .name(outputParameters.get(0).getName())
+                    .type(outputParameters.get(0).getType())
+                    .value(new String(event.getPayload().get(), StandardCharsets.UTF_8))
+                    .build();
+            parameters.add(parameter);
+        }
+
+        try {
+            if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
+                return Occurrence
+                        .builder()
+                        .parameters(parameters)
+                        .isoTimestamp(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.of("UTC")).format(event.getTransactionEvent().getTimestamp().toInstant()))
+                        .build();
+            }
+
+            return null;
+        } catch (Exception e) {
+            throw new InvalidScipParameterException(e.getMessage());
+        }
     }
 
     @Override

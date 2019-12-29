@@ -9,28 +9,20 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.model;
+package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.TimeUtils;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.google.common.base.Strings;
 
-@Builder
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Occurrence {
-    List<Parameter> parameters;
-    String isoTimestamp;
+public class TimeUtils {
 
-    public LocalDateTime getTimestampObject() {
-        return TimeUtils.getTimestampObject(isoTimestamp);
+    public static LocalDateTime getTimestampObject(String isoTimestamp) {
+        if (!Strings.isNullOrEmpty(isoTimestamp)) {
+            return LocalDateTime.parse(isoTimestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        }
+
+        return null;
     }
 }
