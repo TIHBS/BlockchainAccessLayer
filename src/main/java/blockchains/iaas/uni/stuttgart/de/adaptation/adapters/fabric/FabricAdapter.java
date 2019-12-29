@@ -162,8 +162,8 @@ public class FabricAdapter implements BlockchainAdapter {
     public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
         try {
             final SmartContractPathElements path = this.parsePathElements(smartContractAddress);
-            final LocalDateTime fromDateTime = timeFrame.getFromLocalDateTime();
-            final LocalDateTime toDateTime = timeFrame.getToLocalDateTime();
+            final LocalDateTime fromDateTime = timeFrame != null ? timeFrame.getFromLocalDateTime() : null;
+            final LocalDateTime toDateTime = timeFrame != null ? timeFrame.getToLocalDateTime() : null;
             final Network network = GatewayManager.getInstance().getChannel(blockchainId, path.channel);
             final long latestBlockNumber = network
                     .getChannel()
@@ -195,7 +195,7 @@ public class FabricAdapter implements BlockchainAdapter {
                             tE.getTransactionActionInfos().forEach(tAI -> {
                                 ChaincodeEvent cE = tAI.getEvent();
                                 // check if name matches
-                                if (cE.getEventName().equals(eventIdentifier)) {
+                                if (cE != null && cE.getEventName() != null && cE.getEventName().equals(eventIdentifier)) {
                                     // check if filter evaluates to true
                                     Occurrence occurrence = this.handleEvent(new ContractEventImpl(tE, cE), outputParameters, filter);
 
