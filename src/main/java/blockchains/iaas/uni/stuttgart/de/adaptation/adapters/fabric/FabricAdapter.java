@@ -171,42 +171,47 @@ public class FabricAdapter implements BlockchainAdapter {
                     .getHeight();
             final CompletableFuture<QueryResult> result = new CompletableFuture<>();
             final QueryResult queryResult = QueryResult.builder().occurrences(new ArrayList<>()).build();
+            log.info("latest Fabric block number: {}", latestBlockNumber);
 
             // the listening is over either when the block number is past the latest block number at the time of invocation,
             // or when the "to" timestamp is exceeded by the transaction timestamp.
             // using the provided ContractListener does not work since we cannot tell when past events are done in the replay!
             final Consumer<BlockEvent> consumer = network.addBlockListener(0, blockEvent -> {
-                if (blockEvent.getBlockNumber() > latestBlockNumber) {
-                    result.complete(queryResult);
-                } else {
+                log.info("handling block no. {}", blockEvent.getBlockNumber());
 
-                    blockEvent.getTransactionEvents().forEach(tE -> {
-                        final LocalDateTime transactionDateTime = tE.getTimestamp().toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDateTime();
-                        // we could be already done!
-                        if (toDateTime != null && toDateTime.isBefore(transactionDateTime)) {
-                            result.complete(queryResult);
-                        } else {
-                            // ensure we are not before the first permitted timestamp
-                            if (fromDateTime == null || fromDateTime.isBefore(transactionDateTime)) {
-                                // iterate over events of this transaction
-                                tE.getTransactionActionInfos().forEach(tAI -> {
-                                    ChaincodeEvent cE = tAI.getEvent();
-                                    // check if name matches
-                                    if (cE.getEventName().equals(eventIdentifier)) {
-                                        // check if filter evaluates to true
-                                        Occurrence occurrence = this.handleEvent(new ContractEventImpl(tE, cE), outputParameters, filter);
+                blockEvent.getTransactionEvents().forEach(tE -> {
+                    log.info("handling transaction hash: {}", tE.getTransactionID());
+                    final LocalDateTime transactionDateTime = tE.getTimestamp().toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime();
+                    // we could be already done!
+                    if (toDateTime != null && toDateTime.isBefore(transactionDateTime)) {
+                        log.info("transaction after last allowed time. Completing!");
+                        result.complete(queryResult);
+                    } else {
+                        // ensure we are not before the first permitted timestamp
+                        if (fromDateTime == null || fromDateTime.isBefore(transactionDateTime)) {
+                            // iterate over events of this transaction
+                            tE.getTransactionActionInfos().forEach(tAI -> {
+                                ChaincodeEvent cE = tAI.getEvent();
+                                // check if name matches
+                                if (cE.getEventName().equals(eventIdentifier)) {
+                                    // check if filter evaluates to true
+                                    Occurrence occurrence = this.handleEvent(new ContractEventImpl(tE, cE), outputParameters, filter);
 
-                                        if (occurrence != null) {
-                                            // we found a matching occurrence
-                                            queryResult.getOccurrences().add(occurrence);
-                                        }
+                                    if (occurrence != null) {
+                                        // we found a matching occurrence
+                                        queryResult.getOccurrences().add(occurrence);
                                     }
-                                });
-                            }
+                                }
+                            });
                         }
-                    });
+                    }
+                });
+
+                if (blockEvent.getBlockNumber() >= latestBlockNumber) {
+                    log.info("currentBlock >= latestBlock so completing!");
+                    result.complete(queryResult);
                 }
             });
 
@@ -250,7 +255,7 @@ public class FabricAdapter implements BlockchainAdapter {
         try {
             Gateway gateway = GatewayManager.getInstance().getGateway(blockchainId);
             if (gateway.getIdentity() != null)
-                return "true1";
+                return "true2";
             else
                 return "Cannot get gateway identity!";
         } catch (Exception e) {
