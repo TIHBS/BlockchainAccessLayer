@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.naming.OperationNotSupportedException;
@@ -52,6 +53,7 @@ import com.google.common.base.Strings;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -92,7 +94,7 @@ public class EthereumAdapter extends AbstractAdapter {
 
     public EthereumAdapter(final String nodeUrl) {
         this.nodeUrl = nodeUrl;
-        this.web3j = Web3j.build(new HttpService(this.nodeUrl));
+        this.web3j = Web3j.build(createWeb3HttpService(this.nodeUrl));
         this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
@@ -641,5 +643,15 @@ public class EthereumAdapter extends AbstractAdapter {
             }
             future.complete(result);
         }
+    }
+
+    private static HttpService createWeb3HttpService(String url) {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        OkHttpClient client = builder
+                .connectTimeout(0, TimeUnit.SECONDS)
+                .readTimeout(0, TimeUnit.SECONDS)
+                .writeTimeout(0, TimeUnit.SECONDS)
+                .build();
+        return new HttpService(url, client, false);
     }
 }
