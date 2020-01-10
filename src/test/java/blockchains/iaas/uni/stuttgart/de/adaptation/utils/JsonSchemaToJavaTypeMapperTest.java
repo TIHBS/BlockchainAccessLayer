@@ -27,7 +27,7 @@ class JsonSchemaToJavaTypeMapperTest {
                 "\t\"type\": \"string\"\n" +
                 "}";
         parameter.setType(stringType);
-        parameter.setValue("'hello world!'");
+        parameter.setValue("hello world!");
         Object result = JsonSchemaToJavaTypeMapper.map(parameter);
         Assertions.assertEquals(String.class, result.getClass());
         Assertions.assertEquals("hello world!", result);
@@ -37,7 +37,7 @@ class JsonSchemaToJavaTypeMapperTest {
                 "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
                 "}";
         parameter.setType(addressType);
-        parameter.setValue("'0x52908400098527886E0F7030069857D2E4169EE7'");
+        parameter.setValue("0x52908400098527886E0F7030069857D2E4169EE7");
         result = JsonSchemaToJavaTypeMapper.map(parameter);
         Assertions.assertEquals(String.class, result.getClass());
         Assertions.assertEquals("0x52908400098527886E0F7030069857D2E4169EE7".toLowerCase(), result.toString().toLowerCase());
@@ -58,7 +58,7 @@ class JsonSchemaToJavaTypeMapperTest {
                 "\t}\n" +
                 "}";
         parameter.setType(bytes);
-        parameter.setValue("['aa','bb','cc','dd','11','22','33','44']");
+        parameter.setValue("[aa,bb,cc,dd,11,22,33,44]");
         result = JsonSchemaToJavaTypeMapper.map(parameter);
         Assertions.assertEquals(Object[].class, result.getClass());
         byte[] resultAsArray = new byte[((Object[]) result).length];
