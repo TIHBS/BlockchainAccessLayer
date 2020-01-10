@@ -12,7 +12,6 @@
 package blockchains.iaas.uni.stuttgart.de.model;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.TimeUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,12 +26,17 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Occurrence {
-    List<Parameter> parameters;
-    String isoTimestamp;
+public class TimeFrame {
+    private String from;
+    private String to;
 
     @JsonIgnore
-    public LocalDateTime getTimestampObject() {
-        return TimeUtils.getTimestampObject(isoTimestamp);
+    public LocalDateTime getFromLocalDateTime() {
+        return TimeUtils.getTimestampObject(from);
+    }
+
+    @JsonIgnore
+    public LocalDateTime getToLocalDateTime() {
+        return TimeUtils.getTimestampObject(to);
     }
 }

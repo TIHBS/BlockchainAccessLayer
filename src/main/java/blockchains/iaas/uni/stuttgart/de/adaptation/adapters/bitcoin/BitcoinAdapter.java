@@ -28,6 +28,8 @@ import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import com.google.common.base.Strings;
@@ -278,6 +280,11 @@ public class BitcoinAdapter extends AbstractAdapter {
 
     @Override
     public Observable<Occurrence> subscribeToEvent(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, double degreeOfConfidence, String filter) throws BalException {
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
         return null;
     }
 

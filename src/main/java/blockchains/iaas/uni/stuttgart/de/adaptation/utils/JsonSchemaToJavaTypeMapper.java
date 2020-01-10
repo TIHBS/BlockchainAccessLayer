@@ -46,21 +46,17 @@ public class JsonSchemaToJavaTypeMapper {
         }
 
         if (type.equals("string")) {
-            if (value.length() >= 2) {
-                value = value.substring(1, value.length() - 1);
+            if (jsonObject.containsKey("pattern") && jsonObject.getString("pattern").equals("^[a-fA-F0-9]{2}$")) {
+                byte[] bytes = DatatypeConverter.parseHexBinary(value);
 
-                if (jsonObject.containsKey("pattern") && jsonObject.getString("pattern").equals("^[a-fA-F0-9]{2}$")) {
-                    byte[] bytes = DatatypeConverter.parseHexBinary(value);
-
-                    if (bytes.length == 1) {
-                        return bytes[0];
-                    }
-
-                    throw new ParameterException("Invalid byte array: " + value);
+                if (bytes.length == 1) {
+                    return bytes[0];
                 }
 
-                return value;
+                throw new ParameterException("Invalid byte array: " + value);
             }
+
+            return value;
         }
 
         if (type.equals("integer")) {

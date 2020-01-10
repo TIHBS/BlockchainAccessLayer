@@ -33,7 +33,7 @@ public class GatewayManager {
     private Map<String, Gateway> gateways;
     // todo make the key include blockchain-id as well
     private Map<String, Network> channels;
-    // todo make the key include blockchaon-id and channel name as wel
+    // todo make the key include blockchaon-id and channel name as well
     private Map<String, Contract> contracts;
 
     private GatewayManager() {

@@ -11,11 +11,8 @@
 
 package blockchains.iaas.uni.stuttgart.de.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.TimeUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,12 +24,6 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Occurrence {
-    List<Parameter> parameters;
-    String isoTimestamp;
-
-    @JsonIgnore
-    public LocalDateTime getTimestampObject() {
-        return TimeUtils.getTimestampObject(isoTimestamp);
-    }
+public class QueryResult {
+    private List<Occurrence> occurrences;
 }
