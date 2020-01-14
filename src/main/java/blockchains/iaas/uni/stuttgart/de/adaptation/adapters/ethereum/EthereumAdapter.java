@@ -71,6 +71,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.DefaultBlockParameterNumber;
+import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthCall;
@@ -82,6 +83,7 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.DefaultGasProvider;
+import org.web3j.utils.Async;
 import org.web3j.utils.Convert;
 
 public class EthereumAdapter extends AbstractAdapter {
@@ -90,11 +92,13 @@ public class EthereumAdapter extends AbstractAdapter {
     private final Web3j web3j;
     private final DateTimeFormatter formatter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
-    private static final int AVERAGE_BLOCK_TIME_SECONDS = 12;
+    private final int averageBlockTimeSeconds;
 
-    public EthereumAdapter(final String nodeUrl) {
+    public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds) {
         this.nodeUrl = nodeUrl;
-        this.web3j = Web3j.build(createWeb3HttpService(this.nodeUrl));
+        this.averageBlockTimeSeconds = averageBlockTimeSeconds;
+        // We use a specific implementation so we can change the polling period (useful for prototypes).
+        this.web3j = new JsonRpc2_0Web3j(createWeb3HttpService(this.nodeUrl), this.averageBlockTimeSeconds, Async.defaultExecutorService());
         this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
@@ -491,7 +495,7 @@ public class EthereumAdapter extends AbstractAdapter {
 
     long getBlockAfterIsoDate(final LocalDateTime dateTime) throws IOException {
         final long seconds = Duration.between(dateTime, LocalDateTime.now()).getSeconds();
-        long estimatedBlockLag = seconds / AVERAGE_BLOCK_TIME_SECONDS;
+        long estimatedBlockLag = seconds / averageBlockTimeSeconds;
 
         // if the block is in the future
         if (estimatedBlockLag < 0) {

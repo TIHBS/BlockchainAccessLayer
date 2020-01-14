@@ -59,7 +59,7 @@ public class BlockchainAdapterFactory {
     }
 
     private EthereumAdapter createEthereumAdapter(EthereumConnectionProfile gateway) throws IOException, CipherException {
-        final EthereumAdapter result = new EthereumAdapter(gateway.getNodeUrl());
+        final EthereumAdapter result = new EthereumAdapter(gateway.getNodeUrl(), gateway.getPollingTimeSeconds());
         result.setCredentials(gateway.getKeystorePassword(), gateway.getKeystorePath());
         final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
         cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
