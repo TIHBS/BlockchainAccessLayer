@@ -1,19 +1,55 @@
 # Blockchain Access Layer (BAL)
 
-The project is a Java 8 web application that uses Jersey to expose a RESTful and a JSON-RPC APIs.
+BAL is an extensible abstraction layer that allows client applications to access permissioned and permissionless blockchains using a uniform interface.
+BAL is designed to support business process management systems to access blockchains using the [Blockchain Modeling and Execution (BlockME) method](https://link.springer.com/article/10.1007/s00450-019-00399-5).
+It also implements the [Smart Contract Invocation Protocol (SCIP)](https://github.com/lampajr/scip) as a gateway.
+
+BAL is a Java 8 web application that uses Jersey to expose a [RESTful API](#restful-api) and a [JSON-RPC API](#json-rpc-api).
 
 ## Configuration
 
-The blockchain access layer needs to be able to communicate with a [geth node](https://github.com/ethereum/go-ethereum)
+BAL allows simultaneous access to multiple blockchain systems.
+Currently, [Ethereum](https://ethereum.org/), [Bitcoin](https://bitcoin.org/), and [Hyperledger Fabric](https://www.hyperledger.org/projects/fabric) are supported.
+- To access the Ethereum blockchain, BAL needs to be able to communicate with a [geth node](https://github.com/ethereum/go-ethereum)
+which has RPC connections enabled. Furthermore, BAL directly accesses the keystore file holding the private key of an Ethereum account used for sending and receiving transactions.
+- To access the Bitcoin blockchain, BAL needs to be able to communicate with a [bitcoind node](https://bitcoin.org/en/bitcoin-core/)
 which has RPC connections enabled.
-Furthermore, the layer directly accesses the keystore file holding the private key of an Ethereum account used for sending
-and receiving transactions.
-On the other hand, the BAL also needs to be able to communicate with a [bitcoind node](https://bitcoin.org/en/bitcoin-core/)
-which has RPC connections enabled.
-Finally, it needs to communicate with a [Hyperledger Fabric](https://hyperledger-fabric.readthedocs.io/) network.
-The configuration file that can be used to configure these aspects (communication with the Fabric network, a geth, and a bitcoind nodes etc.) can be found 
-[here](src/main/resources/gatewayConfiguration.json)
+- To access a given Hyperledger Fabric network, it needs to have access to a wallet file with authorized users, and an appropriate [connection profile](https://hyperledger-fabric.readthedocs.io/en/latest/developapps/connectionprofile.html).
 
+### Configuring Access to Multiple Blockchains
+BAL expectes a configuration file with the name `connectionProfiles.json` inside the path `[User Folder]/.bal/`.
+An example for this file that accesses a geth node, a bitcoind node and a Hyperledger Fabric network is:
+```[json]
+{
+  "eth-0": {
+    "@type": "ethereum",
+    "nodeUrl":"http://localhost:7545",
+    "keystorePath":"C:\\Ethereum\\keystore\\UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json",
+    "keystorePassword":"123456789",
+    "adversaryVotingRatio": "0.2",
+    "pollingTimeSeconds": 2
+  },
+  "btc-0" : {
+    "@type": "bitcoin",
+    "rpcProtocol": "http",
+    "rpcHost": "129.69.214.211",
+    "rpcPort": "8332",
+    "rpcUser": "falazigb",
+    "rpcPassword": "123456789",
+    "httpAuthScheme": "Basic",
+    "notificationAlertPort": "5158",
+    "notificationBlockPort": "5159",
+    "notificationWalletPort": "5160",
+    "adversaryVotingRatio": "0.1"
+  },
+  "fabric-0" : {
+    "@type": "fabric",
+    "walletPath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\emc\\javascript\\wallet",
+    "userName": "user1",
+    "connectionProfilePath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\first-network\\connection-org1.json"
+  }
+}
+```
 
 ## Building and Deployment
 
@@ -27,8 +63,9 @@ a successful build) can be deployed on an Apache Tomcat server.
 
 **Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core node. [The used library](https://github.com/pythonmax/btcd-cli4j) is forked from an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
 
-## Accessing the RESTful API
+## Accessing the APIs
 
+### RESTful API
 The application exposes an asynchronous RESTful API to subscribe and unsubscribe from the provided operations.
 
 **To summarize:**
@@ -59,8 +96,18 @@ paths to manually delete the corresponding subscription:
 {application-URL}/webapi/invoke-smart-contract-function
 ```
 
-## Running a Local geth Node
+### JSON-RPC API
+BAL implements the [JSON-RPC binding](https://github.com/lampajr/scip#json-rpc-binding) described in the SCIP specifications. 
+It can be accessed with any standard [JSON-RPC client](https://www.jsonrpc.org/archive_json-rpc.org/implementations.html).
 
+## Setting Up Various Blockchains for Testing
+
+BAL needs to have access to a node for each blockchain instance it needs to communicate with.
+These nodes can be already running nodes that you have access to. 
+Otherwise, you need to setup and manage your own nodes.
+Below, are basic instructions how to setup Ethereum, Bitcoin, and Hyperledger Fabric nodes.
+
+### Running a Local geth Node
 A geth node is used to access the Ethereum network. For development purposes, it is advised
 not to connect to the main Ethereum network, but rather to one of the testnets.
 (another, more difficult option would be to run a local private Ethereum network).
@@ -85,8 +132,7 @@ To start a geth node in the fast-sync mode, execute the following command:
 (make sure to install geth on the computer where you run this command):```geth attach http://localhost:8545```
 please replace _localhost_ with the ip address of the computer running the node.
 
-## Running a Local Bitcoin Core Node
-
+### Running a Local Bitcoin Core Node
 A Bitcoin Core node (or _bitcoind_ node) is used to access the Bitcoin network. For development purposes, it is advised
 not to connect to the main Bitcoin network, but rather to one of the testnets.
 (another, more difficult option would be to run a local private Bitcoin network).
@@ -107,12 +153,10 @@ connection, and the availability of peers).
 bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the node> -rpcuser=<rpc username> -rpcpassword=<rpc password>
 ```
 
-## Setting-up a Hyperledger Fabric Network
-
+### Setting-up a Basic Hyperledger Fabric Network
 Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
-### Note
-
+#### Note
 The included Fabric unit test depends on the [FabCar official example](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html), so in order to run it
 ensure the following:
 
@@ -127,8 +171,9 @@ ensure the following:
    
    This ensures that the SDK is able to find the orderer and network peers.
 
-## Case Study (For BlockME)
+## Case Studies
 
+### BlockME Case Study
 [Blockchain Modeling Extension (BlockME)](https://link.springer.com/article/10.1007/s00450-019-00399-5) is an extension to BPMN 2.0 that allows business processes to communicate with heterogeneous blockchains.
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
@@ -176,10 +221,5 @@ You can find the details about the resulting testnet3 Bitcoin transaction [here]
 * The blockchain access layer is running in a local Tomcat server listening to port 8081
 * The camunda engine is running in a local Tomcat server listening to port 8080
 
-## BAL as a Smart Contract Invocation Protocol (SCIP) Gateway
-
-The BAL provides a JSON-RPC API as a prototypical implementation of the [SCIP protocol](https://github.com/lampajr/scip) playing the role of a SCIP gateway.
-
-### SCIP Case Study
-
-A case study that demonstrates the usage of the BAL as a SCIP gateway [can be found here](https://github.com/ghareeb-falazi/SCIP-CaseStudy). 
+### SCIP Case Studies
+Two case studies that demonstrate the usage of the BAL as a SCIP gateway can be found [here](https://github.com/ghareeb-falazi/SCIP-CaseStudy) and [here](https://github.com/ghareeb-falazi/SCIP-CaseStudy-2).
