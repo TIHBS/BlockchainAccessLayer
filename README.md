@@ -1,4 +1,4 @@
-# Blockchain Access Layer (BAL)
+# Blockchain Access Layer (BAL) - SCIP Gateway
 
 BAL is an extensible abstraction layer that allows client applications to access permissioned and permissionless blockchains using a uniform interface.
 BAL is designed to support business process management systems to access blockchains using the [Blockchain Modeling and Execution (BlockME) method](https://link.springer.com/article/10.1007/s00450-019-00399-5).
