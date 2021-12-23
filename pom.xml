@@ -47,6 +47,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.pf4j</groupId>
+            <artifactId>pf4j</artifactId>
+            <version>3.6.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.hyperledger.fabric</groupId>
             <artifactId>fabric-gateway-java</artifactId>
             <version>1.4.0</version>
@@ -210,6 +216,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.containers/jersey-container-grizzly2-http -->
+<!--        <dependency>-->
+<!--            <groupId>org.glassfish.jersey.containers</groupId>-->
+<!--            <artifactId>jersey-container-grizzly2-http</artifactId>-->
+<!--            <version>3.0.3</version>-->
+<!--        </dependency>-->
 
     </dependencies>
     <properties>
