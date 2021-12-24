@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
+package blockchains.iaas.uni.stuttgart.de.api.interfaces;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,12 +19,12 @@ import java.util.concurrent.CompletableFuture;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
-import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import blockchains.iaas.uni.stuttgart.de.api.model.Occurrence;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import io.reactivex.Observable;
 
 public interface BlockchainAdapter {

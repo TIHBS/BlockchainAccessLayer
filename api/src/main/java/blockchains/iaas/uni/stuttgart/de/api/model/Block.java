@@ -1,4 +1,4 @@
-package blockchains.iaas.uni.stuttgart.de.model;
+package blockchains.iaas.uni.stuttgart.de.api.model;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

@@ -140,7 +140,7 @@ In order to connect a _bitcoind_ node to [testnet3](https://en.bitcoin.it/wiki/T
 
 1. [Install bitcoind](https://bitcoin.org/en/download):
  this differs depending on your operating system. For the installation instructions on Ubuntu you can follow [these steps](https://gist.github.com/rjmacarthy/b56497a81a6497bfabb1).
-2. Configure _bitcoind_: This can be done by editing and using the [`bitcoin.conf`](src/main/resources/bitcoin.conf) file when starting the bicoind daemon.
+2. Configure _bitcoind_: This can be done by editing and using the [`bitcoin.conf`](app/src/main/resources/bitcoin.conf) file when starting the bicoind daemon.
 The configuration allows external rpc-based communication with the node, and instructs it to communicate with the testnet rather than
 the mainnet. Furthermore, it orders the node to build an index on the blockchain that allows querying even historic transactions. Finally, it instructs the node
 to send notifications to the BAL when it detects a new block or a transaction addressed to one of the Bitcoin wallet's addresses.
@@ -178,7 +178,7 @@ ensure the following:
 The case study invloves a cryptocurrency exchange service utilitzing the blockchain access layer.
 The exchange uses the following simplified BlockME-model:
 
-![](src/main/resources/images/original-model.png)
+![](app/src/main/resources/images/original-model.png)
 
 Please follow these instructions:
 1. Configure and run a local geth node (see above).
@@ -193,25 +193,25 @@ Camunda Cockpit application (installed as part of step 4) to monitor the current
 The following series of screenshots show a sample execution of the case study:
 
  1. Initiating the process instance:
- ![](src/main/resources/images/start.png)
+ ![](app/src/main/resources/images/start.png)
  
  2. Setting the source, and target addresses (exchange request parameters):
- ![](src/main/resources/images/input-params.png)
+ ![](app/src/main/resources/images/input-params.png)
  
  3. Sending a transaction to the address of the crypto-exchange using the Ethereum Wallet application:
- ![](src/main/resources/images/send-transaction-form.png)
+ ![](app/src/main/resources/images/send-transaction-form.png)
  
  4. While waiting for the resulting Bitcoin transaction sent to the client to receive 1 confirmation, the business process instance looks
  as follows:
- ![](src/main/resources/images/waiting-for-bitcoin-tx.png)
+ ![](app/src/main/resources/images/waiting-for-bitcoin-tx.png)
  
  5. The log records produced by the process instance. The final message in the log shows the id of the transaction
  the exchange sent to the client.
- ![](src/main/resources/images/log.png)
+ ![](app/src/main/resources/images/log.png)
   
  6. [BlockCypher](https://live.blockcypher.com/btc-testnet/) can be used to explore Bitcoin testnet3 (and other) blockchains.
  The following screenshot represents the result of querying the transaction id reported in the previous step:
- ![](src/main/resources/images/blockcypher.png)
+ ![](app/src/main/resources/images/blockcypher.png)
 You can find the details about the resulting testnet3 Bitcoin transaction [here](https://live.blockcypher.com/btc-testnet/tx/347d8f2bc8dbc7cf62d8313f66d2ae930c9e92632fb5a2cfb2507caaaffa7f71/).
  
  When we performed this sample execution, the setup was as follows:

@@ -8,9 +8,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
+package blockchains.iaas.uni.stuttgart.de.api.interfaces;
 
-import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 
 /**
  * Calculates the DoC of a transaction

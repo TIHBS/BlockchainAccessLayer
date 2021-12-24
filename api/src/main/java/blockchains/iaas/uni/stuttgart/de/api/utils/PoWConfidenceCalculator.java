@@ -8,10 +8,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
+package blockchains.iaas.uni.stuttgart.de.api.utils;
 
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.FinalityConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
 
 public class PoWConfidenceCalculator implements FinalityConfidenceCalculator {
     private long currentBlockchainHeight;

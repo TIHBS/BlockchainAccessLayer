@@ -9,12 +9,12 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.model;
+package blockchains.iaas.uni.stuttgart.de.api.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.utils.TimeUtils;
+import blockchains.iaas.uni.stuttgart.de.api.utils.TimeUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

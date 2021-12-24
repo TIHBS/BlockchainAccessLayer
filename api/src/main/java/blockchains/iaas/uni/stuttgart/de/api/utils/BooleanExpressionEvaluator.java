@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.adaptation.utils;
+package blockchains.iaas.uni.stuttgart.de.api.utils;
 
 import java.util.List;
 
@@ -18,7 +18,6 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.api.utils.JsonSchemaToJavaTypeMapper;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
