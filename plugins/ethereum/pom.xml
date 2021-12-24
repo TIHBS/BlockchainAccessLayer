@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>blockchain-access-layer</artifactId>
+        <groupId>blockchains.iaas.uni.stuttgart.de</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ethereum</artifactId>
+    <repositories>
+        <repository>
+            <id>local-maven-repo</id>
+            <url>../local-maven-repo</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-jar-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <finalName>ethereum</finalName>-->
+<!--                    <archive>-->
+<!--                        <manifest>-->
+<!--                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
+<!--                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
+<!--                        </manifest>-->
+<!--                        <manifestEntries>-->
+<!--                            <Plugin-Class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</Plugin-Class>-->
+<!--                            <Plugin-Id>welcome-plugin</Plugin-Id>-->
+<!--                            <Plugin-Version>0.0.1</Plugin-Version>-->
+<!--                            <Plugin-Requires>1.0.0</Plugin-Requires>-->
+<!--&lt;!&ndash;                            <Plugin-Dependencies>x, y, z</Plugin-Dependencies>&ndash;&gt;-->
+<!--                            <Plugin-Description>My example plugin</Plugin-Description>-->
+<!--                            <Plugin-Provider>Decebal Suiu</Plugin-Provider>-->
+<!--                            <Plugin-License>Apache License 2.0</Plugin-License>-->
+<!--                        </manifestEntries>-->
+<!--                    </archive>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-jar-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <finalName>ethereum</finalName>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-dependency-plugin</artifactId>-->
+<!--                <version>3.0.1</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>copy-installed</id>-->
+<!--                        <phase>install</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>copy</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <artifactItems>-->
+<!--                                <artifactItem>-->
+<!--                                    <groupId>${project.groupId}</groupId>-->
+<!--                                    <artifactId>${project.artifactId}</artifactId>-->
+<!--                                    <version>${project.version}</version>-->
+<!--                                    <type>${project.packaging}</type>-->
+<!--                                </artifactItem>-->
+<!--                            </artifactItems>-->
+<!--                            <outputDirectory>../</outputDirectory>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>blockchains.iaas.uni.stuttgart.de</groupId>
+            <artifactId>blockchain-access-layer-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <plugin.id>welcome-plugin</plugin.id>
+        <plugin.class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</plugin.class>
+        <plugin.version>0.0.1</plugin.version>
+        <plugin.provider>Decebal Suiu</plugin.provider>
+        <plugin.dependencies/>
+    </properties>
+
+</project>

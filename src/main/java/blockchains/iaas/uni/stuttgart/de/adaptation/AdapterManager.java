@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import org.apache.commons.lang3.tuple.ImmutablePair;

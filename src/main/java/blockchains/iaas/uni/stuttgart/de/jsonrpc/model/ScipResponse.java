@@ -14,8 +14,8 @@ package blockchains.iaas.uni.stuttgart.de.jsonrpc.model;
 import java.util.List;
 
 import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

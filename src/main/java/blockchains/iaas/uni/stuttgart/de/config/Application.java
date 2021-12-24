@@ -20,9 +20,28 @@ import javax.ws.rs.ApplicationPath;
 @ApplicationPath("")
 public class Application extends ResourceConfig {
     public Application() {
+//        final PluginManager pluginManager = new DefaultPluginManager() {
+//
+//            protected ExtensionFinder createExtensionFinder() {
+//                DefaultExtensionFinder extensionFinder = (DefaultExtensionFinder) super.createExtensionFinder();
+//                extensionFinder.addServiceProviderExtensionFinder(); // to activate "HowdyGreeting" extension
+//                return extensionFinder;
+//            }
+//
+//        };
+//
+//        pluginManager.loadPlugins();
+//        pluginManager.startPlugins();
+//
+//        List<IExtensionInterface> greetings = pluginManager.getExtensions(IExtensionInterface.class);
+//
+//        for (IExtensionInterface greeting : greetings) {
+//            System.out.println(">>> " + greeting.getVersion());
+//        }
+
         packages("blockchains.iaas.uni.stuttgart.de");
         register(ObjectMapperProvider.class);
-        register( JacksonFeature.class );
+        register(JacksonFeature.class);
 
     }
 }
