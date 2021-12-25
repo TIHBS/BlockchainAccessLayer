@@ -52,6 +52,7 @@ public class ConnectionProfilesManager {
         return this.connectionProfilesMap;
     }
 
+
     public String getConnectionProfilesAsJson() throws JsonProcessingException {
         return this.writer.writeValueAsString(this.connectionProfilesMap);
     }
