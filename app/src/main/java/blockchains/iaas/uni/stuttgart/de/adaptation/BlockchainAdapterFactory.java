@@ -20,6 +20,7 @@ import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin.BitcoinAdap
 import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric.FabricAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.neemre.btcdcli4j.core.BitcoindException;
 import com.neemre.btcdcli4j.core.CommunicationException;
 import com.neemre.btcdcli4j.core.client.BtcdClient;
@@ -29,40 +30,18 @@ import com.neemre.btcdcli4j.daemon.BtcdDaemonImpl;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.pf4j.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BlockchainAdapterFactory {
-    String pluginPath = "/home/ash/software/apache-tomcat-8.5.73/plugins";
-
-    PluginManager pluginManager = new DefaultPluginManager(Paths.get(pluginPath)) {
-        //
-        @Override
-        protected PluginLoader createPluginLoader() {
-            // load only jar plugins
-            return new JarPluginLoader(this);
-        }
-
-        @Override
-        protected PluginDescriptorFinder createPluginDescriptorFinder() {
-            // read plugin descriptor from jar's manifest
-            return new ManifestPluginDescriptorFinder();
-        }
-
-    };
 
     public BlockchainAdapterFactory() {
-        // TODO: Create plugin management rest api
-        pluginManager.loadPlugins();
-        pluginManager.startPlugins();
-    }
 
+    }
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
@@ -75,9 +54,7 @@ public class BlockchainAdapterFactory {
 
         try {
             if (connectionProfile instanceof EthereumConnectionProfile) {
-                System.out.println("--------------------------------------------");
                 return createAdapter(parameters.get("type"), parameters);
-                //     return createEthereumAdapter((EthereumConnectionProfile) connectionProfile);
             } else if (connectionProfile instanceof BitcoinConnectionProfile) {
                 return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
             } else if (connectionProfile instanceof FabricConnectionProfile) {
@@ -123,12 +100,10 @@ public class BlockchainAdapterFactory {
     }
 
     private BlockchainAdapter createAdapter(String blockchainType, Map<String, String> parameters) {
-        List<IAdapterExtenstion> adapterExtensions = pluginManager.getExtensions(IAdapterExtenstion.class);
+        List<IAdapterExtenstion> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
         for (IAdapterExtenstion adapterExtension : adapterExtensions) {
             if (adapterExtension.getBlockChainId().equals(blockchainType)) {
-                BlockchainAdapter a = adapterExtension.getAdapter(parameters);
-                System.out.println(">>> " + a.testConnection());
-                return a;
+                return adapterExtension.getAdapter(parameters);
             }
         }
         System.err.println("No extension for blockchain-id: " + blockchainType);
