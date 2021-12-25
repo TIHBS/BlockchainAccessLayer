@@ -9,6 +9,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
 
     <artifactId>ethereum</artifactId>
     <repositories>
@@ -20,29 +21,29 @@
 
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-jar-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <finalName>ethereum</finalName>-->
-<!--                    <archive>-->
-<!--                        <manifest>-->
-<!--                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
-<!--                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
-<!--                        </manifest>-->
-<!--                        <manifestEntries>-->
-<!--                            <Plugin-Class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</Plugin-Class>-->
-<!--                            <Plugin-Id>welcome-plugin</Plugin-Id>-->
-<!--                            <Plugin-Version>0.0.1</Plugin-Version>-->
-<!--                            <Plugin-Requires>1.0.0</Plugin-Requires>-->
-<!--&lt;!&ndash;                            <Plugin-Dependencies>x, y, z</Plugin-Dependencies>&ndash;&gt;-->
-<!--                            <Plugin-Description>My example plugin</Plugin-Description>-->
-<!--                            <Plugin-Provider>Decebal Suiu</Plugin-Provider>-->
-<!--                            <Plugin-License>Apache License 2.0</Plugin-License>-->
-<!--                        </manifestEntries>-->
-<!--                    </archive>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>ethereum</finalName>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Plugin-Class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</Plugin-Class>
+                            <Plugin-Id>welcome-plugin</Plugin-Id>
+                            <Plugin-Version>0.0.1</Plugin-Version>
+                            <Plugin-Requires>1.0.0</Plugin-Requires>
+<!--                            <Plugin-Dependencies>x, y, z</Plugin-Dependencies>-->
+                            <Plugin-Description>My example plugin</Plugin-Description>
+                            <Plugin-Provider>Decebal Suiu</Plugin-Provider>
+                            <Plugin-License>Apache License 2.0</Plugin-License>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
 <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-jar-plugin</artifactId>-->
@@ -75,6 +76,8 @@
 <!--                    </execution>-->
 <!--                </executions>-->
 <!--            </plugin>-->
+
+
         </plugins>
     </build>
 
@@ -110,11 +113,11 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <plugin.id>welcome-plugin</plugin.id>
-        <plugin.class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</plugin.class>
-        <plugin.version>0.0.1</plugin.version>
-        <plugin.provider>Decebal Suiu</plugin.provider>
-        <plugin.dependencies/>
+<!--        <plugin.id>welcome-plugin</plugin.id>-->
+<!--        <plugin.class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</plugin.class>-->
+<!--        <plugin.version>0.0.1</plugin.version>-->
+<!--        <plugin.provider>Decebal Suiu</plugin.provider>-->
+<!--        <plugin.dependencies/>-->
     </properties>
 
 </project>

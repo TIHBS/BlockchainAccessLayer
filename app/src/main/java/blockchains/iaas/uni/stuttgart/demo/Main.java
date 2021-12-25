@@ -1,6 +1,7 @@
 package blockchains.iaas.uni.stuttgart.demo;
 
-import blockchains.iaas.uni.stuttgart.de.api.IExtensionInterface;
+import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
+import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import org.pf4j.*;
 
 import java.nio.file.Paths;
@@ -41,10 +42,11 @@ public class Main {
         pluginManager.loadPlugins();
         pluginManager.startPlugins();
 
-        List<IExtensionInterface> greetings = pluginManager.getExtensions(IExtensionInterface.class);
+        List<IAdapterExtenstion> greetings = pluginManager.getExtensions(IAdapterExtenstion.class);
 
-        for (IExtensionInterface greeting : greetings) {
-            System.out.println(">>> " + greeting.getVersion());
+        for (IAdapterExtenstion greeting : greetings) {
+            BlockchainAdapter a = greeting.getAdapter("http://localhost:7545", 2);
+            System.out.println(">>> " + a.testConnection());
         }
     }
 }

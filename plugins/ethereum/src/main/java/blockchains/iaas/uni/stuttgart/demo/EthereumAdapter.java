@@ -12,6 +12,7 @@ package blockchains.iaas.uni.stuttgart.demo;
 
 
 import blockchains.iaas.uni.stuttgart.de.api.AbstractAdapter;
+import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
@@ -23,6 +24,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.OkHttpClient;
+import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.*;
