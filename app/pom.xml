@@ -115,13 +115,11 @@
 
     <dependencies>
 
-        <!--        <dependency>-->
-        <!--            <groupId>blockchains.iaas.uni.stuttgart.de</groupId>-->
-        <!--            <artifactId>api</artifactId>-->
-        <!--            <version>1.0-SNAPSHOT</version>-->
-        <!--            &lt;!&ndash; !!! VERY IMPORTANT &ndash;&gt;-->
-        <!--            <scope>provided</scope>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>

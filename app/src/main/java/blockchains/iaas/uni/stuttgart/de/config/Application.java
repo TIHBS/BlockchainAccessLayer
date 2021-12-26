@@ -21,10 +21,9 @@ import javax.ws.rs.ApplicationPath;
 @ApplicationPath("")
 public class Application extends ResourceConfig {
     public Application() {
-        AdapterManager a = AdapterManager.getInstance();
-
-        BlockchainAdapter b = a.getAdapter("eth-0");
-        System.out.println(">>> " + b.testConnection());
+//        AdapterManager a = AdapterManager.getInstance();
+//        BlockchainAdapter b = a.getAdapter("eth-0");
+//        System.out.println(">>> " + b.testConnection());
         packages("blockchains.iaas.uni.stuttgart.de");
         register(ObjectMapperProvider.class);
         register(JacksonFeature.class);
