@@ -49,21 +49,44 @@ public class PluginManagerController {
         return Response.ok().build();
     }
 
+    @POST
+    @Path("/enable-plugin")
+    public Response enablePlugin() {
+        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+        BlockchainPluginManager.getInstance().enablePlugin(pluginId);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/start-plugin")
+    public Response startPlugin() {
+        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+        BlockchainPluginManager.getInstance().startPlugin(pluginId);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/disable-plugin")
+    public Response disablePlugin() {
+        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+        BlockchainPluginManager.getInstance().disablePlugin(pluginId);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/unload-plugin")
+    public Response unloadPlugin() {
+        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+        BlockchainPluginManager.getInstance().unloadPlugin(pluginId);
+        return Response.ok().build();
+    }
 
     @DELETE
-    public Response removePlugin() {
+    public Response deletePlugin() {
         String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
-        List<PluginWrapper> plugins = blockchainPluginManager.getPlugins();
-        for (PluginWrapper p : plugins) {
-            if (p.getPluginId().equals(pluginId)) {
-                blockchainPluginManager.unloadPlugin(pluginId);
-                return Response.ok().build();
-            }
-        }
-        log.error("Unable to remove [{}] plugin.", pluginId);
-        return Response.status(Response.Status.BAD_REQUEST).entity("Unable to remove plugin.").build();
-
+        blockchainPluginManager.deletePlugin(pluginId);
+        return Response.ok().build();
     }
 
     @GET
@@ -77,12 +100,11 @@ public class PluginManagerController {
         for (PluginWrapper p : plugins) {
             ObjectNode pluginInfo = objectMapper.createObjectNode();
             pluginInfo.put("plugin-id", p.getPluginId());
-
+            pluginInfo.put("status", String.valueOf(p.getPluginState()));
             parentArray.add(pluginInfo);
         }
         return Response.ok().entity(parentArray).build();
     }
-
 
     private void writeToFile(InputStream uploadedInputStream,
                              String uploadedFileLocation) {

@@ -48,7 +48,6 @@ public class BlockchainPluginManager {
 
     public void loadJar(Path path) {
         pluginManager.loadPlugin(path);
-
     }
 
     public Path getPluginPath() {
@@ -62,4 +61,21 @@ public class BlockchainPluginManager {
     public void unloadPlugin(String pluginId) {
         pluginManager.unloadPlugin(pluginId);
     }
+
+    public void startPlugin(String pluginId){
+        pluginManager.startPlugin(pluginId);
+    }
+
+    public void disablePlugin(String pluginId) {
+        pluginManager.disablePlugin(pluginId);
+    }
+
+    public void deletePlugin(String pluginId) {
+        pluginManager.deletePlugin(pluginId);
+    }
+
+    public void enablePlugin(String pluginId) {
+        pluginManager.enablePlugin(pluginId);
+    }
+
 }

@@ -33,7 +33,7 @@
                         </manifest>
                         <manifestEntries>
                             <Plugin-Class>blockchains.iaas.uni.stuttgart.demo.EthereumPlugin</Plugin-Class>
-                            <Plugin-Id>welcome-plugin</Plugin-Id>
+                            <Plugin-Id>ethereum-plugin</Plugin-Id>
                             <Plugin-Version>0.0.1</Plugin-Version>
                             <Plugin-Requires>1.0.0</Plugin-Requires>
 <!--                            <Plugin-Dependencies>x, y, z</Plugin-Dependencies>-->
