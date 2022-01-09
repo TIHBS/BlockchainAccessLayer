@@ -8,11 +8,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles;
+package blockchains.iaas.uni.stuttgart.demo;
+
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 
 import java.util.Properties;
 
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 
 public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
@@ -77,6 +78,4 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
 
         return result;
     }
-
-
 }

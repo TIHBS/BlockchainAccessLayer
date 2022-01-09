@@ -9,17 +9,13 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.FabricConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import org.hyperledger.fabric.gateway.Contract;
@@ -41,48 +37,49 @@ public class GatewayManager {
         channels = new HashMap<>();
         contracts = new HashMap<>();
 
-        ConnectionProfilesManager.getInstance().setListener(() -> {
-            gateways.values().forEach(Gateway::close);
-            gateways.clear();
-            channels.clear();
-            contracts.clear();
-        });
+//        ConnectionProfilesManager.getInstance().setListener(() -> {
+//            gateways.values().forEach(Gateway::close);
+//            gateways.clear();
+//            channels.clear();
+//            contracts.clear();
+//        });
     }
 
     public Gateway getGateway(String blockchainId) throws BlockchainNodeUnreachableException {
         if (gateways.containsKey(blockchainId)) {
             return gateways.get(blockchainId);
         }
-
-        AbstractConnectionProfile profile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
-
-        if (!(profile instanceof FabricConnectionProfile)) {
-            throw new InvalidScipParameterException();
-        }
-        final String walletPath = ((FabricConnectionProfile) profile).getWalletPath();
-        final String networkConfigPath = ((FabricConnectionProfile) profile).getConnectionProfilePath();
-        final String user = ((FabricConnectionProfile) profile).getUserName();
-        // Load an existing wallet holding identities used to access the network.
-        Path walletDirectory = Paths.get(walletPath);
-
-        Wallet wallet = null;
-        try {
-            wallet = Wallet.createFileSystemWallet(walletDirectory);
-
-            // Path to a connection profile describing the network.
-            Path networkConfigFile = Paths.get(networkConfigPath);
-
-            // Configure the gateway connection used to access the network.
-            Gateway result = Gateway.createBuilder()
-                    .identity(wallet, user)
-                    .networkConfig(networkConfigFile)
-                    .connect();
-            gateways.put(blockchainId, result);
-
-            return result;
-        } catch (IOException e) {
-            throw new BlockchainNodeUnreachableException("Cannot create Fabric gateway. Reason: " + e.getMessage());
-        }
+        // TODO: Fix code below
+//        AbstractConnectionProfile profile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
+//
+//        if (!(profile instanceof FabricConnectionProfile)) {
+//            throw new InvalidScipParameterException();
+//        }
+//        final String walletPath = ((FabricConnectionProfile) profile).getWalletPath();
+//        final String networkConfigPath = ((FabricConnectionProfile) profile).getConnectionProfilePath();
+//        final String user = ((FabricConnectionProfile) profile).getUserName();
+//        // Load an existing wallet holding identities used to access the network.
+//        Path walletDirectory = Paths.get(walletPath);
+//
+//        Wallet wallet = null;
+//        try {
+//            wallet = Wallet.createFileSystemWallet(walletDirectory);
+//
+//            // Path to a connection profile describing the network.
+//            Path networkConfigFile = Paths.get(networkConfigPath);
+//
+//            // Configure the gateway connection used to access the network.
+//            Gateway result = Gateway.createBuilder()
+//                    .identity(wallet, user)
+//                    .networkConfig(networkConfigFile)
+//                    .connect();
+//            gateways.put(blockchainId, result);
+//
+//            return result;
+//        } catch (IOException e) {
+//            throw new BlockchainNodeUnreachableException("Cannot create Fabric gateway. Reason: " + e.getMessage());
+//        }
+        throw new BlockchainNodeUnreachableException("Feature not yet implemented");
     }
 
     public Network getChannel(String blockchainId, String channelName) {

@@ -1,5 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
+import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,7 +23,7 @@ import javax.ws.rs.core.UriInfo;
 
 @Path("plugin-manager")
 public class PluginManagerController {
-    private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionController.class);
+    private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
 
     @Context
     protected UriInfo uriInfo;

@@ -9,14 +9,11 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.api.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
@@ -48,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BitcoinAdapter extends AbstractAdapter {
-    private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
+    private static final Logger log = LoggerFactory.getLogger(BitcoinAdapter.class);
     private BtcdClient client;
     private BtcdDaemon daemon;
 

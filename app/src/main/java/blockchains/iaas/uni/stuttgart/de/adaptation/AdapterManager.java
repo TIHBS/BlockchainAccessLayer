@@ -11,14 +11,11 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -70,5 +67,24 @@ public class AdapterManager {
             throw new BlockchainNodeUnreachableException("Failed to create a blockchain adapter. Reason: " + e.getMessage());
         }
     }
+
+    public AbstractConnectionProfile[] getActiveAdapters() {
+        AbstractConnectionProfile[] a = new AbstractConnectionProfile[map.size()];
+        List<Pair<BlockchainAdapter, AbstractConnectionProfile>> targetList = new ArrayList<>(map.values());
+        for (int i = 0; i < targetList.size(); i++) {
+            Pair<BlockchainAdapter, AbstractConnectionProfile> s = targetList.get(i);
+            a[i] = s.getValue();
+        }
+        return a;
+    }
+
+//    public AbstractConnectionProfile[] deactivateAdapter(String adapterId) {
+//        List<Pair<BlockchainAdapter, AbstractConnectionProfile>> targetList = new ArrayList<>(map.values());
+//        for (int i = 0; i < targetList.size(); i++) {
+//            Pair<BlockchainAdapter, AbstractConnectionProfile> s = targetList.get(i);
+//            if(adapterId.equals(s.getValue().))
+//        }
+//        return a;
+//    }
 }
 ;

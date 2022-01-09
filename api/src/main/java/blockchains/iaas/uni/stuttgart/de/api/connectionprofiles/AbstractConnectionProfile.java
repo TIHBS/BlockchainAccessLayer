@@ -10,24 +10,15 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.connectionprofiles;
+package blockchains.iaas.uni.stuttgart.de.api.connectionprofiles;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Properties;
 
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.BitcoinConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.EthereumConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.FabricConnectionProfile;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-@JsonSubTypes( {
-        @JsonSubTypes.Type(value = EthereumConnectionProfile.class, name = "ethereum"),
-        @JsonSubTypes.Type(value = BitcoinConnectionProfile.class, name = "bitcoin"),
-        @JsonSubTypes.Type(value = FabricConnectionProfile.class, name = "fabric")}
-)
 public abstract class AbstractConnectionProfile {
     private static final String PREFIX = "common.";
     private static final String ADVERSARY_VOTING_RATIO = PREFIX + "adversaryVotingRatio";

@@ -19,6 +19,9 @@
 
     <modules>
         <module>ethereum</module>
+        <module>bitcoin</module>
+        <module>fabric</module>
+
     </modules>
 
     <artifactId>plugins</artifactId>

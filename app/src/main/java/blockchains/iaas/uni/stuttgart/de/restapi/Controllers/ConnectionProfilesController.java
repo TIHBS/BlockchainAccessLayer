@@ -21,15 +21,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("configure")
 public class ConnectionProfilesController {
+
+    private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionController.class);
+
     @Context
     protected UriInfo uriInfo;
 
@@ -40,14 +46,16 @@ public class ConnectionProfilesController {
     }
 
     @DELETE
-    public void resetConfigurations() {
+    public Response resetConfigurations() {
         ConnectionProfilesManager.getInstance().resetConnectionProfiles();
+        return Response.ok().build();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfigurations() throws JsonProcessingException {
         return ConnectionProfilesManager.getInstance().getConnectionProfilesAsJson();
+
     }
 
     @Path("test")

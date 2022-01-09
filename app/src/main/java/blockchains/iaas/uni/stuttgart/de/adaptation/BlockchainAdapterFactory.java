@@ -12,32 +12,22 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.BitcoinConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.EthereumConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.profiles.FabricConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.bitcoin.BitcoinAdapter;
-import blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric.FabricAdapter;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
-import com.neemre.btcdcli4j.core.BitcoindException;
-import com.neemre.btcdcli4j.core.CommunicationException;
-import com.neemre.btcdcli4j.core.client.BtcdClient;
-import com.neemre.btcdcli4j.core.client.BtcdClientImpl;
-import com.neemre.btcdcli4j.daemon.BtcdDaemon;
-import com.neemre.btcdcli4j.daemon.BtcdDaemonImpl;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Context;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BlockchainAdapterFactory {
+
+    @Context
+    ObjectMapperProvider objectMapperProvider;
 
     public BlockchainAdapterFactory() {
 
@@ -53,16 +43,15 @@ public class BlockchainAdapterFactory {
         parameters.put("averageBlockTimeSeconds", "2");
 
         try {
-            if (connectionProfile instanceof EthereumConnectionProfile) {
-                return createAdapter(parameters.get("type"), parameters);
-            } else if (connectionProfile instanceof BitcoinConnectionProfile) {
-                return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
-            } else if (connectionProfile instanceof FabricConnectionProfile) {
-                return createFabricAdapter((FabricConnectionProfile) connectionProfile, blockchainId);
-            } else {
-                log.error("Invalid connectionProfile type!");
-                return null;
-            }
+            return createAdapter(parameters.get("type"), parameters);
+//           if (connectionProfile instanceof BitcoinConnectionProfile) {
+//                return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
+//            } else if (connectionProfile instanceof FabricConnectionProfile) {
+//                return createFabricAdapter((FabricConnectionProfile) connectionProfile, blockchainId);
+//            } else {
+//                log.error("Invalid connectionProfile type!");
+//                return null;
+//            }
         } catch (Exception e) {
             final String msg = String.format("Error while creating a blockchain adapter for. Details: %s", e.getMessage());
             log.error(msg);
@@ -80,29 +69,30 @@ public class BlockchainAdapterFactory {
 //        return result;
 //    }
 
-    private BitcoinAdapter createBitcoinAdapter(BitcoinConnectionProfile gateway) throws BitcoindException, CommunicationException {
-        final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-        final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
-        final BtcdClient client = new BtcdClientImpl(httpProvider, gateway.getAsProperties());
-        final BtcdDaemon daemon = new BtcdDaemonImpl(client);
-        final BitcoinAdapter result = new BitcoinAdapter(client, daemon);
-        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
-        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
-        result.setConfidenceCalculator(cCalc);
-
-        return result;
-    }
-
-    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway, String blockchainId) {
-        return FabricAdapter.builder()
-                .blockchainId(blockchainId)
-                .build();
-    }
+//    private BitcoinAdapter createBitcoinAdapter(BitcoinConnectionProfile gateway) throws BitcoindException, CommunicationException {
+//        final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+//        final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
+//        final BtcdClient client = new BtcdClientImpl(httpProvider, gateway.getAsProperties());
+//        final BtcdDaemon daemon = new BtcdDaemonImpl(client);
+//        final BitcoinAdapter result = new BitcoinAdapter(client, daemon);
+//        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
+//        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
+//        result.setConfidenceCalculator(cCalc);
+//
+//        return result;
+//    }
+//
+//    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway, String blockchainId) {
+//        return FabricAdapter.builder()
+//                .blockchainId(blockchainId)
+//                .build();
+//    }
 
     private BlockchainAdapter createAdapter(String blockchainType, Map<String, String> parameters) {
         List<IAdapterExtenstion> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
         for (IAdapterExtenstion adapterExtension : adapterExtensions) {
             if (adapterExtension.getBlockChainId().equals(blockchainType)) {
+                // adapterExtension.registerConnectionProfile(objectMapperProvider.getContext());
                 return adapterExtension.getAdapter(parameters);
             }
         }

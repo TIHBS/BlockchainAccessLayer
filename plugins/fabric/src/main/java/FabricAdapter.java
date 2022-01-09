@@ -8,7 +8,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.fabric;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
