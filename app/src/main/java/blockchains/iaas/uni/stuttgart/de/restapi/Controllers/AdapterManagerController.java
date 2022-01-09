@@ -1,6 +1,7 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
