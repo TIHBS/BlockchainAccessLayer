@@ -1,4 +1,4 @@
-/*******************************************************************************
+package blockchains.iaas.uni.stuttgart.demo; /*******************************************************************************
  * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -9,19 +9,13 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import org.hyperledger.fabric.gateway.Contract;
 import org.hyperledger.fabric.gateway.Gateway;
 import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
 
 // todo make thread-safe
 public class GatewayManager {
@@ -52,12 +46,12 @@ public class GatewayManager {
         // TODO: Fix code below
 //        AbstractConnectionProfile profile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
 //
-//        if (!(profile instanceof FabricConnectionProfile)) {
+//        if (!(profile instanceof blockchains.iaas.uni.stuttgart.demo.FabricConnectionProfile)) {
 //            throw new InvalidScipParameterException();
 //        }
-//        final String walletPath = ((FabricConnectionProfile) profile).getWalletPath();
-//        final String networkConfigPath = ((FabricConnectionProfile) profile).getConnectionProfilePath();
-//        final String user = ((FabricConnectionProfile) profile).getUserName();
+//        final String walletPath = ((blockchains.iaas.uni.stuttgart.demo.FabricConnectionProfile) profile).getWalletPath();
+//        final String networkConfigPath = ((blockchains.iaas.uni.stuttgart.demo.FabricConnectionProfile) profile).getConnectionProfilePath();
+//        final String user = ((blockchains.iaas.uni.stuttgart.demo.FabricConnectionProfile) profile).getUserName();
 //        // Load an existing wallet holding identities used to access the network.
 //        Path walletDirectory = Paths.get(walletPath);
 //

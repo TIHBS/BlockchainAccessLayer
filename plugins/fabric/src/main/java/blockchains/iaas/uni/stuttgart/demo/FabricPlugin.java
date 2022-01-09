@@ -1,3 +1,5 @@
+package blockchains.iaas.uni.stuttgart.demo;
+
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
 import org.pf4j.Extension;
 import org.pf4j.Plugin;

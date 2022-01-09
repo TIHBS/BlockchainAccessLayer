@@ -1,4 +1,4 @@
-/*******************************************************************************
+package blockchains.iaas.uni.stuttgart.demo; /*******************************************************************************
  * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *

@@ -1,3 +1,5 @@
+package blockchains.iaas.uni.stuttgart.demo;
+
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
@@ -43,7 +45,7 @@ public class BitcoinPlugin extends Plugin {
 
         @Override
         public BlockchainAdapter getAdapter(Map<String, String> parameters) {
-            // TODO: Create BitcoinConnectionProfile object from parameters
+            // TODO: Create blockchains.iaas.uni.stuttgart.demo.BitcoinConnectionProfile object from parameters
             BitcoinConnectionProfile gateway = new BitcoinConnectionProfile();
             final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
             final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
