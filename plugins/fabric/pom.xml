@@ -11,6 +11,34 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>fabric</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>fabric</finalName>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Plugin-Class>blockchains.iaas.uni.stuttgart.demo.FabricPlugin</Plugin-Class>
+                            <Plugin-Id>fabric-plugin</Plugin-Id>
+                            <Plugin-Version>0.0.1</Plugin-Version>
+                            <Plugin-Requires>1.0.0</Plugin-Requires>
+                            <Plugin-Description>Fabric plugin</Plugin-Description>
+                            <Plugin-Provider><!--TODO --></Plugin-Provider>
+                            <Plugin-License>Apache License 2.0</Plugin-License>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>blockchains.iaas.uni.stuttgart.de</groupId>

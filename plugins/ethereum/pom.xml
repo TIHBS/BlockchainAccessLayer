@@ -37,8 +37,8 @@
                             <Plugin-Version>0.0.1</Plugin-Version>
                             <Plugin-Requires>1.0.0</Plugin-Requires>
 <!--                            <Plugin-Dependencies>x, y, z</Plugin-Dependencies>-->
-                            <Plugin-Description>My example plugin</Plugin-Description>
-                            <Plugin-Provider>Decebal Suiu</Plugin-Provider>
+                            <Plugin-Description>Ethereum plugin</Plugin-Description>
+                            <Plugin-Provider><!--TODO --></Plugin-Provider>
                             <Plugin-License>Apache License 2.0</Plugin-License>
                         </manifestEntries>
                     </archive>
