@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import blockchains.iaas.uni.stuttgart.de.api.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
