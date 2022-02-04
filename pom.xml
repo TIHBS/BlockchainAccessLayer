@@ -8,7 +8,6 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>api</module>
         <module>plugins</module>
         <module>app</module>
     </modules>
