@@ -126,6 +126,7 @@ class EthereumAdapterTest {
     }
 
     @Test
+    @Disabled
     void testBlockNumbers() throws IOException {
         LocalDateTime from = LocalDateTime.of(2019, 12, 27, 10, 50);
         LocalDateTime to = LocalDateTime.of(2019, 12, 27, 10, 56);
@@ -137,6 +138,7 @@ class EthereumAdapterTest {
     }
 
     @Test
+    @Disabled
     void testExtremeBlockNumbers() throws IOException {
         LocalDateTime from = LocalDateTime.of(2001, 12, 27, 10, 50);
         LocalDateTime to = LocalDateTime.of(2029, 12, 27, 10, 56);
