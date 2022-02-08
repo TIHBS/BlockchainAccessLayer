@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -339,16 +339,21 @@ public class EthereumAdapter extends AbstractAdapter {
 
             final String encodedFunction = FunctionEncoder.encode(function);
 
-            // if we are expecting a return value, we try to invoke as a method call, otherwise, we immediately try a transaction
+            // if we are expecting a return value, we try to invoke as a method call, otherwise, we try a transaction
             if (outputParameters.size() > 0) {
                 Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, outputs, function.getOutputParameters());
 
                 if (resultFromEthCall != null) {
                     return CompletableFuture.completedFuture(resultFromEthCall);
+                } else {
+                    CompletableFuture<Transaction> future = new CompletableFuture<>();
+                    future.completeExceptionally(new InvokeSmartContractFunctionFailure("Failed to invoke read-only smart contract function"));
+                    return future;
                 }
-            }
 
-            return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
+            } else {
+                return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
+            }
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
             throw mapEthereumException(e);
@@ -623,7 +628,7 @@ public class EthereumAdapter extends AbstractAdapter {
 
     private CompletableFuture<BigInteger> retrieveNewNonce() {
         return web3j.ethGetTransactionCount(
-                credentials.getAddress(), DefaultBlockParameterName.LATEST)
+                        credentials.getAddress(), DefaultBlockParameterName.LATEST)
                 .sendAsync()
                 .thenApply(EthGetTransactionCount::getTransactionCount);
     }

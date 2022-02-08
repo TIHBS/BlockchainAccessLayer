@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -20,6 +20,6 @@ public enum TransactionState {
     CONFIRMED,
     NOT_FOUND,
     INVALID,
-    // transactions which are only place holders for read-only function invocation result
+    // indicates that a successful read-only function invocation occurred
     RETURN_VALUE
 }

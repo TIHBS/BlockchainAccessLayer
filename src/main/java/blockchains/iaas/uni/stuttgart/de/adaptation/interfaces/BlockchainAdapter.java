@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -83,7 +83,8 @@ public interface BlockchainAdapter {
      * @param inputs             the input parameters of the function to be invoked
      * @param outputs            the output parameters of the function to be invoked
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
-     * @return a completable future that emits a new transaction object holding the result of the invocation.
+     * @return a completable future that emits a new transaction object holding the result of the invocation, or finishes exceptionally
+     * indicating a failed invocation.
      * @throws NotSupportedException if the underlying blockchain system does not support smart contracts.
      */
     CompletableFuture<Transaction> invokeSmartContract(

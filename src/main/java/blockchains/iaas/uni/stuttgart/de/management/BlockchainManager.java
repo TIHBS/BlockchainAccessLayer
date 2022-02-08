@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -385,7 +385,6 @@ public class BlockchainManager {
 
         final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
-
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
                 functionIdentifier, inputs, outputs, minimumConfidenceAsProbability);
@@ -402,10 +401,11 @@ public class BlockchainManager {
                             CallbackManager.getInstance().sendCallback(callbackUrl,
                                     ScipMessageTranslator.getAsynchronousErrorResponseMessage(
                                             correlationId,
-                                            new TransactionNotFoundException("The transaction associated with an function invocation is invalidated after it was mined.")));
+                                            new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
                         }
-                    } else
+                    } else {
                         log.info("resulting transaction is null");
+                    }
                 }).
                 exceptionally((e) -> {
                     log.info("Failed to invoke smart contract function. Reason: {}", e.getMessage());
