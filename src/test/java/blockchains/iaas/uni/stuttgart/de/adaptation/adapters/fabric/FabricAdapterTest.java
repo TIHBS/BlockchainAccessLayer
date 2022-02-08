@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * In order for this test to succeed:
@@ -77,14 +76,16 @@ class FabricAdapterTest {
                         new Parameter("colour", "string", "Black"),
                         new Parameter("owner", "string", "Ghareeb")),
                 Collections.emptyList(),
-                1.0).get();
+                1.0,
+                0).get();
 
         Transaction result = this.adapter.invokeSmartContract(
                 path,
                 "queryAllCars",
                 new ArrayList<>(),
                 new ArrayList<>(),
-                1.0).get();
+                1.0,
+                0).get();
         String value = result.getReturnValues().get(0).getValue();
         log.debug("Looking for Id: " + id);
         Assertions.assertTrue(value.contains(id));

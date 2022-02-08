@@ -20,6 +20,8 @@ public enum TransactionState {
     CONFIRMED,
     NOT_FOUND,
     INVALID,
+    // When a smart contract function fails although a transaction is recorded (relevant for Ethereum-like BCs)
+    ERRORED,
     // indicates that a successful read-only function invocation occurred
     RETURN_VALUE
 }

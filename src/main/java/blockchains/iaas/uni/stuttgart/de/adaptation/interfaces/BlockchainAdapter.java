@@ -92,7 +92,8 @@ public interface BlockchainAdapter {
             String functionIdentifier,
             List<Parameter> inputs,
             List<Parameter> outputs,
-            double requiredConfidence
+            double requiredConfidence,
+            long timeoutMillis
     ) throws BalException;
 
     /**

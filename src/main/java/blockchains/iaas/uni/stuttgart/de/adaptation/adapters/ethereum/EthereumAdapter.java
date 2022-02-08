@@ -41,6 +41,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionF
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.SmartContractNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.model.Block;
 import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
@@ -76,9 +77,11 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.core.methods.response.Log;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.tx.Transfer;
@@ -135,10 +138,12 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     /**
-     * Subscribes for the event of detecting a transition of the state of a given transaction which is assumed to having been
-     * MINED before. The method supports detecting
-     * (i) a transaction being not found anymore (invalidated), or (ii) not having a containing block (orphaned), or
-     * (iii) having received enough block-confirmations (durably committed).
+     * Subscribes for the event of detecting a transition of the state of a given transaction, which is assumed to having been
+     * MINED before. The method supports detecting:
+     * (i) a transaction being not found anymore (invalidated): NOT_FOUND,
+     * (ii) not having a containing block (orphaned): PENDING: ,
+     * (iii) reporting an error although mined into a block (e.g., SC function threw an error): ERRORED
+     * (iii) having received enough block-confirmations (durably committed): CONFIRMED.
      *
      * @param txHash         the hash of the transaction to monitor
      * @param waitFor        the number of block-confirmations to wait until the transaction is considered persisted (-1 if the
@@ -161,12 +166,19 @@ public class EthereumAdapter extends AbstractAdapter {
                     return;
                 }
 
+                // determine if the transaction reported an error
+                EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
+
+                if (!receipt.getResult().isStatusOK()) {
+                    if (handleDetectedState(transaction.getTransaction(), TransactionState.ERRORED, observedStates, result))
+                        return;
+                }
+
                 // make sure the transaction is still contained in a block, i.e., it was not orphaned
                 final String retrievedBlockHash = transaction.getTransaction().get().getBlockHash();
 
                 if (retrievedBlockHash == null || retrievedBlockHash.isEmpty()) {
-                    final String msg = String.format("The transaction of the hash %s has no block (orphaned?)",
-                            txHash);
+                    final String msg = String.format("The transaction of the hash %s has no block (orphaned?)", txHash);
                     log.info(msg);
 
                     handleDetectedState(transaction.getTransaction(), TransactionState.PENDING, observedStates, result);
@@ -300,12 +312,14 @@ public class EthereumAdapter extends AbstractAdapter {
             String functionIdentifier,
             List<Parameter> inputs,
             List<Parameter> outputs,
-            double requiredConfidence
+            double requiredConfidence,
+            long timeoutMillis
     ) throws NotSupportedException, ParameterException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
             throw new NullPointerException("Credentials are not set for the Ethereum user");
         }
+
         Objects.requireNonNull(smartContractPath);
         Objects.requireNonNull(functionIdentifier);
         Objects.requireNonNull(inputs);
@@ -350,9 +364,8 @@ public class EthereumAdapter extends AbstractAdapter {
                     future.completeExceptionally(new InvokeSmartContractFunctionFailure("Failed to invoke read-only smart contract function"));
                     return future;
                 }
-
             } else {
-                return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress);
+                return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress, timeoutMillis);
             }
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
@@ -591,7 +604,7 @@ public class EthereumAdapter extends AbstractAdapter {
         }
     }
 
-    private CompletableFuture<Transaction> invokeFunctionByTransaction(long waitFor, String encodedFunction, String scAddress) {
+    private CompletableFuture<Transaction> invokeFunctionByTransaction(long waitFor, String encodedFunction, String scAddress, long timeoutMillis) {
         return this
                 .retrieveNewNonce()
                 .thenApply(nonce -> {
@@ -609,10 +622,41 @@ public class EthereumAdapter extends AbstractAdapter {
                     }
                 })
                 .thenCompose(transaction -> web3j.ethSendTransaction(transaction).sendAsync())
-                .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND))
+                .thenCompose(tx -> {
+                    final String txHash = tx.getTransactionHash();
+                    log.info("transaction hash is {}", txHash);
+                    return CompletableFuture.completedFuture(txHash);
+                })
+                .thenCompose(txHash -> waitUntilTransactionIsMined(txHash, timeoutMillis))
+                .thenCompose(txReceipt -> subscribeForTxEvent(txReceipt.getTransactionHash(), waitFor,
+                        TransactionState.CONFIRMED, TransactionState.NOT_FOUND, TransactionState.ERRORED))
                 .exceptionally((e) -> {
                     throw wrapEthereumExceptions(e);
                 });
+    }
+
+    private CompletableFuture<TransactionReceipt> waitUntilTransactionIsMined(final String txHash, final long timeOutMillis)
+            throws CompletionException {
+        try {
+            long passedTime = 0;
+            final long timeout = timeOutMillis <= 0 ? Integer.MAX_VALUE : timeOutMillis;
+            final int BLOCK_TIME = 3000;
+            EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
+
+            while ((receipt == null || !receipt.getTransactionReceipt().isPresent())) {
+                Thread.sleep(BLOCK_TIME);
+                receipt = web3j.ethGetTransactionReceipt(txHash).send();
+                passedTime += BLOCK_TIME;
+
+                if (passedTime > timeout)
+                    throw new TimeoutException("Timeout is reached before transaction is mined!", txHash, 0.0);
+            }
+
+            return CompletableFuture.completedFuture(receipt.getResult());
+
+        } catch (Exception e) {
+            throw new CompletionException(e);
+        }
     }
 
     // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
@@ -633,7 +677,7 @@ public class EthereumAdapter extends AbstractAdapter {
                 .thenApply(EthGetTransactionCount::getTransactionCount);
     }
 
-    private static void handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
+    private static boolean handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
                                             final TransactionState detectedState, final TransactionState[] interesting,
                                             CompletableFuture<Transaction> future) {
         // Only complete the future if we are interested in this event
@@ -650,8 +694,13 @@ public class EthereumAdapter extends AbstractAdapter {
                 result.setTransactionHash(transactionDetails.get().getHash());
                 result.setValue(transactionDetails.get().getValue());
             }
+
             future.complete(result);
+
+            return true;
         }
+
+        return false;
     }
 
     private static HttpService createWeb3HttpService(String url) {

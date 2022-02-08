@@ -26,6 +26,7 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundExceptio
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.TransactionNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.UnknownException;
@@ -387,7 +388,7 @@ public class BlockchainManager {
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability);
+                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
 
         future.
                 thenAccept(tx -> {
@@ -397,11 +398,18 @@ public class BlockchainManager {
                                     ScipMessageTranslator.getInvocationResponseMessage(
                                             correlationId,
                                             tx.getReturnValues()));
-                        } else {// it is NOT_FOUND (it was dropped from the system due to invalidation)
-                            CallbackManager.getInstance().sendCallback(callbackUrl,
-                                    ScipMessageTranslator.getAsynchronousErrorResponseMessage(
-                                            correlationId,
-                                            new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
+                        } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
+                            if (tx.getState() == TransactionState.NOT_FOUND) {
+                                CallbackManager.getInstance().sendCallback(callbackUrl,
+                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                correlationId,
+                                                new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
+                            } else {
+                                CallbackManager.getInstance().sendCallback(callbackUrl,
+                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                correlationId,
+                                                new InvokeSmartContractFunctionFailure("The smart contract function invocation reported an error.")));
+                            }
                         }
                     } else {
                         log.info("resulting transaction is null");
