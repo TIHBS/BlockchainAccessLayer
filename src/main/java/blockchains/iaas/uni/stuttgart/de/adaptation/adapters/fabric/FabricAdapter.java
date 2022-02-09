@@ -122,7 +122,7 @@ public class FabricAdapter implements BlockchainAdapter {
                 result.complete(resultT);
             } catch (Exception e) {
                 // exceptions at this level are invocation exceptions. They should be sent asynchronously to the client app.
-                result.completeExceptionally(new InvokeSmartContractFunctionRevoke(e.getMessage()));
+                result.completeExceptionally(new InvokeSmartContractFunctionFailure(e.getMessage()));
             }
         } catch (Exception e) {
             // this is a synchronous exception.
