@@ -639,15 +639,14 @@ public class EthereumAdapter extends AbstractAdapter {
     private CompletableFuture<TransactionReceipt> waitUntilTransactionIsMined(final String txHash, final long timeOutMillis)
             throws CompletionException {
         final CompletableFuture<TransactionReceipt> result = new CompletableFuture<>();
-        final BigInteger TIMEOUT = BigInteger.valueOf(timeOutMillis);
-        final BigInteger START_TIME_MILLIS = BigInteger.valueOf((new Date()).getTime());
+        final long START_TIME_MILLIS = (new Date()).getTime();
 
         final Disposable subscription = web3j.blockFlowable(false).subscribe(ethBlock -> {
             try {
-                BigInteger blockTime = ethBlock.getBlock().getTimestamp();
+                long currentTimeMillis = (new Date()).getTime();
 
                 // if the time passed since we started is longer than the timeout
-                if (blockTime.subtract(START_TIME_MILLIS).compareTo(TIMEOUT) >= 0) {
+                if (currentTimeMillis - START_TIME_MILLIS >= timeOutMillis) {
                     TimeoutException exception =
                             new TimeoutException("Timeout is reached before transaction is mined!", txHash, 0.0);
                     result.completeExceptionally(exception);
