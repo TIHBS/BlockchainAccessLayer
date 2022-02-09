@@ -19,6 +19,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -637,26 +638,38 @@ public class EthereumAdapter extends AbstractAdapter {
 
     private CompletableFuture<TransactionReceipt> waitUntilTransactionIsMined(final String txHash, final long timeOutMillis)
             throws CompletionException {
-        try {
-            long passedTime = 0;
-            final long timeout = timeOutMillis <= 0 ? Integer.MAX_VALUE : timeOutMillis;
-            final int BLOCK_TIME = 3000;
-            EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
+        final CompletableFuture<TransactionReceipt> result = new CompletableFuture<>();
+        final BigInteger TIMEOUT = BigInteger.valueOf(timeOutMillis);
+        final BigInteger START_TIME_MILLIS = BigInteger.valueOf((new Date()).getTime());
 
-            while ((receipt == null || !receipt.getTransactionReceipt().isPresent())) {
-                Thread.sleep(BLOCK_TIME);
-                receipt = web3j.ethGetTransactionReceipt(txHash).send();
-                passedTime += BLOCK_TIME;
+        final Disposable subscription = web3j.blockFlowable(false).subscribe(ethBlock -> {
+            try {
+                BigInteger blockTime = ethBlock.getBlock().getTimestamp();
 
-                if (passedTime > timeout)
-                    throw new TimeoutException("Timeout is reached before transaction is mined!", txHash, 0.0);
+                // if the time passed since we started is longer than the timeout
+                if (blockTime.subtract(START_TIME_MILLIS).compareTo(TIMEOUT) >= 0) {
+                    TimeoutException exception =
+                            new TimeoutException("Timeout is reached before transaction is mined!", txHash, 0.0);
+                    result.completeExceptionally(exception);
+                } else {
+                    EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
+                    if(receipt != null && receipt.getTransactionReceipt().isPresent()) {
+                        result.complete(receipt.getResult());
+                    }
+                }
+
+            } catch (IOException e) {
+                result.completeExceptionally(e);
             }
+        });
 
-            return CompletableFuture.completedFuture(receipt.getResult());
+        //dispose the flowable when the CompletableFuture completes (either when detecting an event, or manually)
+        result.whenComplete(
+                (v, e) -> {
+                    subscription.dispose();
+                });
 
-        } catch (Exception e) {
-            throw new CompletionException(e);
-        }
+        return result;
     }
 
     // based on https://github.com/web3j/web3j/blob/master/abi/src/test/java/org/web3j/abi/FunctionEncoderTest.java
@@ -678,8 +691,8 @@ public class EthereumAdapter extends AbstractAdapter {
     }
 
     private static boolean handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
-                                            final TransactionState detectedState, final TransactionState[] interesting,
-                                            CompletableFuture<Transaction> future) {
+                                               final TransactionState detectedState, final TransactionState[] interesting,
+                                               CompletableFuture<Transaction> future) {
         // Only complete the future if we are interested in this event
         if (Arrays.asList(interesting).contains(detectedState)) {
             final LinearChainTransaction result = new LinearChainTransaction();
