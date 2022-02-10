@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -274,7 +274,7 @@ public class BitcoinAdapter extends AbstractAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence) throws NotSupportedException, ParameterException {
+    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath, String functionIdentifier, List<Parameter> inputs, List<Parameter> outputs, double requiredConfidence, long timeoutMillis) throws NotSupportedException, ParameterException {
         throw new NotSupportedException("Bitcoin does not support smart contract function invocations!");
     }
 
