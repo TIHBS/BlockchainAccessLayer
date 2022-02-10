@@ -76,7 +76,6 @@ import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog;
@@ -356,17 +355,17 @@ public class EthereumAdapter extends AbstractAdapter {
 
             // if we are expecting a return value, we try to invoke as a method call, otherwise, we try a transaction
             if (outputParameters.size() > 0) {
-                Transaction resultFromEthCall = invokeFunctionByMethodCall(encodedFunction, smartContractAddress, outputs, function.getOutputParameters());
-
-                if (resultFromEthCall != null) {
-                    return CompletableFuture.completedFuture(resultFromEthCall);
-                } else {
-                    CompletableFuture<Transaction> future = new CompletableFuture<>();
-                    future.completeExceptionally(new InvokeSmartContractFunctionFailure("Failed to invoke read-only smart contract function"));
-                    return future;
-                }
+                return this.invokeFunctionByMethodCall(
+                        encodedFunction,
+                        smartContractAddress,
+                        outputs,
+                        function.getOutputParameters());
             } else {
-                return this.invokeFunctionByTransaction(waitFor, encodedFunction, smartContractAddress, timeoutMillis);
+                return this.invokeFunctionByTransaction(
+                        waitFor,
+                        encodedFunction,
+                        smartContractAddress,
+                        timeoutMillis);
             }
         } catch (Exception e) {
             log.error("Decoding smart contract function call failed. Reason: {}", e.getMessage());
@@ -572,37 +571,34 @@ public class EthereumAdapter extends AbstractAdapter {
         return filter;
     }
 
-    private Transaction invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,
-                                                   List<TypeReference<Type>> returnTypes) throws InvokeSmartContractFunctionFailure {
-        try {
-            org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
-                    .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
-            EthCall ethCall = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
-            List<Type> decoded = FunctionReturnDecoder.decode(ethCall.getValue(), returnTypes);
+    private CompletableFuture<Transaction> invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,
+                                                                      List<TypeReference<Type>> returnTypes) {
+        org.web3j.protocol.core.methods.request.Transaction transaction = org.web3j.protocol.core.methods.request.Transaction
+                .createEthCallTransaction(credentials.getAddress(), scAddress, encodedFunction);
 
-            if (returnTypes.size() != decoded.size())
-                throw new InvokeSmartContractFunctionFailure("Failed to invoke function by ethCall");
+        return web3j.ethCall(transaction, DefaultBlockParameterName.LATEST)
+                .sendAsync()
+                .thenApply(ethCall -> FunctionReturnDecoder.decode(ethCall.getValue(), returnTypes))
+                .thenApply(decoded -> {
+                    if (returnTypes.size() != decoded.size())
+                        throw new InvokeSmartContractFunctionFailure("Failed to invoke read-only Ethereum smart contract function");
 
-            Transaction tx = new LinearChainTransaction();
-            tx.setState(TransactionState.RETURN_VALUE);
-            List<Parameter> returnedValues = new ArrayList<>();
+                    Transaction tx = new LinearChainTransaction();
+                    tx.setState(TransactionState.RETURN_VALUE);
+                    List<Parameter> returnedValues = new ArrayList<>();
 
-            for (int i = 0; i < decoded.size(); i++) {
-                returnedValues.add(Parameter
-                        .builder()
-                        .name(outputs.get(i).getName())
-                        .value(ParameterDecoder.decode(decoded.get(i)))
-                        .build());
-            }
+                    for (int i = 0; i < decoded.size(); i++) {
+                        returnedValues.add(Parameter
+                                .builder()
+                                .name(outputs.get(i).getName())
+                                .value(ParameterDecoder.decode(decoded.get(i)))
+                                .build());
+                    }
 
-            tx.setReturnValues(returnedValues);
+                    tx.setReturnValues(returnedValues);
 
-            return tx;
-        } catch (Exception e) {
-            log.debug("Failed to execute smart contract function via eth_call. Reason: {}", e.getMessage());
-            // this is important so we know we should try a transaction
-            return null;
-        }
+                    return tx;
+                });
     }
 
     private CompletableFuture<Transaction> invokeFunctionByTransaction(long waitFor, String encodedFunction, String scAddress, long timeoutMillis) {
@@ -652,21 +648,17 @@ public class EthereumAdapter extends AbstractAdapter {
                     result.completeExceptionally(exception);
                 } else {
                     EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
-                    if(receipt != null && receipt.getTransactionReceipt().isPresent()) {
+                    if (receipt != null && receipt.getTransactionReceipt().isPresent()) {
                         result.complete(receipt.getResult());
                     }
                 }
-
             } catch (IOException e) {
                 result.completeExceptionally(e);
             }
         });
 
         //dispose the flowable when the CompletableFuture completes (either when detecting an event, or manually)
-        result.whenComplete(
-                (v, e) -> {
-                    subscription.dispose();
-                });
+        result.whenComplete((v, e) -> subscription.dispose());
 
         return result;
     }
