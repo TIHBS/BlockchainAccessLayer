@@ -1,13 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.config;
-
-
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-
-import javax.ws.rs.ApplicationPath;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -17,6 +9,14 @@ import javax.ws.rs.ApplicationPath;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.config;
+
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+
+import javax.ws.rs.ApplicationPath;
+
 @ApplicationPath("")
 public class Application extends ResourceConfig {
     public Application() {
