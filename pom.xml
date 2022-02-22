@@ -180,7 +180,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>RELEASE</version>
+            <version>${org.junit.jupiter}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${org.junit.jupiter}</version>
             <scope>test</scope>
         </dependency>
 
@@ -211,8 +217,10 @@
             </exclusions>
         </dependency>
 
+
     </dependencies>
     <properties>
+        <org.junit.jupiter>5.8.2</org.junit.jupiter>
         <jersey.version>2.9.1</jersey.version>
         <jackson.version>[2.9.9.2,)</jackson.version>
         <jsonrpc.version>0.10</jsonrpc.version>

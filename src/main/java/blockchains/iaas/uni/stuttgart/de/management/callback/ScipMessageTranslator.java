@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.ScipResponse;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;

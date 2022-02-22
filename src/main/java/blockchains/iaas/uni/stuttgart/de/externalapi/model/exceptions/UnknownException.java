@@ -9,24 +9,14 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.externalapi.model.responses;
+package blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions;
 
-import java.util.List;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-import lombok.Data;
-
-/**
- * A single occurrence of an event or a smart contract function invocation.
- */
-@Data
-public class Occurrence {
-    /**
-     * A list of parameters associated with the reported occurrence.
-     */
-    List<Parameter> params;
-
-    /**
-     * The UTC timestamp of the transaction associated with the occurrence.
-     */
-    String timestamp;
+@JsonRpcError(code = ExceptionCode.UnknownError, message = "Unknown server error occurred.")
+public class UnknownException extends BalException {
+    @Override
+    public int getCode() {
+        return ExceptionCode.UnknownError;
+    }
 }

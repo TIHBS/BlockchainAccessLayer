@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.exceptions;
+package blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 import lombok.Getter;

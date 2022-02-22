@@ -8,22 +8,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
-package blockchains.iaas.uni.stuttgart.de.exceptions;
+package blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.ExecutionError, message = "The execution of the smart contract function resulted in an error.")
-public class InvokeSmartContractFunctionRevoke extends  BalException{
-    public InvokeSmartContractFunctionRevoke() {
+@JsonRpcError(code = ExceptionCode.InvocationError, message = "An error occurred while trying to invoke the smart contract function.")
+public class InvalidTransactionException extends BalException {
+
+    public InvalidTransactionException() {
     }
 
-    public InvokeSmartContractFunctionRevoke(String message) {
+    public InvalidTransactionException(String message) {
         super(message);
     }
 
     @Override
     public int getCode() {
-        return ExceptionCode.ExecutionError;
+        return ExceptionCode.InvocationError;
     }
 }
