@@ -41,14 +41,16 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
         final Map<String, Variable> variables = new HashMap<>();
-        response.getParams().forEach(parameter -> {
-            Variable current = Variable
-                    .builder()
-                    .value(parameter.getValue())
-                    .type("String")
-                    .build();
-            variables.put(parameter.getName(), current);
-        });
+        if (response.getParams() != null) {
+            response.getParams().forEach(parameter -> {
+                Variable current = Variable
+                        .builder()
+                        .value(parameter.getValue())
+                        .type("String")
+                        .build();
+                variables.put(parameter.getName(), current);
+            });
+        }
 
         final Message message = Message
                 .builder()
