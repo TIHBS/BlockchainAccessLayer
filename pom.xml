@@ -93,7 +93,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.8</version>
+            <version>1.18.22</version>
             <scope>provided</scope>
         </dependency>
 
@@ -189,6 +189,15 @@
             <version>${org.junit.jupiter}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+
+
 
         <dependency>
             <groupId>com.github.arteam</groupId>

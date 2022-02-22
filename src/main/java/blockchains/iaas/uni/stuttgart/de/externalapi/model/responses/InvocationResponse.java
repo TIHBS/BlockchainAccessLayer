@@ -13,12 +13,16 @@ package blockchains.iaas.uni.stuttgart.de.externalapi.model.responses;
 
 import java.util.List;
 
+import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
+
 
 /**
  * Represents the asynchronous result of an INVOKE method.
  */
 @Data
+@Builder
 public class InvocationResponse {
     /**
      * A list of the invocation's returned parameters (variables).
@@ -28,7 +32,7 @@ public class InvocationResponse {
     /**
      * A copy of the correlation identifier that was used to issue the INVOKE method.
      */
-    String correlationIdentifier;
+    @NonNull String correlationIdentifier;
 
     /**
      * The UTC timestamp of the transaction that invoked the function. If the function did not require a transaction,

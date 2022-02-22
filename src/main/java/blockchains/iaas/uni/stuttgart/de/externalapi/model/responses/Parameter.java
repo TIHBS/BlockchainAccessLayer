@@ -11,13 +11,16 @@
 
 package blockchains.iaas.uni.stuttgart.de.externalapi.model.responses;
 
+import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Represents a return value of a smart contract function invocation.
  */
 @Data
+@Builder
 public class Parameter {
-    private String name;
-    private String value;
+    @NonNull private String name;
+    @NonNull private String value;
 }

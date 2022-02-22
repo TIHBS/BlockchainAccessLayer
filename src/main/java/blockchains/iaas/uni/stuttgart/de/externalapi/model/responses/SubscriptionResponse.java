@@ -13,13 +13,16 @@ package blockchains.iaas.uni.stuttgart.de.externalapi.model.responses;
 
 import java.util.List;
 
+import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * One of the asynchronous response messages of a SUBSCRIBE method. Every instance of this class represents a single
  * occurrence of the event or smart contract function invocation that is being monitored by the SUBSCRIBE method.
  */
 @Data
+@Builder
 public class SubscriptionResponse {
     /**
      * A list of parameters associated with the reported occurrence.
@@ -29,7 +32,7 @@ public class SubscriptionResponse {
     /**
      * A copy of the correlation identifier that was used to issue the SUBSCRIBE method.
      */
-    String correlationIdentifier;
+    @NonNull String correlationIdentifier;
 
     /**
      * The UTC timestamp of the transaction associated with the occurrence.
