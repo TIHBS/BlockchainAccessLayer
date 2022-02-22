@@ -9,15 +9,27 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model;
+package blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import org.junit.jupiter.api.Test;
 
-@Data
-@Builder
-public class Variable {
-    @NonNull private String value;
-    @NonNull private String type;
+import static org.junit.jupiter.api.Assertions.*;
+
+class CamundaBindingTest {
+
+    @Test
+    void getBindingIdentifier() {
+    }
+
+    @Test
+    void sendInvocationResponse() {
+    }
+
+    @Test
+    void sendSubscriptionResponse() {
+    }
+
+    @Test
+    void sendErrorResponse() {
+    }
 }

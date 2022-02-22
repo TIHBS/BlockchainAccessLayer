@@ -11,13 +11,19 @@
 
 package blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model;
 
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 
 @Data
 @Builder
-public class Variable {
-    @NonNull private String value;
-    @NonNull private String type;
+public class Message {
+    @NonNull
+    private String processInstanceId;
+    @NonNull
+    private String messageName;
+    @NonNull
+    private Map<String, Variable> processVariables;
 }
