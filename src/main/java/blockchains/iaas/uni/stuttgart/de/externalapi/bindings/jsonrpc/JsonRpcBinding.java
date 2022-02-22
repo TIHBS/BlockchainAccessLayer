@@ -55,7 +55,7 @@ public class JsonRpcBinding implements AbstractBinding {
     public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
         NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
         builder.param("correlationIdentifier", response.getCorrelationIdentifier())
-                .param("parameters", response.getParams() == null ? "" : response.getParams())
+                .param("parameters", response.getParams() == null ? Collections.emptyList() : response.getParams())
                 .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
                 .execute();
     }
