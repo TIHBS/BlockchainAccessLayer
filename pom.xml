@@ -67,15 +67,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>${jersey.version}</version>
         </dependency>
 
         <dependency>
@@ -83,6 +77,17 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.web3j</groupId>
@@ -230,8 +235,8 @@
     </dependencies>
     <properties>
         <org.junit.jupiter>5.8.2</org.junit.jupiter>
-        <jersey.version>2.9.1</jersey.version>
-        <jackson.version>[2.9.9.2,)</jackson.version>
+        <jersey.version>2.35</jersey.version>
+        <jackson.version>2.12.1</jackson.version>
         <jsonrpc.version>0.10</jsonrpc.version>
         <org.slf4j>1.7.25</org.slf4j>
         <ch.qos.logback.logback-classic.version>1.2.3</ch.qos.logback.logback-classic.version>

@@ -11,13 +11,19 @@
 
 package blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.extern.jackson.Jacksonized;
 
 @Data
 @Builder
+@Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Variable {
-    @NonNull private String value;
-    @NonNull private String type;
+    @NonNull
+    private String value;
+    @NonNull
+    private String type;
 }
