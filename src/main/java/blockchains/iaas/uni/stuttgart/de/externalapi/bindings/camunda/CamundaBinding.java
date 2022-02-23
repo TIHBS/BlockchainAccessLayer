@@ -12,6 +12,7 @@
 package blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.client.Client;
@@ -25,6 +26,7 @@ import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model.Mess
 import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model.Variable;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.InvocationResponse;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.SubscriptionResponse;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
@@ -40,9 +42,41 @@ public class CamundaBinding implements AbstractBinding {
 
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
+        final Map<String, Variable> variables = parseParameters(response.getParams());
+
+        final Message message = Message
+                .builder()
+                .messageName("result_INOKE_" + response.getCorrelationIdentifier())
+                .processInstanceId(response.getCorrelationIdentifier())
+                .processVariables(variables)
+                .build();
+
+        sendCamundaMessage(message, endpointUrl);
+    }
+
+    @Override
+    public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
+        final Map<String, Variable> variables = parseParameters(response.getParams());
+
+        final Message message = Message
+                .builder()
+                .messageName("result_SUBSCRIBE_" + response.getCorrelationIdentifier())
+                .processInstanceId(response.getCorrelationIdentifier())
+                .processVariables(variables)
+                .build();
+
+        sendCamundaMessage(message, endpointUrl);
+    }
+
+    @Override
+    public void sendErrorResponse(String endpointUrl, BalException exception) {
+
+    }
+
+    private Map<String, Variable> parseParameters(List<Parameter> parameterList) {
         final Map<String, Variable> variables = new HashMap<>();
-        if (response.getParams() != null) {
-            response.getParams().forEach(parameter -> {
+        if (parameterList != null) {
+            parameterList.forEach(parameter -> {
                 Variable current = Variable
                         .builder()
                         .value(parameter.getValue())
@@ -52,13 +86,10 @@ public class CamundaBinding implements AbstractBinding {
             });
         }
 
-        final Message message = Message
-                .builder()
-                .messageName("result_INOKE_" + response.getCorrelationIdentifier())
-                .processInstanceId(response.getCorrelationIdentifier())
-                .processVariables(variables)
-                .build();
+        return variables;
+    }
 
+    private void sendCamundaMessage(Message message, String endpointUrl) {
         final Client client = ClientBuilder.newBuilder()
                 .register(JacksonFeature.class)
                 .build();
@@ -67,15 +98,5 @@ public class CamundaBinding implements AbstractBinding {
                 .post(entity);
 
         log.info("Callback client responded with code({})", postResponse.getStatus());
-    }
-
-    @Override
-    public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
-
-    }
-
-    @Override
-    public void sendErrorResponse(String endpointUrl, BalException exception) {
-
     }
 }

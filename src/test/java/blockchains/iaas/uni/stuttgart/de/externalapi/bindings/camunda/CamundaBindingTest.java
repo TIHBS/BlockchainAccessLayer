@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.Parameter;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.SubscriptionResponse;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -60,8 +61,15 @@ class CamundaBindingTest {
         // todo test contents of request message
     }
 
-    @Test
-    void sendSubscriptionResponse() {
+    @ParameterizedTest
+    @MethodSource
+    void sendSubscriptionResponse(SubscriptionResponse response) throws InterruptedException {
+        String endpointUrl = this.mockWebServer.url("/").toString();
+        CamundaBinding binding = new CamundaBinding();
+        binding.sendSubscriptionResponse(endpointUrl, response);
+        RecordedRequest recordedRequest = this.mockWebServer.takeRequest();
+        log.debug(recordedRequest.getBody().readUtf8());
+        // todo test contents of request message
     }
 
     @Test
@@ -105,6 +113,57 @@ class CamundaBindingTest {
                 .build();
         // here the parameters are provided as an empty collection
         InvocationResponse response5 = InvocationResponse
+                .builder()
+                .correlationIdentifier("1234")
+                .timestamp("654321")
+                .params(Collections.emptyList())
+                .build();
+
+        return Stream.of(
+                Arguments.of(response1),
+                Arguments.of(response3),
+                Arguments.of(response4),
+                Arguments.of(response5)
+        );
+    }
+
+    private static Stream<Arguments> sendSubscriptionResponse() {
+        Parameter param1 = Parameter
+                .builder()
+                .name("param1")
+                .value("Great Test!")
+                .build();
+        Parameter param2 = Parameter
+                .builder()
+                .name("param2")
+                .value("Super Test!")
+                .build();
+        // here everything is provided
+        SubscriptionResponse response1 = SubscriptionResponse
+                .builder()
+                .correlationIdentifier("1234")
+                .timestamp("654321")
+                .params(Stream
+                        .of(param1, param2)
+                        .collect(Collectors.toList()))
+                .build();
+        // a missing corrId throws an exception
+        // here the timestamp is missing
+        SubscriptionResponse response3 = SubscriptionResponse
+                .builder()
+                .correlationIdentifier("1234")
+                .params(Stream
+                        .of(param1, param2)
+                        .collect(Collectors.toList()))
+                .build();
+        // here the parameters are missing
+        SubscriptionResponse response4 = SubscriptionResponse
+                .builder()
+                .correlationIdentifier("1234")
+                .timestamp("654321")
+                .build();
+        // here the parameters are provided as an empty collection
+        SubscriptionResponse response5 = SubscriptionResponse
                 .builder()
                 .correlationIdentifier("1234")
                 .timestamp("654321")
