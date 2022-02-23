@@ -16,9 +16,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
