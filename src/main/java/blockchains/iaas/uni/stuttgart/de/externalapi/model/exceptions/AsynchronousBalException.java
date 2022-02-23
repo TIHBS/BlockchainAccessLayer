@@ -8,16 +8,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
+
 package blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions;
 
-public abstract class BalException extends RuntimeException {
+public abstract class AsynchronousBalException extends BalException {
+    private String correlationIdentifier;
 
-    public BalException() {
+    public AsynchronousBalException() {
     }
 
-    public BalException(String message) {
+    public AsynchronousBalException(String message) {
         super(message);
     }
 
-    public abstract int getCode();
+
+    public String getCorrelationIdentifier() {
+        return correlationIdentifier;
+    }
+
+    public void setCorrelationIdentifier(String correlationIdentifier) {
+        this.correlationIdentifier = correlationIdentifier;
+    }
 }

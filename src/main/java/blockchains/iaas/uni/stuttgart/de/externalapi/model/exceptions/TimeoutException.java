@@ -18,7 +18,7 @@ import lombok.Setter;
 @JsonRpcError(code = ExceptionCode.Timeout, message = "Timeout was reached before the desired DoC was fulfilled.")
 @Setter
 @Getter
-public class TimeoutException extends BalException {
+public class TimeoutException extends AsynchronousBalException {
     private String transactionHash;
     private double doc;
 

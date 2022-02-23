@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
 @JsonRpcError(code = ExceptionCode.InvocationError, message = "The smart contract function invocation failed.")
-public class InvokeSmartContractFunctionFailure extends BalException {
+public class InvokeSmartContractFunctionFailure extends AsynchronousBalException {
     public InvokeSmartContractFunctionFailure() {
     }
 

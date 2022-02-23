@@ -84,6 +84,8 @@
             <version>${org.web3j.version}</version>
         </dependency>
 
+        <!-- The following dependency is needed for the crypto features of web3j
+        For some reason, web3j just assumes it is there somehow...-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
@@ -193,7 +195,7 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
-            <version>3.8.1</version>
+            <version>4.9.0</version>
             <scope>test</scope>
         </dependency>
 

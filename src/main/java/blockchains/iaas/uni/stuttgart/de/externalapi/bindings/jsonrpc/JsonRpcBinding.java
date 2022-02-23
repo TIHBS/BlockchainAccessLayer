@@ -17,6 +17,7 @@ import java.util.Collections;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.AbstractBinding;
@@ -61,11 +62,12 @@ public class JsonRpcBinding implements AbstractBinding {
     }
 
     @Override
-    public void sendErrorResponse(String endpointUrl, BalException exception) {
+    public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
         NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
 
         builder = builder.param("errorCode", exception.getCode());
         builder = builder.param("errorMessage", exception.getMessage());
+        builder = builder.param("correlationIdentifier", exception.getCorrelationIdentifier());
 
         if (exception instanceof TimeoutException) {
             builder = builder.param("transactionHash", ((TimeoutException) exception).getTransactionHash());

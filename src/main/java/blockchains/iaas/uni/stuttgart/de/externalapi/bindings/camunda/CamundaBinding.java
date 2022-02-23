@@ -24,7 +24,8 @@ import javax.ws.rs.core.Response;
 import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model.Message;
 import blockchains.iaas.uni.stuttgart.de.externalapi.bindings.camunda.model.Variable;
-import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.AsynchronousBalException;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.SubscriptionResponse;
@@ -69,8 +70,33 @@ public class CamundaBinding implements AbstractBinding {
     }
 
     @Override
-    public void sendErrorResponse(String endpointUrl, BalException exception) {
+    public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
+        final Map<String, Variable> variables = new HashMap<>();
 
+        if (exception instanceof TimeoutException) {
+            final Variable txHash = Variable
+                    .builder()
+                    .value(((TimeoutException) exception).getTransactionHash())
+                    .type("String")
+                    .build();
+
+            final Variable doc = Variable
+                    .builder()
+                    .value(String.valueOf(((TimeoutException) exception).getDoc()))
+                    .type("String")
+                    .build();
+
+            variables.put("reachedDoC", doc);
+            variables.put("transactionHash", txHash);
+        }
+
+        Message message = Message
+                .builder()
+                .messageName("error_SUBSCRIBE_" + exception.getCorrelationIdentifier())
+                .processInstanceId(exception.getCorrelationIdentifier())
+                .processVariables(variables).build();
+
+        sendCamundaMessage(message, endpointUrl);
     }
 
     private Map<String, Variable> parseParameters(List<Parameter> parameterList) {

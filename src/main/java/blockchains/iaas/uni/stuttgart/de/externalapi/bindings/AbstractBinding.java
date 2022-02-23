@@ -11,6 +11,7 @@
 
 package blockchains.iaas.uni.stuttgart.de.externalapi.bindings;
 
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.SubscriptionResponse;
@@ -22,5 +23,5 @@ public interface AbstractBinding {
 
     void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response);
 
-    void sendErrorResponse(String endpointUrl, BalException exception);
+    void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception);
 }

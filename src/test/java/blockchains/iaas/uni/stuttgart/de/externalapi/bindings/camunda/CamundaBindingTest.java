@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.externalapi.model.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.externalapi.model.responses.SubscriptionResponse;
@@ -23,6 +25,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,6 +42,9 @@ class CamundaBindingTest {
     void init() {
         this.mockWebServer = new MockWebServer();
         this.mockWebServer.enqueue(new MockResponse().setResponseCode(200));
+        this.mockWebServer.enqueue(new MockResponse().setResponseCode(200));
+        this.mockWebServer.enqueue(new MockResponse().setResponseCode(200));
+        this.mockWebServer.enqueue(new MockResponse().setResponseCode(200));
     }
 
     @AfterEach
@@ -48,6 +54,8 @@ class CamundaBindingTest {
 
     @Test
     void getBindingIdentifier() {
+        CamundaBinding biniding = new CamundaBinding();
+        Assertions.assertEquals("camunda", biniding.getBindingIdentifier());
     }
 
     @ParameterizedTest
@@ -73,7 +81,21 @@ class CamundaBindingTest {
     }
 
     @Test
-    void sendErrorResponse() {
+    void sendErrorResponse() throws InterruptedException {
+        InvokeSmartContractFunctionFailure e1 = new InvokeSmartContractFunctionFailure("The first Exception occurred");
+        e1.setCorrelationIdentifier("654321ABC");
+        TimeoutException e2 = new TimeoutException("The second exception occurred", "CRAZYHASH123", 0.3);
+        e2.setCorrelationIdentifier("XXX654321ABC");
+        String endpointUrl = this.mockWebServer.url("/").toString();
+        CamundaBinding binding = new CamundaBinding();
+        binding.sendAsyncErrorResponse(endpointUrl, e1);
+        binding.sendAsyncErrorResponse(endpointUrl, e2);
+        RecordedRequest recordedRequest = this.mockWebServer.takeRequest();
+        log.debug(recordedRequest.getBody().readUtf8());
+        recordedRequest = this.mockWebServer.takeRequest();
+        log.debug(recordedRequest.getBody().readUtf8());
+
+        // todo test contents of request message
     }
 
     private static Stream<Arguments> sendInvocationResponse() {
