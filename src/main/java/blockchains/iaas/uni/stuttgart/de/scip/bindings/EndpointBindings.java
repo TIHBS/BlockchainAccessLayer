@@ -11,9 +11,12 @@
 
 package blockchains.iaas.uni.stuttgart.de.scip.bindings;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,10 +61,27 @@ public class EndpointBindings {
         }
     }
 
+    /**
+     * Removes an existing endpoint binding rule.
+     *
+     * @param url the url of the endpoint with possible wildcards.
+     * @return the previous binding id or null if no rule was found.
+     */
+    public String removeRule(String url) {
+        return rules.remove(url);
+    }
+
     public AbstractBinding getBindingForEndpoint(String endpointUrl) {
         final String bindingId = getBindingIdentifierForEndpoint(endpointUrl);
 
         return BindingsManager.getInstance().getBinding(bindingId);
+    }
+
+    public Collection<ImmutablePair<String, String>> getAllRules() {
+        return rules.entrySet()
+                .stream()
+                .map((entry) -> ImmutablePair.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -71,9 +91,10 @@ public class EndpointBindings {
      * @return the binding identifier associated with this url, or the default binding identifier.
      */
     protected String getBindingIdentifierForEndpoint(String endpointUrl) {
-        String binding = DEFAULT_BINDING_IDENTIFIER; ;
+        String binding = DEFAULT_BINDING_IDENTIFIER;
+        ;
 
-        for(String key: rules.keySet()) {
+        for (String key : rules.keySet()) {
             String url = preprocess(key);
 
             if (endpointUrl.matches(url)) {
@@ -95,6 +116,7 @@ public class EndpointBindings {
 
     /**
      * FOR INTERNAL USE AND TESTING!
+     *
      * @param url a url in clear text with possible wildcards, i.e., *.
      * @return a regex that escapes special characters and properly handles the wildcard
      */
