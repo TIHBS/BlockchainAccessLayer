@@ -21,15 +21,6 @@ import java.util.stream.Collectors;
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.MathUtils;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
-import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
-import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslator;
-import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
-import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
@@ -39,6 +30,15 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionF
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.TransactionNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.UnknownException;
+import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslator;
+import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
+import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
 import blockchains.iaas.uni.stuttgart.de.subscription.SubscriptionManager;
@@ -352,6 +352,7 @@ public class BlockchainManager {
      * <p>
      * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible or the function is not recognized
      * INVALID: the submitted transaction failed validation at the node (if a transaction was required)
+     * ERRORED: the smart contract function threw an exception.
      * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
      * or the result returned from a read-only smart contract function.
      *
@@ -387,12 +388,12 @@ public class BlockchainManager {
                 || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
             throw new InvalidScipParameterException();
         }
-
+        final long effectiveTimeoutMillis = timeoutMillis == 0 ? Long.MAX_VALUE : timeoutMillis;
         final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
+                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, effectiveTimeoutMillis);
 
         future.
                 thenAccept(tx -> {
