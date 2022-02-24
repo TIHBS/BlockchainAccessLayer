@@ -58,6 +58,7 @@
             <!-- use the following artifactId if you don't need servlet 2.x compatibility -->
             <!-- artifactId>jersey-container-servlet</artifactId -->
         </dependency>
+        
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
@@ -68,25 +69,12 @@
             <artifactId>jersey-media-json-binding</artifactId>
         </dependency>
 
-        <!--<dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>-->
-
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
             <version>${org.web3j.version}</version>
         </dependency>
 
-        <!-- The following dependency is needed for the crypto features of web3j
-        For some reason, web3j just assumes it is there somehow...-->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.63</version>
-        </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
