@@ -64,7 +64,13 @@ public class EndpointBindings {
         return BindingsManager.getInstance().getBinding(bindingId);
     }
 
-    String getBindingIdentifierForEndpoint(String endpointUrl) {
+    /**
+     * FOR INTERNAL USE AND TESTING!
+     *
+     * @param endpointUrl an endpoint url with potential wildcards, i.e., *.
+     * @return the binding identifier associated with this url, or the default binding identifier.
+     */
+    protected String getBindingIdentifierForEndpoint(String endpointUrl) {
         String binding = DEFAULT_BINDING_IDENTIFIER; ;
 
         for(String key: rules.keySet()) {
@@ -79,7 +85,20 @@ public class EndpointBindings {
         return binding;
     }
 
-    String preprocess(String url) {
+    /**
+     * ONLY FOR TESTING!
+     * Please do not use this method for any production code.
+     */
+    protected void resetRules() {
+        rules.clear();
+    }
+
+    /**
+     * FOR INTERNAL USE AND TESTING!
+     * @param url a url in clear text with possible wildcards, i.e., *.
+     * @return a regex that escapes special characters and properly handles the wildcard
+     */
+    protected String preprocess(String url) {
         return url
                 .replaceAll("\\*", "\\\\S*")
                 .replaceAll("\\+", "\\\\+")

@@ -12,9 +12,15 @@
 package blockchains.iaas.uni.stuttgart.de.scip.bindings;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class EndpointBindingsTest {
+
+    @BeforeEach
+    void clearRules() {
+        EndpointBindings.getInstance().resetRules();
+    }
 
     @Test
     void addInvalidRule() {
