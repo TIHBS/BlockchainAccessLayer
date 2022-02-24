@@ -8,21 +8,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.InvocationError, message = "The smart contract function invocation failed.")
-public class InvokeSmartContractFunctionFailure extends AsynchronousBalException {
-    public InvokeSmartContractFunctionFailure() {
+@JsonRpcError(code = ExceptionCode.InvalidParameters, message = "The passed function/event parameter names, order, or types are invalid.")
+public class ParameterException extends BalException {
+    public ParameterException() {
     }
 
-    public InvokeSmartContractFunctionFailure(String message) {
+    public ParameterException(String message) {
         super(message);
     }
 
     @Override
     public int getCode() {
-        return ExceptionCode.InvocationError;
+        return ExceptionCode.InvalidParameters;
     }
 }

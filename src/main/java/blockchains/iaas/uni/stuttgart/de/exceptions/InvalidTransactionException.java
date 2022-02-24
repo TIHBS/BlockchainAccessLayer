@@ -8,22 +8,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.InvalidScipParam, message = "A scip method parameter has an invalid value.")
-public class InvalidScipParameterException extends BalException {
+@JsonRpcError(code = ExceptionCode.InvocationError, message = "An error occurred while trying to invoke the smart contract function.")
+public class InvalidTransactionException extends BalException {
+
+    public InvalidTransactionException() {
+    }
+
+    public InvalidTransactionException(String message) {
+        super(message);
+    }
+
     @Override
     public int getCode() {
-        return ExceptionCode.InvalidScipParam;
-    }
-
-    public InvalidScipParameterException() {
-    }
-
-    public InvalidScipParameterException(String message) {
-        super(message);
+        return ExceptionCode.InvocationError;
     }
 }

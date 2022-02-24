@@ -8,22 +8,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.ConnectionException, message = "The blockchain node cannot be reached.")
-public class BlockchainNodeUnreachableException extends BalException {
-
-    public BlockchainNodeUnreachableException() {
+@JsonRpcError(code = ExceptionCode.InvocationError,
+        message = "The smart contract function invocation failed.")
+public class InvokeSmartContractFunctionFailure extends BalException {
+    public InvokeSmartContractFunctionFailure() {
     }
 
-    public BlockchainNodeUnreachableException(String message) {
+    public InvokeSmartContractFunctionFailure(String message) {
         super(message);
     }
 
     @Override
     public int getCode() {
-        return ExceptionCode.ConnectionException;
+        return ExceptionCode.InvocationError;
     }
 }

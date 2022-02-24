@@ -8,22 +8,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+public abstract class BalException extends RuntimeException {
 
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
-
-@JsonRpcError(code = ExceptionCode.NotFound, message = "The specified smart contract is not found.")
-public class SmartContractNotFoundException extends BalException {
-    public SmartContractNotFoundException() {
+    public BalException() {
     }
 
-    public SmartContractNotFoundException(String message) {
+    public BalException(String message) {
         super(message);
     }
 
-    @Override
-    public int getCode() {
-        return ExceptionCode.NotFound;
+    public BalException(String message, Throwable cause) {
+        super(message, cause);
     }
+
+    public abstract int getCode();
 }

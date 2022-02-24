@@ -12,7 +12,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 
 import java.math.BigInteger;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Bytes;

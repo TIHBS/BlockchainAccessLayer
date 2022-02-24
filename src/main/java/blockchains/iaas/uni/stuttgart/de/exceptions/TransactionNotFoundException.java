@@ -8,12 +8,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.TransactionInvalidatedException, message = "The transaction associated with an function invocation is invalidated after it was mined.")
-public class TransactionNotFoundException extends AsynchronousBalException {
+@JsonRpcError(code = ExceptionCode.TransactionInvalidatedException,
+        message = "The transaction associated with an function invocation is invalidated after it was mined.")
+public class TransactionNotFoundException extends BalException {
 
     public TransactionNotFoundException() {
     }

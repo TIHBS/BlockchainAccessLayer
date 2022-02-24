@@ -11,25 +11,22 @@
 
 package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
 
-public abstract class AsynchronousBalException extends BalException {
-    private String correlationIdentifier;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
 
-    public AsynchronousBalException() {
-    }
+public final class AsynchronousBalException extends BalException {
+    final private String correlationIdentifier;
 
-    public AsynchronousBalException(String message) {
-        super(message);
-    }
-
-    public AsynchronousBalException(String message, Throwable cause) {
-        super(message, cause);
+    public AsynchronousBalException(BalException cause, String correlationIdentifier) {
+        super(cause.getMessage(), cause);
+        this.correlationIdentifier = correlationIdentifier;
     }
 
     public String getCorrelationIdentifier() {
         return correlationIdentifier;
     }
 
-    public void setCorrelationIdentifier(String correlationIdentifier) {
-        this.correlationIdentifier = correlationIdentifier;
+    @Override
+    public int getCode() {
+        return ((BalException)getCause()).getCode();
     }
 }

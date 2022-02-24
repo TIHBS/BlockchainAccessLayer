@@ -25,7 +25,7 @@ import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Message;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Variable;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.TimeoutException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
@@ -73,16 +73,16 @@ public class CamundaBinding implements AbstractBinding {
     public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
         final Map<String, Variable> variables = new HashMap<>();
 
-        if (exception instanceof TimeoutException) {
+        if (exception.getCause() instanceof TimeoutException) {
             final Variable txHash = Variable
                     .builder()
-                    .value(((TimeoutException) exception).getTransactionHash())
+                    .value(((TimeoutException) exception.getCause()).getTransactionHash())
                     .type("String")
                     .build();
 
             final Variable doc = Variable
                     .builder()
-                    .value(String.valueOf(((TimeoutException) exception).getDoc()))
+                    .value(String.valueOf(((TimeoutException) exception.getCause()).getDoc()))
                     .type("String")
                     .build();
 

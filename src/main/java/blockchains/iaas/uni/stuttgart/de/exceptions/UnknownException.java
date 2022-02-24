@@ -9,21 +9,14 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.InvalidParameters, message = "The passed function/event parameter names, order, or types are invalid.")
-public class ParameterException extends BalException {
-    public ParameterException() {
-    }
-
-    public ParameterException(String message) {
-        super(message);
-    }
-
+@JsonRpcError(code = ExceptionCode.UnknownError, message = "Unknown server error occurred.")
+public class UnknownException extends BalException {
     @Override
     public int getCode() {
-        return ExceptionCode.InvalidParameters;
+        return ExceptionCode.UnknownError;
     }
 }

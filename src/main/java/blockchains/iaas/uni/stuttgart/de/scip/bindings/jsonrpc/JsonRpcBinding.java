@@ -17,9 +17,9 @@ import java.util.Collections;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.TimeoutException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
@@ -68,9 +68,11 @@ public class JsonRpcBinding implements AbstractBinding {
         builder = builder.param("errorMessage", exception.getMessage());
         builder = builder.param("correlationIdentifier", exception.getCorrelationIdentifier());
 
-        if (exception instanceof TimeoutException) {
-            builder = builder.param("transactionHash", ((TimeoutException) exception).getTransactionHash());
-            builder = builder.param("reachedDoC", ((TimeoutException) exception).getDoc());
+        if (exception.getCause() instanceof TimeoutException) {
+            builder = builder.param("transactionHash",
+                    ((TimeoutException) exception.getCause()).getTransactionHash());
+            builder = builder.param("reachedDoC",
+                    ((TimeoutException) exception.getCause()).getDoc());
         }
 
         builder.execute();

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 public class ExceptionCode {
     public static final int UnknownError = 0;

@@ -18,7 +18,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.utils.MathUtils;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import org.web3j.abi.datatypes.AbiTypes;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;

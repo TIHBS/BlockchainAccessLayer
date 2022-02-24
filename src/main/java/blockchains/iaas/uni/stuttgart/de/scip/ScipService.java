@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.scip;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvalidScipParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.model.QueryResult;

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 import lombok.Getter;
@@ -18,7 +18,7 @@ import lombok.Setter;
 @JsonRpcError(code = ExceptionCode.Timeout, message = "Timeout was reached before the desired DoC was fulfilled.")
 @Setter
 @Getter
-public class TimeoutException extends AsynchronousBalException {
+public class TimeoutException extends BalException {
     private String transactionHash;
     private double doc;
 

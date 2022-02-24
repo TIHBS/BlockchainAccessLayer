@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.adaptation;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BlockchainIdNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

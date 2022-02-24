@@ -18,8 +18,8 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.xml.bind.DatatypeConverter;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 
 public class JsonSchemaToJavaTypeMapper {

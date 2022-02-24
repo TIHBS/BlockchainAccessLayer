@@ -15,7 +15,7 @@ import java.math.BigInteger;
 
 import javax.xml.bind.DatatypeConverter;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.ParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Parameter;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;

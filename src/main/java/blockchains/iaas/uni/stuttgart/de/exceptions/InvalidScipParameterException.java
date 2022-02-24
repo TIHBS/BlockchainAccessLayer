@@ -9,14 +9,21 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.UnknownError, message = "Unknown server error occurred.")
-public class UnknownException extends BalException {
+@JsonRpcError(code = ExceptionCode.InvalidScipParam, message = "A scip method parameter has an invalid value.")
+public class InvalidScipParameterException extends BalException {
     @Override
     public int getCode() {
-        return ExceptionCode.UnknownError;
+        return ExceptionCode.InvalidScipParam;
+    }
+
+    public InvalidScipParameterException() {
+    }
+
+    public InvalidScipParameterException(String message) {
+        super(message);
     }
 }

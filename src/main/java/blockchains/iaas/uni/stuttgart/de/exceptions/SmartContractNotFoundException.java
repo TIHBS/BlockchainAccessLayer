@@ -9,21 +9,21 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.NotSupported, message = "The requested operation is not supported by the underlying blockchain instance.")
-public class NotSupportedException extends BalException {
-    public NotSupportedException() {
+@JsonRpcError(code = ExceptionCode.NotFound, message = "The specified smart contract is not found.")
+public class SmartContractNotFoundException extends BalException {
+    public SmartContractNotFoundException() {
     }
 
-    public NotSupportedException(String message) {
+    public SmartContractNotFoundException(String message) {
         super(message);
     }
 
     @Override
     public int getCode() {
-        return ExceptionCode.NotSupported;
+        return ExceptionCode.NotFound;
     }
 }

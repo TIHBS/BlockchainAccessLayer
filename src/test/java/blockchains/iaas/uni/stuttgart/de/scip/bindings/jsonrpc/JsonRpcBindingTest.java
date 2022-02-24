@@ -16,8 +16,9 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvokeSmartContractFunctionFailure;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.TimeoutException;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
@@ -80,10 +81,12 @@ class JsonRpcBindingTest {
 
     @Test
     void sendErrorResponses() throws InterruptedException {
-        InvokeSmartContractFunctionFailure e1 = new InvokeSmartContractFunctionFailure("The first Exception occurred");
-        e1.setCorrelationIdentifier("654321ABC");
-        TimeoutException e2 = new TimeoutException("The second exception occurred", "CRAZYHASH123", 0.3);
-        e2.setCorrelationIdentifier("XXX654321ABC");
+        AsynchronousBalException e1 = new AsynchronousBalException(
+                new InvokeSmartContractFunctionFailure("The first Exception occurred"),
+                "654321ABC");
+        AsynchronousBalException e2 = new AsynchronousBalException(
+                new TimeoutException("The first Exception occurred", "CRAZYHASH123", 0.3),
+                "XXX654321ABC");
         String endpointUrl = this.mockWebServer.url("/").toString();
         JsonRpcBinding binding = new JsonRpcBinding();
         binding.sendAsyncErrorResponse(endpointUrl, e1);

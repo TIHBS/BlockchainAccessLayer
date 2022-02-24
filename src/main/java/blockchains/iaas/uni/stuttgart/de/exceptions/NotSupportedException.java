@@ -9,17 +9,21 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.exceptions;
+package blockchains.iaas.uni.stuttgart.de.exceptions;
 
-public class GenericAsynchronousBalException extends AsynchronousBalException {
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-    public GenericAsynchronousBalException(BalException exception, String correlationIdentifier) {
-        super(exception.getMessage(), exception);
-        setCorrelationIdentifier(correlationIdentifier);
+@JsonRpcError(code = ExceptionCode.NotSupported, message = "The requested operation is not supported by the underlying blockchain instance.")
+public class NotSupportedException extends BalException {
+    public NotSupportedException() {
+    }
+
+    public NotSupportedException(String message) {
+        super(message);
     }
 
     @Override
     public int getCode() {
-        return ((BalException)getCause()).getCode();
+        return ExceptionCode.NotSupported;
     }
 }

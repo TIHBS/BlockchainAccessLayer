@@ -29,16 +29,16 @@ import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
 import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.BlockchainNodeUnreachableException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.GenericAsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvalidScipParameterException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.InvokeSmartContractFunctionFailure;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.TransactionNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.UnknownException;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
+import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.TransactionNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.exceptions.UnknownException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
 import blockchains.iaas.uni.stuttgart.de.subscription.SubscriptionManager;
@@ -413,17 +413,18 @@ public class BlockchainManager {
                                     .build();
                             ScipCallbackManager.getInstance().sendInvocationResponse(callbackUrl, response);
                         } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
+                            AsynchronousBalException exception;
                             if (tx.getState() == TransactionState.NOT_FOUND) {
                                 TransactionNotFoundException txNotFoundException =
                                         new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.");
-                                txNotFoundException.setCorrelationIdentifier(correlationId);
-                                ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, txNotFoundException);
+                                exception = new AsynchronousBalException(txNotFoundException, correlationId);
                             } else {
                                 InvokeSmartContractFunctionFailure invocationException =
                                         new InvokeSmartContractFunctionFailure("The smart contract function invocation reported an error.");
-                                invocationException.setCorrelationIdentifier(correlationId);
-                                ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, invocationException);
+                                exception = new AsynchronousBalException(invocationException, correlationId);
                             }
+
+                            ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, exception);
                         }
                     } else {
                         log.info("resulting transaction is null");
@@ -434,8 +435,8 @@ public class BlockchainManager {
                     // happens if the node is unreachable, or something goes wrong while trying to invoke the sc function.
                     // todo figure out how to handle this case
                     if (e.getCause() instanceof BalException) {
-                        GenericAsynchronousBalException exception =
-                                new GenericAsynchronousBalException((BalException) e.getCause(), correlationId);
+                        AsynchronousBalException exception =
+                                new AsynchronousBalException((BalException) e.getCause(), correlationId);
                         ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, exception);
                     }
 
