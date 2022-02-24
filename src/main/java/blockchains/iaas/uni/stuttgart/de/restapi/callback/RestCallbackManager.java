@@ -21,10 +21,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
-import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +52,8 @@ public class RestCallbackManager {
 
     private void sendRestCallback(final String endpointUrl, final CallbackMessage responseBody) {
         final Client client = ClientBuilder.newBuilder()
-                .register(ObjectMapperProvider.class)  // No need to register this provider if no special configuration is required.
-                .register(JacksonFeature.class)
+                //.register(ObjectMapperProvider.class)  // No need to register this provider if no special configuration is required.
+                //.register(JacksonFeature.class)
                 .build();
         final Entity entity = Entity.entity(responseBody, MediaType.APPLICATION_JSON);
         final Response response = client.target(endpointUrl).request(MediaType.APPLICATION_JSON)

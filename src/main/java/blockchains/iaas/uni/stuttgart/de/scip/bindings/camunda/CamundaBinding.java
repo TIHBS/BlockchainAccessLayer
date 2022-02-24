@@ -21,15 +21,14 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Message;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Variable;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Parameter;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscriptionResponse;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +116,7 @@ public class CamundaBinding implements AbstractBinding {
 
     private void sendCamundaMessage(Message message, String endpointUrl) {
         final Client client = ClientBuilder.newBuilder()
-                .register(JacksonFeature.class)
+                //.register(JacksonFeature.class)
                 .build();
         final Entity entity = Entity.entity(message, MediaType.APPLICATION_JSON);
         final Response postResponse = client.target(endpointUrl).request(MediaType.APPLICATION_JSON)
