@@ -211,6 +211,7 @@ public class EthereumAdapter extends AbstractAdapter {
         return new CompletionException(mapEthereumException(e));
     }
 
+    // todo this code seems fishy.
     private static BalException mapEthereumException(Throwable e) {
         BalException result;
 
@@ -245,7 +246,17 @@ public class EthereumAdapter extends AbstractAdapter {
             return Transfer.sendFunds(web3j, credentials, receiverAddress, value, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
-                    .thenCompose(tx -> subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND))
+                    .thenCompose(tx -> {
+                        if (tx.isStatusOK()) {
+                            // we go here, for example, for block gas limit exceptions.
+                            InvalidTransactionException exception = new InvalidTransactionException(
+                                    "Failed to submit transaction. Ethereum JSON-RPC code: " + tx.getStatus());
+                            log.error("Failed to submit transaction. Ethereum JSON-RPC code: " + tx.getStatus());
+                            throw new CompletionException(exception);
+                        }
+
+                        return subscribeForTxEvent(tx.getTransactionHash(), waitFor, TransactionState.CONFIRMED, TransactionState.NOT_FOUND);
+                    })
                     .exceptionally((e) -> {
                                 throw wrapEthereumExceptions(e);
                             }
@@ -621,6 +632,15 @@ public class EthereumAdapter extends AbstractAdapter {
                 .thenCompose(transaction -> web3j.ethSendTransaction(transaction).sendAsync())
                 .thenCompose(tx -> {
                     final String txHash = tx.getTransactionHash();
+
+                    if (tx.hasError()) {
+                        InvokeSmartContractFunctionFailure exception = new InvokeSmartContractFunctionFailure(
+                                "Failed to invoke smart contract function via tx. Reason: " + tx.getError().getMessage());
+                        log.error("Transaction submission failed. Code: {}, Reason: {}", tx.getError().getCode(), tx.getError().getMessage());
+
+                        throw new CompletionException(exception);
+                    }
+
                     log.info("transaction hash is {}", txHash);
                     return CompletableFuture.completedFuture(txHash);
                 })
