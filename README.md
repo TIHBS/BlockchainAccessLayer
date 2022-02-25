@@ -207,7 +207,7 @@ Where:
 
 Clients of the BAL can choose different return message bindings for different callback endpoints. To this end, a
 dedicated RESTful resource is provided at `{application-URL}/webapi/bindings/`. This endpoint accepts binding rules in
-the following `JSON` format:
+the following `JSON` format via `POST`:
 
 ```json
 {

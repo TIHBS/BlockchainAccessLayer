@@ -247,7 +247,7 @@ public class EthereumAdapter extends AbstractAdapter {
                     .sendAsync()
                     // when an exception (e.g., ConnectException happens), the following is skipped
                     .thenCompose(tx -> {
-                        if (tx.isStatusOK()) {
+                        if (!tx.isStatusOK()) {
                             // we go here, for example, for block gas limit exceptions.
                             InvalidTransactionException exception = new InvalidTransactionException(
                                     "Failed to submit transaction. Ethereum JSON-RPC code: " + tx.getStatus());
