@@ -12,12 +12,16 @@
 package blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model;
 
 import lombok.Getter;
+import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
-public abstract class Variable {
-    private final String type;
+public class StringVariable extends Variable {
+    @NonNull
+    private final String value;
 
-    public Variable(String typeName) {
-        this.type = typeName;
+    public StringVariable(@NotNull String value) {
+        super("String");
+        this.value = value;
     }
 }

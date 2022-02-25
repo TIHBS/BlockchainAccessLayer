@@ -14,10 +14,11 @@ package blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model;
 import lombok.Getter;
 
 @Getter
-public abstract class Variable {
-    private final String type;
+public class DoubleVariable extends Variable {
+    private final double value;
 
-    public Variable(String typeName) {
-        this.type = typeName;
+    public DoubleVariable(double value) {
+        super("Number");
+        this.value = value;
     }
 }

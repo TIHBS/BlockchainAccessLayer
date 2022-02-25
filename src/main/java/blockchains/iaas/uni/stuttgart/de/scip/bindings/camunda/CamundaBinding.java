@@ -23,7 +23,10 @@ import javax.ws.rs.core.Response;
 
 import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
+import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.DoubleVariable;
+import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.LongVariable;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Message;
+import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.StringVariable;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Variable;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvocationResponse;
@@ -43,6 +46,9 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
         final Map<String, Variable> variables = parseParameters(response.getParams());
+        long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("")?
+                0 : Long.parseLong(response.getTimestamp());
+        variables.put("timestamp", new LongVariable(timestamp));
 
         final Message message = Message
                 .builder()
@@ -57,6 +63,9 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
         final Map<String, Variable> variables = parseParameters(response.getParams());
+        long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("")?
+                0 : Long.parseLong(response.getTimestamp());
+        variables.put("timestamp", new LongVariable(timestamp));
 
         final Message message = Message
                 .builder()
@@ -73,22 +82,16 @@ public class CamundaBinding implements AbstractBinding {
         final Map<String, Variable> variables = new HashMap<>();
 
         if (exception.getCause() instanceof TimeoutException) {
-            final Variable txHash = Variable
-                    .builder()
-                    .value(((TimeoutException) exception.getCause()).getTransactionHash())
-                    .type("String")
-                    .build();
-
-            final Variable doc = Variable
-                    .builder()
-                    .value(String.valueOf(((TimeoutException) exception.getCause()).getDoc()))
-                    .type("String")
-                    .build();
-
+            final Variable txHash = new StringVariable(((TimeoutException) exception.getCause()).getTransactionHash());
+            final Variable doc = new DoubleVariable(((TimeoutException) exception.getCause()).getDoc());
             variables.put("reachedDoC", doc);
             variables.put("transactionHash", txHash);
         }
 
+        final Variable errCode = new LongVariable(exception.getCode());
+        final Variable errMessage = new StringVariable(exception.getMessage());
+        variables.put("errorCode", errCode);
+        variables.put("errorMessage", errMessage);
         Message message = Message
                 .builder()
                 .messageName("error_SUBSCRIBE_" + exception.getCorrelationIdentifier())
@@ -102,11 +105,7 @@ public class CamundaBinding implements AbstractBinding {
         final Map<String, Variable> variables = new HashMap<>();
         if (parameterList != null) {
             parameterList.forEach(parameter -> {
-                Variable current = Variable
-                        .builder()
-                        .value(parameter.getValue())
-                        .type("String")
-                        .build();
+                Variable current = new StringVariable(parameter.getValue());
                 variables.put(parameter.getName(), current);
             });
         }
