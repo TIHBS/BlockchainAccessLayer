@@ -13,15 +13,22 @@ package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.junit.jupiter.api.*;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.WalletUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,12 +37,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class TestEthereumAdapter {
-
     // Add -Dpf4j.pluginsDir=<plugin_storage_path> -DethereumPluginJarPath=<path_to_ethereum_plugin_jar>
-    private static final String NETWORK_NAME = "eth-0";
 
+    private static final Logger log = LoggerFactory.getLogger(TestEthereumAdapter.class);
+    private static final String NETWORK_NAME = "eth-0";
+    private static final double REQUIRED_CONFIDENCE = -1;
     private final BlockchainPluginManager pluginManager = BlockchainPluginManager.getInstance();
     private final Path pluginPath = Paths.get(System.getProperty("ethereumPluginJarPath"));
 
@@ -76,7 +85,7 @@ public class TestEthereumAdapter {
     }
 
     @Test
-    public void testCreateAdapterInstanceFromConnectionProfile() throws IOException, URISyntaxException {
+    public void testSendEthereumTransaction() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
         Path uploadedPluginPath = Paths.get(pluginManager.getPluginPath() + "/ethereum.jar");
         Files.copy(pluginPath, uploadedPluginPath);
@@ -100,8 +109,12 @@ public class TestEthereumAdapter {
         manager.loadConnectionProfilesFromFile(file);
 
         BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(NETWORK_NAME);
+        Assertions.assertEquals("true", adapter.testConnection());
 
-        // blockchainAdapter.invokeSmartContract();
+//        final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
+//        final BigDecimal value = new BigDecimal(5000);
+//        LinearChainTransaction result = (LinearChainTransaction) adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
+//        log.debug("transaction hash is: " + result.getTransactionHash());
     }
 
     private void clearPluginDirectory() {
@@ -110,15 +123,42 @@ public class TestEthereumAdapter {
         for (File f : files) f.delete();
     }
 
-    private Map<String, String> getConfiguration() {
-        Map<String, String> map = new HashMap<>();
+    private Map<String, Object> getConfiguration() {
+        Map<String, Object> map = new HashMap<>();
         map.put("nodeUrl", "http://localhost:7545/");
-        map.put("keystorePath", "C:\\Ethereum\\keystore\\UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json");
+        map.put("keystorePath", "/account.json");
         map.put("averageBlockTimeSeconds", "2");
         map.put("keystorePassword", "123456789");
-        map.put("adversaryVotingRatio", "0.2");
-        map.put("pollingTimeSeconds", "2");
+        map.put("adversaryVotingRatio", 0.2);
+        map.put("pollingTimeSeconds", 2);
 
         return map;
     }
+
+    void createNewKeystoreFile() throws CipherException, IOException {
+        final String filePath = "C:\\Ethereum\\keystore";
+        final File file = new File(filePath);
+        final String password = "123456789";
+        final String privateKey = "6871412854632d2ccd9c99901f5a0a3d838b31dbc6bfecae5f2382d6b7658bbf";
+        ECKeyPair pair = ECKeyPair.create(new BigInteger(privateKey, 16));
+        WalletUtils.generateWalletFile(password, pair, file, false);
+    }
+
+    /*
+    * Creating account.json file using node 16
+    *
+     ```bash
+        npm install web3
+     ```
+
+     ```javascript
+        var Web3 = require('web3');
+        var web3 = new Web3(Web3.givenProvider || 'ws://localhost:7545');
+        var privateKey="<your_private_key>";
+        var password="123456789";
+        var JsonWallet = web3.eth.accounts.encrypt(privateKey, password);
+        console.log(JSON.stringify(JsonWallet)
+     ```
+     Copy the output to a file `account.json` on the machine.
+    * */
 }
