@@ -44,49 +44,49 @@ import org.slf4j.LoggerFactory;
  */
 @Disabled
 class FabricAdapterTest {
-    private static final String NETWORK_NAME = "fabric-0";
-    private static final String CHANNEL_NAME = "mychannel";
-    private static final String CHAINCODE_NAME = "fabcar";
-    private static final Logger log = LoggerFactory.getLogger(FabricAdapterTest.class);
-
-    private FabricAdapter adapter;
-
-    @BeforeEach
-    public void initialize() {
-        String connectionProfile = "{ \"fabric-0\" : {\n" +
-                "    \"@type\": \"fabric\",\n" +
-                "    \"walletPath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\ems\\\\javascript\\\\wallet\",\n" +
-                "    \"userName\": \"user1\",\n" +
-                "    \"connectionProfilePath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\first-network\\\\connection-org1.json\"\n" +
-                "  }}";
-        ConnectionProfilesManager.getInstance().loadConnectionProfilesFromJson(connectionProfile);
-        adapter = (FabricAdapter) AdapterManager.getInstance().getAdapter(NETWORK_NAME);
-    }
-
-    @Test
-    public void testRoundTrip() throws ExecutionException, InterruptedException {
-        String path = String.format("%s/%s", CHANNEL_NAME, CHAINCODE_NAME);
-        final String id = String.format("CAR%s", RandomStringUtils.randomNumeric(6));
-        this.adapter.invokeSmartContract(
-                path,
-                "createCar",
-                Arrays.asList(
-                        new Parameter("id", "string", id),
-                        new Parameter("make", "string", "Mercedes"),
-                        new Parameter("model", "string", "clk"),
-                        new Parameter("colour", "string", "Black"),
-                        new Parameter("owner", "string", "Ghareeb")),
-                Collections.emptyList(),
-                1.0).get();
-
-        Transaction result = this.adapter.invokeSmartContract(
-                path,
-                "queryAllCars",
-                new ArrayList<>(),
-                new ArrayList<>(),
-                1.0).get();
-        String value = result.getReturnValues().get(0).getValue();
-        log.debug("Looking for Id: " + id);
-        Assertions.assertTrue(value.contains(id));
-    }
+//    private static final String NETWORK_NAME = "fabric-0";
+//    private static final String CHANNEL_NAME = "mychannel";
+//    private static final String CHAINCODE_NAME = "fabcar";
+//    private static final Logger log = LoggerFactory.getLogger(FabricAdapterTest.class);
+//
+//    private FabricAdapter adapter;
+//
+//    @BeforeEach
+//    public void initialize() {
+//        String connectionProfile = "{ \"fabric-0\" : {\n" +
+//                "    \"@type\": \"fabric\",\n" +
+//                "    \"walletPath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\ems\\\\javascript\\\\wallet\",\n" +
+//                "    \"userName\": \"user1\",\n" +
+//                "    \"connectionProfilePath\": \"C:\\\\Users\\\\falazigb\\\\Documents\\\\GitHub\\\\fabric\\\\fabric-samples\\\\first-network\\\\connection-org1.json\"\n" +
+//                "  }}";
+//        ConnectionProfilesManager.getInstance().loadConnectionProfilesFromJson(connectionProfile);
+//        adapter = (FabricAdapter) AdapterManager.getInstance().getAdapter(NETWORK_NAME);
+//    }
+//
+//    @Test
+//    public void testRoundTrip() throws ExecutionException, InterruptedException {
+//        String path = String.format("%s/%s", CHANNEL_NAME, CHAINCODE_NAME);
+//        final String id = String.format("CAR%s", RandomStringUtils.randomNumeric(6));
+//        this.adapter.invokeSmartContract(
+//                path,
+//                "createCar",
+//                Arrays.asList(
+//                        new Parameter("id", "string", id),
+//                        new Parameter("make", "string", "Mercedes"),
+//                        new Parameter("model", "string", "clk"),
+//                        new Parameter("colour", "string", "Black"),
+//                        new Parameter("owner", "string", "Ghareeb")),
+//                Collections.emptyList(),
+//                1.0).get();
+//
+//        Transaction result = this.adapter.invokeSmartContract(
+//                path,
+//                "queryAllCars",
+//                new ArrayList<>(),
+//                new ArrayList<>(),
+//                1.0).get();
+//        String value = result.getReturnValues().get(0).getValue();
+//        log.debug("Looking for Id: " + id);
+//        Assertions.assertTrue(value.contains(id));
+//    }
 }

@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -19,19 +19,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidTransactionException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.NotSupportedException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.TransactionNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.UnknownException;
 import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
@@ -388,7 +381,7 @@ public class BlockchainManager {
 
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability);
+                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
 
         future.
                 thenAccept(tx -> {
@@ -398,14 +391,22 @@ public class BlockchainManager {
                                     ScipMessageTranslator.getInvocationResponseMessage(
                                             correlationId,
                                             tx.getReturnValues()));
-                        } else {// it is NOT_FOUND (it was dropped from the system due to invalidation)
-                            CallbackManager.getInstance().sendCallback(callbackUrl,
-                                    ScipMessageTranslator.getAsynchronousErrorResponseMessage(
-                                            correlationId,
-                                            new TransactionNotFoundException("The transaction associated with an function invocation is invalidated after it was mined.")));
+                        } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
+                            if (tx.getState() == TransactionState.NOT_FOUND) {
+                                CallbackManager.getInstance().sendCallback(callbackUrl,
+                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                correlationId,
+                                                new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
+                            } else {
+                                CallbackManager.getInstance().sendCallback(callbackUrl,
+                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                correlationId,
+                                                new InvokeSmartContractFunctionFailure("The smart contract function invocation reported an error.")));
+                            }
                         }
-                    } else
+                    } else {
                         log.info("resulting transaction is null");
+                    }
                 }).
                 exceptionally((e) -> {
                     log.info("Failed to invoke smart contract function. Reason: {}", e.getMessage());

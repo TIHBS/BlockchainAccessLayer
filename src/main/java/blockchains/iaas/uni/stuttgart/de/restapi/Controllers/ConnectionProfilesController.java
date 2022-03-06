@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-author: Akdhay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -8,7 +9,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ public class ConnectionProfilesController {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void acceptConfiguration(Map<String, AbstractConnectionProfile> profiles) {
+    public void acceptConfiguration(Map<String, Map<String, Object>> profiles) {
         ConnectionProfilesManager.getInstance().loadConnectionProfiles(profiles);
     }
 

@@ -1,7 +1,8 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -11,8 +12,7 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
-import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
-import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Context;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,23 +34,10 @@ public class BlockchainAdapterFactory {
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
-    public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile, String blockchainId) throws Exception {
-
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("nodeUrl", "http://localhost:7545");
-        parameters.put("type", "ethereum");
-        parameters.put("averageBlockTimeSeconds", "2");
+    public BlockchainAdapter createBlockchainAdapter(Map<String, Object> connectionProfile, String blockchainId) throws Exception {
 
         try {
-            return createAdapter(parameters.get("type"), parameters);
-//           if (connectionProfile instanceof BitcoinConnectionProfile) {
-//                return createBitcoinAdapter((BitcoinConnectionProfile) connectionProfile);
-//            } else if (connectionProfile instanceof FabricConnectionProfile) {
-//                return createFabricAdapter((FabricConnectionProfile) connectionProfile, blockchainId);
-//            } else {
-//                log.error("Invalid connectionProfile type!");
-//                return null;
-//            }
+            return createAdapter((String) connectionProfile.get("@type"), connectionProfile);
         } catch (Exception e) {
             final String msg = String.format("Error while creating a blockchain adapter for. Details: %s", e.getMessage());
             log.error(msg);
@@ -88,9 +74,9 @@ public class BlockchainAdapterFactory {
 //                .build();
 //    }
 
-    private BlockchainAdapter createAdapter(String blockchainType, Map<String, String> parameters) {
-        List<IAdapterExtenstion> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
-        for (IAdapterExtenstion adapterExtension : adapterExtensions) {
+    private BlockchainAdapter createAdapter(String blockchainType, Map<String, Object> parameters) {
+        List<IAdapterExtension> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
+        for (IAdapterExtension adapterExtension : adapterExtensions) {
             if (adapterExtension.getBlockChainId().equals(blockchainType)) {
                 // adapterExtension.registerConnectionProfile(objectMapperProvider.getContext());
                 return adapterExtension.getAdapter(parameters);

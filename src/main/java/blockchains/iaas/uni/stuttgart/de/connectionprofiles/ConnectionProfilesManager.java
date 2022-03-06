@@ -2,6 +2,7 @@
  * Copyright (c) 2019 Institute for the Architecture of Application System
  * - University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -37,19 +38,19 @@ public class ConnectionProfilesManager {
     private static ConnectionProfilesManager instance;
     private ConnectionProfileListener listener;
 
-    private Map<String, AbstractConnectionProfile> connectionProfilesMap;
+    private Map<String, Map<String, Object>> connectionProfilesMap;
     private ObjectReader reader;
     private ObjectWriter writer;
 
     private ConnectionProfilesManager() {
         this.connectionProfilesMap = new HashMap<>();
-        this.reader = new ObjectMapper().readerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
+        this.reader = new ObjectMapper().readerFor(new TypeReference<Map<String, Map<String, Object>>>() {
         });
-        this.writer = new ObjectMapper().writerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
+        this.writer = new ObjectMapper().writerFor(new TypeReference<Map<String, Map<String, Object>>>() {
         });
     }
 
-    public Map<String, AbstractConnectionProfile> getConnectionProfiles() {
+    public Map<String, Map<String, Object>> getConnectionProfiles() {
         return this.connectionProfilesMap;
     }
 
@@ -63,7 +64,7 @@ public class ConnectionProfilesManager {
      *
      * @param newMap a map of name->connection profiles
      */
-    public void loadConnectionProfiles(Map<String, AbstractConnectionProfile> newMap) {
+    public void loadConnectionProfiles(Map<String, Map<String, Object>> newMap) {
         this.connectionProfilesMap.putAll(newMap);
 
         if (listener != null) {
@@ -81,7 +82,7 @@ public class ConnectionProfilesManager {
 
     public void loadConnectionProfilesFromFile(File file) {
         try {
-            Map<String, AbstractConnectionProfile> newMap = this.reader.readValue(file);
+            Map<String, Map<String, Object>> newMap = this.reader.readValue(file);
             this.loadConnectionProfiles(newMap);
         } catch (IOException e) {
             log.error("Failed to load connection profiles from the file!", e);
@@ -90,7 +91,7 @@ public class ConnectionProfilesManager {
 
     public void loadConnectionProfilesFromJson(String jsonString) {
         try {
-            Map<String, AbstractConnectionProfile> newMap = reader.readValue(jsonString);
+            Map<String, Map<String, Object>> newMap = reader.readValue(jsonString);
             this.loadConnectionProfiles(newMap);
         } catch (IOException e) {
             log.error("Failed to load connection profiles from the string!", e);
