@@ -9,7 +9,7 @@ import java.util.List;
 
 public class BlockchainPluginManager {
 
-    Path pluginPath =  null;
+    Path pluginPath = null;
     private PluginManager pluginManager = null;
     private static BlockchainPluginManager instance = null;
 
@@ -29,10 +29,6 @@ public class BlockchainPluginManager {
                 return new ManifestPluginDescriptorFinder();
             }
         };
-
-        // TODO: Create plugin management rest api
-        pluginManager.loadPlugins();
-        pluginManager.startPlugins();
     }
 
     public static BlockchainPluginManager getInstance() {
@@ -54,7 +50,7 @@ public class BlockchainPluginManager {
         return pluginPath;
     }
 
-    public List<PluginWrapper> getPlugins(){
+    public List<PluginWrapper> getPlugins() {
         return pluginManager.getPlugins();
     }
 
@@ -62,7 +58,7 @@ public class BlockchainPluginManager {
         pluginManager.unloadPlugin(pluginId);
     }
 
-    public void startPlugin(String pluginId){
+    public void startPlugin(String pluginId) {
         pluginManager.startPlugin(pluginId);
     }
 
@@ -76,6 +72,10 @@ public class BlockchainPluginManager {
 
     public void enablePlugin(String pluginId) {
         pluginManager.enablePlugin(pluginId);
+    }
+
+    public PluginState getPluginState(String pluginId) {
+        return pluginManager.getPlugin(pluginId).getPluginState();
     }
 
 }
