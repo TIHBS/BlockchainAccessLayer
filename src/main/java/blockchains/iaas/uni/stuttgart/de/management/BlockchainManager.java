@@ -378,7 +378,6 @@ public class BlockchainManager {
 
         final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
-
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
                 functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);

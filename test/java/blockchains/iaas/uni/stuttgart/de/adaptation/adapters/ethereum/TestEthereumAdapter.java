@@ -44,7 +44,7 @@ public class TestEthereumAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(TestEthereumAdapter.class);
     private static final String NETWORK_NAME = "eth-0";
-    private static final double REQUIRED_CONFIDENCE = -1;
+    private static final double REQUIRED_CONFIDENCE = 0.6;
     private final BlockchainPluginManager pluginManager = BlockchainPluginManager.getInstance();
     private final Path pluginPath = Paths.get(System.getProperty("ethereumPluginJarPath"));
 
@@ -111,10 +111,10 @@ public class TestEthereumAdapter {
         BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(NETWORK_NAME);
         Assertions.assertEquals("true", adapter.testConnection());
 
-//        final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
-//        final BigDecimal value = new BigDecimal(5000);
-//        LinearChainTransaction result = (LinearChainTransaction) adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
-//        log.debug("transaction hash is: " + result.getTransactionHash());
+        final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
+        final BigDecimal value = new BigDecimal(5000);
+        LinearChainTransaction result = (LinearChainTransaction) adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
+        log.debug("transaction hash is: " + result.getTransactionHash());
     }
 
     private void clearPluginDirectory() {
