@@ -16,19 +16,17 @@ import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import org.pf4j.*;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 
 public class BlockchainPluginManager {
 
-    Path pluginsPath = null;
     private PluginManager pluginManager = null;
     private static BlockchainPluginManager instance = null;
 
     private BlockchainPluginManager() {
-        pluginsPath = Paths.get(System.getProperty(Constants.PLUGINS_DIRECTORY));
-        this.pluginManager = new DefaultPluginManager(pluginsPath) {
+
+        this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
             //
             @Override
             protected PluginLoader createPluginLoader() {
@@ -60,7 +58,7 @@ public class BlockchainPluginManager {
     }
 
     public Path getPluginsPath() {
-        return pluginsPath;
+        return Constants.PLUGINS_DIRECTORY;
     }
 
     public List<PluginWrapper> getPlugins() {
