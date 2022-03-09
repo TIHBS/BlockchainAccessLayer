@@ -50,9 +50,8 @@ public class PluginManagerController {
     }
 
     @POST
-    @Path("/enable")
-    public Response enablePlugin() {
-        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+    @Path("{plugin-id}/enable")
+    public Response enablePlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager.getInstance().enablePlugin(pluginId);
         return Response.ok().build();
     }

@@ -184,6 +184,14 @@ curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugi
 curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/unload'
 ```
 
+##### **POST** `/webapi/plugin-manager/{plugin-id}/enable`
+
+- Example
+
+```bash
+curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/enable'
+```
+
 ### JSON-RPC API
 
 BAL implements the [JSON-RPC binding](https://github.com/lampajr/scip#json-rpc-binding) described in the SCIP
