@@ -134,52 +134,46 @@ The RESTful api provides the following resources/methods:
 
 #### Plugin management RESTful apis:
 
-##### **POST** `/webapi/plugin-manager/upload-plugin`
+
+##### **POST** `/webapi/plugins/`
+
+- Example
 
 ```bash
-curl --location --request POST '{application-URL}webapi/plugin-manager/upload-plugin' \
+curl --location --request POST '{application-URL}/webapi/plugins/' \
 --form 'file=@"<path>/blockchain-access-layer-ethereum-plugin-1.0.0.jar"'
 ```
 
-##### **POST** `/webapi/plugin-manager/upload-plugin`
+##### **GET** `/webapi/plugins/`
 
 - Example
 
 ```bash
-curl --location --request POST '{application-URL}/webapi/plugin-manager/upload-plugin' \
---form 'file=@"<path>/blockchain-access-layer-ethereum-plugin-1.0.0.jar"'
+curl --location --request GET '{application-URL}/webapi/plugins/'
 ```
 
-##### **GET** `/webapi/plugin-manager/`
+##### **DELETE** `/webapi/plugins/{plugin-id}`
 
 - Example
 
 ```bash
-curl --location --request GET '{application-URL}/webapi/plugin-manager/'
+curl --location --request DELETE '{application-URL}/webapi/plugins/ethereum-plugin'
 ```
 
-##### **DELETE** `/webapi/plugin-manager/?plugin-id=<plugin-id>`
+##### **POST** `/webapi/plugins/{plugin-id}/start`
 
 - Example
 
 ```bash
-curl --location --request DELETE '{application-URL}/webapi/plugin-manager/?plugin-id=ethereum-plugin'
+curl --location --request POST '{application-URL}/webapi/plugins/ethereum-plugin/start'
 ```
 
-##### **POST** `/webapi/plugin-manager/start-plugin?plugin-id=<plugin-id>`
+##### **POST** `/webapi/plugin-manager/{plugin-id}/disable`
 
 - Example
 
 ```bash
-curl --location --request POST '{application-URL}/webapi/plugin-manager/start-plugin?plugin-id=ethereum-plugin'
-```
-
-##### **POST** `/webapi/plugin-manager/disable-plugin?plugin-id=<plugin-id>`
-
-- Example
-
-```bash
-curl --location --request POST '{application-URL}/webapi/plugin-manager/disable-plugin?plugin-id=ethereum-plugin'
+curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/disable'
 ```
 
 ### JSON-RPC API
