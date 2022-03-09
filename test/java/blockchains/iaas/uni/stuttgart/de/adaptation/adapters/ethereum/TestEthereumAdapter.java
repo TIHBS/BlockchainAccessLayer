@@ -65,7 +65,7 @@ public class TestEthereumAdapter {
 
         assert pluginManager.getPlugins().size() == 0;
 
-        Path uploadedPluginPath = Paths.get(pluginManager.getPluginPath() + "/ethereum.jar");
+        Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
 
         Files.copy(pluginPath, uploadedPluginPath);
 
@@ -87,7 +87,7 @@ public class TestEthereumAdapter {
     @Test
     public void testSendEthereumTransaction() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
-        Path uploadedPluginPath = Paths.get(pluginManager.getPluginPath() + "/ethereum.jar");
+        Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
         Files.copy(pluginPath, uploadedPluginPath);
         pluginManager.loadJar(pluginPath);
 
@@ -118,7 +118,7 @@ public class TestEthereumAdapter {
     }
 
     private void clearPluginDirectory() {
-        Path path = pluginManager.getPluginPath();
+        Path path = pluginManager.getPluginsPath();
         final File[] files = path.toFile().listFiles();
         for (File f : files) f.delete();
     }

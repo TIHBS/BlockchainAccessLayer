@@ -1,6 +1,5 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -21,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import javax.ws.rs.core.UriInfo;
 
-@Path("plugin-manager")
+@Path("plugins")
 public class PluginManagerController {
     private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
 
@@ -29,7 +28,7 @@ public class PluginManagerController {
     protected UriInfo uriInfo;
 
     @POST
-    @Path("/upload-plugin")
+    @Path("/")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadJar(@FormDataParam("file") InputStream uploadedInputStream,
                               @FormDataParam("file") FormDataContentDisposition fileDetails) {
@@ -37,7 +36,7 @@ public class PluginManagerController {
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         String fileName = fileDetails.getFileName();
         log.info("Received file {}", fileName);
-        String uploadedFileLocation = blockchainPluginManager.getPluginPath() + "/" + fileDetails.getFileName();
+        String uploadedFileLocation = blockchainPluginManager.getPluginsPath() + "/" + fileDetails.getFileName();
         java.nio.file.Path filePath = Paths.get(uploadedFileLocation);
         if (Files.exists(filePath)) {
             log.error("Received file {} already exists in plugins directory.", fileName);
@@ -51,7 +50,7 @@ public class PluginManagerController {
     }
 
     @POST
-    @Path("/enable-plugin")
+    @Path("/enable")
     public Response enablePlugin() {
         String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
         BlockchainPluginManager.getInstance().enablePlugin(pluginId);
@@ -59,32 +58,29 @@ public class PluginManagerController {
     }
 
     @POST
-    @Path("/start-plugin")
-    public Response startPlugin() {
-        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+    @Path("{plugin-id}/start")
+    public Response startPlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager.getInstance().startPlugin(pluginId);
         return Response.ok().build();
     }
 
     @POST
-    @Path("/disable-plugin")
-    public Response disablePlugin() {
-        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+    @Path("{plugin-id}/disable")
+    public Response disablePlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager.getInstance().disablePlugin(pluginId);
         return Response.ok().build();
     }
 
     @POST
-    @Path("/unload-plugin")
-    public Response unloadPlugin() {
-        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+    @Path("{plugin-id}/unload")
+    public Response unloadPlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager.getInstance().unloadPlugin(pluginId);
         return Response.ok().build();
     }
 
     @DELETE
-    public Response deletePlugin() {
-        String pluginId = this.uriInfo.getQueryParameters().getFirst("plugin-id");
+    @Path("{plugin-id}")
+    public Response deletePlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.deletePlugin(pluginId);
         return Response.ok().build();
@@ -109,18 +105,23 @@ public class PluginManagerController {
 
     private void writeToFile(InputStream uploadedInputStream,
                              String uploadedFileLocation) {
+
         try {
             OutputStream out = new FileOutputStream(new File(
                     uploadedFileLocation));
-            int read = 0;
-            byte[] bytes = new byte[1024];
+            ;
+            try {
+                int read = 0;
+                byte[] bytes = new byte[1024];
 
-            out = new FileOutputStream(new File(uploadedFileLocation));
-            while ((read = uploadedInputStream.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
+                out = new FileOutputStream(new File(uploadedFileLocation));
+                while ((read = uploadedInputStream.read(bytes)) != -1) {
+                    out.write(bytes, 0, read);
+                }
+            } finally {
+                out.flush();
+                out.close();
             }
-            out.flush();
-            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

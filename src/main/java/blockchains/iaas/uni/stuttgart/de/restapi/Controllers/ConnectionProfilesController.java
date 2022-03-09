@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 @Path("configure")
 public class ConnectionProfilesController {
 
-    private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionController.class);
+    private static final Logger log = LoggerFactory.getLogger(ConnectionProfilesController.class);
 
     @Context
     protected UriInfo uriInfo;
