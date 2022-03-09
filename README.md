@@ -173,7 +173,7 @@ curl --location --request POST '{application-URL}/webapi/plugins/ethereum-plugin
 - Example
 
 ```bash
-curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/disable'
+curl --location --request POST '{application-URL}/webapi/plugins/ethereum-plugin/disable'
 ```
 
 ##### **POST** `/webapi/plugin-manager/{plugin-id}/unload`
@@ -181,7 +181,7 @@ curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugi
 - Example
 
 ```bash
-curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/unload'
+curl --location --request POST '{application-URL}/webapi/plugins/ethereum-plugin/unload'
 ```
 
 ##### **POST** `/webapi/plugin-manager/{plugin-id}/enable`
@@ -189,7 +189,7 @@ curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugi
 - Example
 
 ```bash
-curl --location --request POST '{application-URL}/webapi/plugins/{ethereum-plugin}/enable'
+curl --location --request POST '{application-URL}/webapi/plugins/ethereum-plugin/enable'
 ```
 
 ### JSON-RPC API
