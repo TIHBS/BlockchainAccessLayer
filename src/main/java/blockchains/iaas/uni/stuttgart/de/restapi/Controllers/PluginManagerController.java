@@ -22,13 +22,14 @@ import java.nio.file.Paths;
 import java.util.List;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 
 @Path("plugins")
 public class PluginManagerController {
     private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
 
     @Context
-    ResourceContext resourceContext;
+    Providers providers;
 
     @Context
     protected UriInfo uriInfo;
@@ -67,10 +68,10 @@ public class PluginManagerController {
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.startPlugin(pluginId);
 
-        ObjectMapperProvider objectMapperProvider = resourceContext.getResource(ObjectMapperProvider.class);
+        ContextResolver<ObjectMapper> resolver = providers.getContextResolver(ObjectMapper.class, MediaType.APPLICATION_JSON_TYPE);
+        ObjectMapper engine = resolver.getContext(ObjectMapper.class);
 
-        ObjectMapper objectMapper = objectMapperProvider.getContext(ObjectMapper.class);
-        blockchainPluginManager.registerConnectionProfileSubtypeClass(objectMapper, pluginId);
+        blockchainPluginManager.registerConnectionProfileSubtypeClass(engine, pluginId);
         return Response.ok().build();
     }
 
@@ -119,7 +120,6 @@ public class PluginManagerController {
         try {
             OutputStream out = new FileOutputStream(new File(
                     uploadedFileLocation));
-            ;
             try {
                 int read = 0;
                 byte[] bytes = new byte[1024];
