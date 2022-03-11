@@ -97,8 +97,8 @@ public class BlockchainPluginManager {
     public void registerConnectionProfileSubtypeClass(ObjectMapper objectMapper, String pluginId) {
         List<IAdapterExtension> adapterExtensions = this.pluginManager.getExtensions(IAdapterExtension.class, pluginId);
         for (IAdapterExtension adapterExtension : adapterExtensions) {
-            // TODO: String typeName = adapterExtension.getConnectionProfileNamedType();
-            objectMapper.registerSubtypes(new NamedType(adapterExtension.getConnectionProfileClass(), "ethereum"));
+            String namedType = adapterExtension.getConnectionProfileNamedType();
+            objectMapper.registerSubtypes(new NamedType(adapterExtension.getConnectionProfileClass(), namedType));
         }
     }
 }
