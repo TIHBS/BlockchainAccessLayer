@@ -93,11 +93,12 @@ The project uses pf4j framework for managing the plugins. The application expose
 - [Bitcoin](https://github.com/TIHBS/blockchain-access-layer-bitcoin-plugin)
 - [Fabric](https://github.com/TIHBS/blockchain-access-layer-fabric-plugin)
 
-**Notice:** the build requires a library (btcd-cli4j) to communicate with the Bitcoin Core
-node. [The used library](https://github.com/pythonmax/btcd-cli4j) is forked from
-an [unmaintained library](http://btcd-cli4j.neemre.com) to fix some issues resulting from changes in the recent versions
-of the Bitcoin Core node. However, the used library is not available in a public Maven repository, so we had to provide
-a local Maven repository which includes the required binaries. This repository is found [here](local-maven-repo).
+One can create their own plugin. A plugin should:
+
+- Use the core [api](https://github.com/TIHBS/blockchain-access-layer-api).
+- Implement [IAdapterExtension](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/IAdapterExtenstion.java) interface.
+- Define a [Plugin](https://pf4j.org/doc/plugins.html).
+- Provide a class that   extends [AbstractConnectionProfile](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/connectionprofiles/AbstractConnectionProfile.java)
 
 ## Accessing the APIs
 
@@ -134,6 +135,7 @@ The RESTful api provides the following resources/methods:
 
 #### Plugin management RESTful apis:
 
+In the current implementation, the plugin management apis do not require authentication.
 
 ##### **POST** `/webapi/plugins/`
 
@@ -203,80 +205,6 @@ standard [JSON-RPC client](https://www.jsonrpc.org/archive_json-rpc.org/implemen
 BAL needs to have access to a node for each blockchain instance it needs to communicate with. These nodes can be already
 running nodes that you have access to. Otherwise, you need to setup and manage your own nodes. Below, are basic
 instructions how to setup Ethereum, Bitcoin, and Hyperledger Fabric nodes.
-
-### Running a Local geth Node
-
-A geth node is used to access the Ethereum network. For development purposes, it is advised not to connect to the main
-Ethereum network, but rather to one of the testnets.
-(another, more difficult option would be to run a local private Ethereum network). In order to connect a geth node
-to [Rinkeby](https://www.rinkeby.io) (one of Ethereum testnets), you can follow these steps:
-
-1. [Install geth](https://github.com/ethereum/go-ethereum/wiki/Installing-Geth):
-   this differs depending on your operating system.
-2. Run geth in the fast-sync mode: This option downlaoads the whole blockchain but does not re-execute all transactions.
-   Syncing the whole testnet blockchain (which is done once only) takes about 1-4 hours (depending on the hardware, the
-   speed of the network connection, and the availability of peers). To start a geth node in the fast-sync mode, execute
-   the following command:
-    ```
-    geth --rpcapi personal,db,eth,net,web3 --rpc --rinkeby --cache=2048 --rpcport "8545"
-    --bootnodes=
-    enode://a24ac7c5484ef4ed0c5eb2d36620ba4e4aa13b8c84684e1b4aab0cebea2ae45cb4d375b77eab56516d34bfbd3c1a833fc51296ff084b770b94fb9028c4d25ccf@52.169.42.101:30303,
-    enode://343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8@52.3.158.184:30303,
-    enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303
-    ``` 
-   If you want your node to be accessible remotely, apart from configuring your firewall, you also need to use the
-   following extra option, when running the node: ```--rpcaddr "0.0.0.0"```
-3. Test connection: you can test your connection to a running geth node using the following command
-   (make sure to install geth on the computer where you run this command):```geth attach http://localhost:8545```
-   please replace _localhost_ with the ip address of the computer running the node.
-
-### Running a Local Bitcoin Core Node
-
-A Bitcoin Core node (or _bitcoind_ node) is used to access the Bitcoin network. For development purposes, it is advised
-not to connect to the main Bitcoin network, but rather to one of the testnets.
-(another, more difficult option would be to run a local private Bitcoin network). In order to connect a _bitcoind_ node
-to [testnet3](https://en.bitcoin.it/wiki/Testnet) (one of Bitcoin's testnets), you can follow these steps:
-
-1. [Install bitcoind](https://bitcoin.org/en/download):
-   this differs depending on your operating system. For the installation instructions on Ubuntu you can
-   follow [these steps](https://gist.github.com/rjmacarthy/b56497a81a6497bfabb1).
-2. Configure _bitcoind_: This can be done by editing and using the [`bitcoin.conf`](app/src/main/resources/bitcoin.conf)
-   file when starting the bicoind daemon. The configuration allows external rpc-based communication with the node, and
-   instructs it to communicate with the testnet rather than the mainnet. Furthermore, it orders the node to build an
-   index on the blockchain that allows querying even historic transactions. Finally, it instructs the node to send
-   notifications to the BAL when it detects a new block or a transaction addressed to one of the Bitcoin wallet's
-   addresses. Syncing the whole testnet blockchain (which is done once only) takes about 1-4 hours (depending on the
-   hardware, the speed of the network connection, and the availability of peers).
-3. Start the pre-configured _bitcoind_ node with the following command:```bitcoind -daemon```
-4. Test connection: you can test your connection to a running _bitcoind_ node using the following command
-   (make sure to install bitcoin-cli (shipped with _bitcoind_) on the computer where you run this command):
-
-```
-bitcoin-cli -getinfo -rpcconnect=<ip address of the node> -rpcport=<port of the node> -rpcuser=<rpc username> -rpcpassword=<rpc password>
-```
-
-### Setting-up a Basic Hyperledger Fabric Network
-
-Please follow these steps [Fabric Setup](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
-
-#### Note
-
-The included Fabric unit test depends on
-the [FabCar official example](https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html), so in
-order to run it ensure the following:
-
-1. follow the steps of running the first Fabric tutorial
-   at: https://hyperledger-fabric.readthedocs.io/en/release-1.4/write_first_app.html (use the javascript smart contract)
-   .
-2. execute the enrollAdmin.js and the registerUser.js node programs.
-3. alter the local hosts file by adding the following entries:
-    * 127.0.0.1 orderer.example.com
-    * 127.0.0.1 peer0.org1.example.com
-    * 127.0.0.1 peer0.org2.example.com
-    * 127.0.0.1 peer1.org1.example.com
-    * 127.0.0.1 peer1.org2.example.com
-
-   This ensures that the SDK is able to find the orderer and network peers.
 
 ## Case Studies
 
