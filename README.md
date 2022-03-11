@@ -219,7 +219,7 @@ to BPMN 2.0 that allows business processes to communicate with heterogeneous blo
 cryptocurrency exchange service utilitzing the blockchain access layer. The exchange uses the following simplified
 BlockME-model:
 
-![](app/src/main/resources/images/original-model.png)
+![](src/main/resources/images/original-model.png)
 
 Please follow these instructions:
 
