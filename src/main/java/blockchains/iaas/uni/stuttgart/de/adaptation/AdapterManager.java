@@ -27,7 +27,7 @@ public class AdapterManager {
     private static final Logger log = LoggerFactory.getLogger(AdapterManager.class);
     private BlockchainAdapterFactory factory = new BlockchainAdapterFactory();
     private static AdapterManager instance = null;
-    private final Map<String, Pair<BlockchainAdapter, Map<String, Object>>> map = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, Pair<BlockchainAdapter, AbstractConnectionProfile>> map = Collections.synchronizedMap(new HashMap<>());
 
     private AdapterManager() {
     }
@@ -41,7 +41,7 @@ public class AdapterManager {
     }
 
     public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException, BlockchainNodeUnreachableException {
-        Map<String, Object> connectionProfile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
+        AbstractConnectionProfile connectionProfile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
         // no connection profile!
         if (connectionProfile == null) {
             final String msg = String.format("blockchain-id <%s> does not exist!", blockchainId);
@@ -51,7 +51,7 @@ public class AdapterManager {
 
         // we already have an adapter for it
         if (map.containsKey(blockchainId)) {
-            Pair<BlockchainAdapter, Map<String, Object>> result = map.get(blockchainId);
+            Pair<BlockchainAdapter, AbstractConnectionProfile> result = map.get(blockchainId);
             // is the connection profile still the same?
             if (result.getRight().equals(connectionProfile)) {
                 return map.get(blockchainId).getLeft();
@@ -60,7 +60,7 @@ public class AdapterManager {
         }
 
         try {
-            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile, blockchainId);
+            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile);
             map.put(blockchainId, ImmutablePair.of(adapter, connectionProfile));
             return Objects.requireNonNull(adapter);
         } catch (Exception e) {
@@ -70,9 +70,9 @@ public class AdapterManager {
 
     public Object[] getActiveAdapters() {
         Object[] a = new AbstractConnectionProfile[map.size()];
-        List<Pair<BlockchainAdapter, Map<String, Object>>> targetList = new ArrayList<>(map.values());
+        List<Pair<BlockchainAdapter, AbstractConnectionProfile>> targetList = new ArrayList<>(map.values());
         for (int i = 0; i < targetList.size(); i++) {
-            Pair<BlockchainAdapter, Map<String, Object>> s = targetList.get(i);
+            Pair<BlockchainAdapter, AbstractConnectionProfile> s = targetList.get(i);
             a[i] = s.getValue();
         }
         return a;

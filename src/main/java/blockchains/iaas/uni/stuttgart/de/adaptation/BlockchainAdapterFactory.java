@@ -13,20 +13,16 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
-import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Context;
 import java.util.List;
-import java.util.Map;
 
 public class BlockchainAdapterFactory {
 
-    @Context
-    ObjectMapperProvider objectMapperProvider;
 
     public BlockchainAdapterFactory() {
 
@@ -34,10 +30,10 @@ public class BlockchainAdapterFactory {
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
-    public BlockchainAdapter createBlockchainAdapter(Map<String, Object> connectionProfile, String blockchainId) throws Exception {
+    public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile) throws Exception {
 
         try {
-            return createAdapter((String) connectionProfile.get("@type"), connectionProfile);
+            return createAdapter(connectionProfile);
         } catch (Exception e) {
             final String msg = String.format("Error while creating a blockchain adapter for. Details: %s", e.getMessage());
             log.error(msg);
@@ -74,12 +70,12 @@ public class BlockchainAdapterFactory {
 //                .build();
 //    }
 
-    private BlockchainAdapter createAdapter(String blockchainType, Map<String, Object> parameters) {
+    private BlockchainAdapter createAdapter(AbstractConnectionProfile connectionProfile) {
+        String blockchainType = "";
         List<IAdapterExtension> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
         for (IAdapterExtension adapterExtension : adapterExtensions) {
             if (adapterExtension.getBlockChainId().equals(blockchainType)) {
-                // adapterExtension.registerConnectionProfile(objectMapperProvider.getContext());
-                return adapterExtension.getAdapter(parameters);
+                return adapterExtension.getAdapter(connectionProfile);
             }
         }
         System.err.println("No extension for blockchain-id: " + blockchainType);

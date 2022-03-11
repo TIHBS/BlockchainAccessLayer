@@ -13,11 +13,14 @@ package blockchains.iaas.uni.stuttgart.de.management;
 
 import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.pf4j.*;
 
 import java.nio.file.Path;
 import java.util.List;
-
 
 public class BlockchainPluginManager {
 
@@ -71,6 +74,8 @@ public class BlockchainPluginManager {
 
     public void startPlugin(String pluginId) {
         pluginManager.startPlugin(pluginId);
+
+
     }
 
     public void disablePlugin(String pluginId) {
@@ -89,4 +94,11 @@ public class BlockchainPluginManager {
         return pluginManager.getPlugin(pluginId).getPluginState();
     }
 
+    public void registerConnectionProfileSubtypeClass(ObjectMapper objectMapper, String pluginId) {
+        List<IAdapterExtension> adapterExtensions = this.pluginManager.getExtensions(IAdapterExtension.class, pluginId);
+        for (IAdapterExtension adapterExtension : adapterExtensions) {
+            // TODO: String typeName = adapterExtension.getConnectionProfileNamedType();
+            objectMapper.registerSubtypes(new NamedType(adapterExtension.getConnectionProfileClass(), "ethereum"));
+        }
+    }
 }

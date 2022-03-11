@@ -24,6 +24,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,7 +41,7 @@ public class ConnectionProfilesController {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public void acceptConfiguration(Map<String, Map<String, Object>> profiles) {
+    public void acceptConfiguration(Map<String, AbstractConnectionProfile> profiles) {
         ConnectionProfilesManager.getInstance().loadConnectionProfiles(profiles);
     }
 
