@@ -41,44 +41,14 @@ public class BlockchainAdapterFactory {
         }
     }
 
-//    private EthereumAdapter createEthereumAdapter(EthereumConnectionProfile gateway) throws IOException, CipherException {
-//        final EthereumAdapter result = new EthereumAdapter(gateway.getNodeUrl(), gateway.getPollingTimeSeconds());
-//        result.setCredentials(gateway.getKeystorePassword(), gateway.getKeystorePath());
-//        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
-//        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
-//        result.setConfidenceCalculator(cCalc);
-//
-//        return result;
-//    }
-
-//    private BitcoinAdapter createBitcoinAdapter(BitcoinConnectionProfile gateway) throws BitcoindException, CommunicationException {
-//        final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-//        final CloseableHttpClient httpProvider = HttpClients.custom().setConnectionManager(connManager).build();
-//        final BtcdClient client = new BtcdClientImpl(httpProvider, gateway.getAsProperties());
-//        final BtcdDaemon daemon = new BtcdDaemonImpl(client);
-//        final BitcoinAdapter result = new BitcoinAdapter(client, daemon);
-//        final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
-//        cCalc.setAdversaryRatio(gateway.getAdversaryVotingRatio());
-//        result.setConfidenceCalculator(cCalc);
-//
-//        return result;
-//    }
-//
-//    private FabricAdapter createFabricAdapter(FabricConnectionProfile gateway, String blockchainId) {
-//        return FabricAdapter.builder()
-//                .blockchainId(blockchainId)
-//                .build();
-//    }
-
     private BlockchainAdapter createAdapter(AbstractConnectionProfile connectionProfile) {
-        String blockchainType = "";
         List<IAdapterExtension> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
         for (IAdapterExtension adapterExtension : adapterExtensions) {
-            if (adapterExtension.getBlockChainId().equals(blockchainType)) {
+            if (connectionProfile.getClass() == adapterExtension.getConnectionProfileClass()) {
                 return adapterExtension.getAdapter(connectionProfile);
             }
         }
-        System.err.println("No extension for blockchain-id: " + blockchainType);
+        System.err.println("No extension for blockchain-id: " + connectionProfile);
         return null;
     }
 
