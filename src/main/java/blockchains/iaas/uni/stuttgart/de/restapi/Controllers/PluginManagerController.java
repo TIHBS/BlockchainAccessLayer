@@ -69,9 +69,9 @@ public class PluginManagerController {
         blockchainPluginManager.startPlugin(pluginId);
 
         ContextResolver<ObjectMapper> resolver = providers.getContextResolver(ObjectMapper.class, MediaType.APPLICATION_JSON_TYPE);
-        ObjectMapper engine = resolver.getContext(ObjectMapper.class);
+        ObjectMapper objectMapper = resolver.getContext(ObjectMapper.class);
 
-        blockchainPluginManager.registerConnectionProfileSubtypeClass(engine, pluginId);
+        blockchainPluginManager.registerConnectionProfileSubtypeClass(objectMapper, pluginId);
         return Response.ok().build();
     }
 
