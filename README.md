@@ -96,9 +96,12 @@ The project uses pf4j framework for managing the plugins. The application expose
 One can create their own plugin. A plugin should:
 
 - Use the core [api](https://github.com/TIHBS/blockchain-access-layer-api).
-- Implement [IAdapterExtension](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/IAdapterExtenstion.java) interface.
+-
+Implement [IAdapterExtension](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/IAdapterExtenstion.java)
+interface.
 - Define a [Plugin](https://pf4j.org/doc/plugins.html).
-- Provide a class that   extends [AbstractConnectionProfile](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/connectionprofiles/AbstractConnectionProfile.java)
+- Provide a class that
+  extends [AbstractConnectionProfile](https://github.com/TIHBS/blockchain-access-layer-api/blob/main/src/main/java/blockchains/iaas/uni/stuttgart/de/api/connectionprofiles/AbstractConnectionProfile.java)
 
 ## Accessing the APIs
 
@@ -203,8 +206,9 @@ standard [JSON-RPC client](https://www.jsonrpc.org/archive_json-rpc.org/implemen
 ## Setting Up Various Blockchains for Testing
 
 BAL needs to have access to a node for each blockchain instance it needs to communicate with. These nodes can be already
-running nodes that you have access to. Otherwise, you need to setup and manage your own nodes. Below, are basic
-instructions how to setup Ethereum, Bitcoin, and Hyperledger Fabric nodes.
+running nodes that you have access to. Otherwise, you need to setup and manage your own nodes. The basic instructions
+how to setup Ethereum, Bitcoin, and Hyperledger Fabric nodes are provided in the README.md of the respective plugin
+source code.
 
 ## Case Studies
 
