@@ -16,6 +16,7 @@ import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;

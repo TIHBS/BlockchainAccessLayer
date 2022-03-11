@@ -1,5 +1,6 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
+import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -19,16 +21,20 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Providers;
 
 @Path("plugins")
 public class PluginManagerController {
     private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
 
     @Context
+    Providers providers;
+
+    @Context
     protected UriInfo uriInfo;
 
     @POST
-    @Path("/")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadJar(@FormDataParam("file") InputStream uploadedInputStream,
                               @FormDataParam("file") FormDataContentDisposition fileDetails) {
@@ -59,7 +65,13 @@ public class PluginManagerController {
     @POST
     @Path("{plugin-id}/start")
     public Response startPlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().startPlugin(pluginId);
+        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+        blockchainPluginManager.startPlugin(pluginId);
+
+        ContextResolver<ObjectMapper> resolver = providers.getContextResolver(ObjectMapper.class, MediaType.APPLICATION_JSON_TYPE);
+        ObjectMapper engine = resolver.getContext(ObjectMapper.class);
+
+        blockchainPluginManager.registerConnectionProfileSubtypeClass(engine, pluginId);
         return Response.ok().build();
     }
 
@@ -108,7 +120,6 @@ public class PluginManagerController {
         try {
             OutputStream out = new FileOutputStream(new File(
                     uploadedFileLocation));
-            ;
             try {
                 int read = 0;
                 byte[] bytes = new byte[1024];
