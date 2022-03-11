@@ -68,23 +68,4 @@ public class AdapterManager {
         }
     }
 
-    public Object[] getActiveAdapters() {
-        Object[] a = new AbstractConnectionProfile[map.size()];
-        List<Pair<BlockchainAdapter, AbstractConnectionProfile>> targetList = new ArrayList<>(map.values());
-        for (int i = 0; i < targetList.size(); i++) {
-            Pair<BlockchainAdapter, AbstractConnectionProfile> s = targetList.get(i);
-            a[i] = s.getValue();
-        }
-        return a;
-    }
-
-//    public AbstractConnectionProfile[] deactivateAdapter(String adapterId) {
-//        List<Pair<BlockchainAdapter, AbstractConnectionProfile>> targetList = new ArrayList<>(map.values());
-//        for (int i = 0; i < targetList.size(); i++) {
-//            Pair<BlockchainAdapter, AbstractConnectionProfile> s = targetList.get(i);
-//            if(adapterId.equals(s.getValue().))
-//        }
-//        return a;
-//    }
 }
-;
