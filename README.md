@@ -238,26 +238,26 @@ Please follow these instructions:
 The following series of screenshots show a sample execution of the case study:
 
 1. Initiating the process instance:
-   ![](app/src/main/resources/images/start.png)
+   ![](src/main/resources/images/start.png)
 
 2. Setting the source, and target addresses (exchange request parameters):
-   ![](app/src/main/resources/images/input-params.png)
+   ![](src/main/resources/images/input-params.png)
 
 3. Sending a transaction to the address of the crypto-exchange using the Ethereum Wallet application:
-   ![](app/src/main/resources/images/send-transaction-form.png)
+   ![](src/main/resources/images/send-transaction-form.png)
 
 4. While waiting for the resulting Bitcoin transaction sent to the client to receive 1 confirmation, the business
    process instance looks as follows:
-   ![](app/src/main/resources/images/waiting-for-bitcoin-tx.png)
+   ![](src/main/resources/images/waiting-for-bitcoin-tx.png)
 
 5. The log records produced by the process instance. The final message in the log shows the id of the transaction the
    exchange sent to the client.
-   ![](app/src/main/resources/images/log.png)
+   ![](src/main/resources/images/log.png)
 
 6. [BlockCypher](https://live.blockcypher.com/btc-testnet/) can be used to explore Bitcoin testnet3 (and other)
    blockchains. The following screenshot represents the result of querying the transaction id reported in the previous
    step:
-   ![](app/src/main/resources/images/blockcypher.png)
+   ![](src/main/resources/images/blockcypher.png)
    You can find the details about the resulting testnet3 Bitcoin
    transaction [here](https://live.blockcypher.com/btc-testnet/tx/347d8f2bc8dbc7cf62d8313f66d2ae930c9e92632fb5a2cfb2507caaaffa7f71/)
    .
