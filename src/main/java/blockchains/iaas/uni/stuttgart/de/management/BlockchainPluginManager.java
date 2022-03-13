@@ -13,8 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.management;
 
 import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
-import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
-import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.pf4j.*;
@@ -28,7 +27,6 @@ public class BlockchainPluginManager {
     private static BlockchainPluginManager instance = null;
 
     private BlockchainPluginManager() {
-
         this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
             //
             @Override
@@ -43,6 +41,8 @@ public class BlockchainPluginManager {
                 return new ManifestPluginDescriptorFinder();
             }
         };
+        pluginManager.loadPlugins();
+
     }
 
     public static BlockchainPluginManager getInstance() {
