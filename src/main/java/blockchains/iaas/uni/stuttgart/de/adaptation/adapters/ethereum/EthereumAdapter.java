@@ -672,7 +672,8 @@ public class EthereumAdapter extends AbstractAdapter {
                         result.complete(receipt.getResult());
                     }
                 }
-            } catch (IOException e) {
+
+            } catch (Exception e) {// most likely IOException
                 result.completeExceptionally(e);
             }
         });

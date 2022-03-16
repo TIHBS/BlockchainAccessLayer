@@ -23,7 +23,8 @@ import org.web3j.abi.datatypes.generated.Int160;
 import org.web3j.abi.datatypes.generated.Uint160;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+// 2^255 = 57896044618658097711785492504343953926634992332820282019728792003956564819968
+// 2^256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935
 class EthereumTypeMapperTest {
     @Test
     void testTypes(){
