@@ -33,8 +33,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRpcBinding implements AbstractBinding {
+
+    private static final Logger log = LoggerFactory.getLogger(JsonRpcBinding.class);
 
     @Override
     public String getBindingIdentifier() {
@@ -43,45 +47,57 @@ public class JsonRpcBinding implements AbstractBinding {
 
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
-        NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
 
-        builder.param("correlationIdentifier", response.getCorrelationIdentifier())
-                .param("parameters", response.getParams() == null ? Collections.emptyList() : response.getParams())
-                .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
-                .execute();
+            builder.param("correlationIdentifier", response.getCorrelationIdentifier())
+                    .param("parameters", response.getParams() == null ? Collections.emptyList() : response.getParams())
+                    .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send Invocation response to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
     }
 
     @Override
     public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
-        NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
-        builder.param("correlationIdentifier", response.getCorrelationIdentifier())
-                .param("parameters", response.getParams() == null ? Collections.emptyList() : response.getParams())
-                .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
-                .execute();
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            builder.param("correlationIdentifier", response.getCorrelationIdentifier())
+                    .param("parameters", response.getParams() == null ? Collections.emptyList() : response.getParams())
+                    .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send Subscription response to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
     }
 
     @Override
     public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
-        NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
 
-        builder = builder.param("errorCode", exception.getCode());
-        builder = builder.param("errorMessage", exception.getMessage());
-        builder = builder.param("correlationIdentifier", exception.getCorrelationIdentifier());
+            builder = builder.param("errorCode", exception.getCode());
+            builder = builder.param("errorMessage", exception.getMessage());
+            builder = builder.param("correlationIdentifier", exception.getCorrelationIdentifier());
 
-        if (exception.getCause() instanceof TimeoutException) {
-            builder = builder.param("transactionHash",
-                    ((TimeoutException) exception.getCause()).getTransactionHash());
-            builder = builder.param("reachedDoC",
-                    ((TimeoutException) exception.getCause()).getDoc());
+            if (exception.getCause() instanceof TimeoutException) {
+                builder = builder.param("transactionHash",
+                        ((TimeoutException) exception.getCause()).getTransactionHash());
+                builder = builder.param("reachedDoC",
+                        ((TimeoutException) exception.getCause()).getDoc());
+            }
+
+            builder.execute();
+        } catch (Exception e) {
+            log.error("Failed to send asynchronous error to {}. Reason: {}", endpointUrl, e.getMessage());
         }
-
-        builder.execute();
     }
 
     private NotificationRequestBuilder createNotificationBuilder(final String endpointUrl) {
         final String METHOD_NAME = "ReceiveResponse";
         JsonRpcClient client = new JsonRpcClient(new Transport() {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
+            final CloseableHttpClient httpClient = HttpClients.createDefault();
 
             @NotNull
             @Override

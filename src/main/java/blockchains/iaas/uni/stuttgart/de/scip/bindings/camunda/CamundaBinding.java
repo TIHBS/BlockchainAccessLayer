@@ -45,60 +45,72 @@ public class CamundaBinding implements AbstractBinding {
 
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
-        final Map<String, Variable> variables = parseParameters(response.getParams());
-        long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("")?
-                0 : Long.parseLong(response.getTimestamp());
-        variables.put("timestamp", new LongVariable(timestamp));
+        try {
+            final Map<String, Variable> variables = parseParameters(response.getParams());
+            long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("") ?
+                    0 : Long.parseLong(response.getTimestamp());
+            variables.put("timestamp", new LongVariable(timestamp));
 
-        final Message message = Message
-                .builder()
-                .messageName("result_INOKE_" + response.getCorrelationIdentifier())
-                .processInstanceId(response.getCorrelationIdentifier())
-                .processVariables(variables)
-                .build();
+            final Message message = Message
+                    .builder()
+                    .messageName("result_INOKE_" + response.getCorrelationIdentifier())
+                    .processInstanceId(response.getCorrelationIdentifier())
+                    .processVariables(variables)
+                    .build();
 
-        sendCamundaMessage(message, endpointUrl);
+            sendCamundaMessage(message, endpointUrl);
+        } catch (Exception e) {
+            log.error("Failed to send Invocation response to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
     }
 
     @Override
     public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
-        final Map<String, Variable> variables = parseParameters(response.getParams());
-        long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("")?
-                0 : Long.parseLong(response.getTimestamp());
-        variables.put("timestamp", new LongVariable(timestamp));
+        try {
+            final Map<String, Variable> variables = parseParameters(response.getParams());
+            long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("") ?
+                    0 : Long.parseLong(response.getTimestamp());
+            variables.put("timestamp", new LongVariable(timestamp));
 
-        final Message message = Message
-                .builder()
-                .messageName("result_SUBSCRIBE_" + response.getCorrelationIdentifier())
-                .processInstanceId(response.getCorrelationIdentifier())
-                .processVariables(variables)
-                .build();
+            final Message message = Message
+                    .builder()
+                    .messageName("result_SUBSCRIBE_" + response.getCorrelationIdentifier())
+                    .processInstanceId(response.getCorrelationIdentifier())
+                    .processVariables(variables)
+                    .build();
 
-        sendCamundaMessage(message, endpointUrl);
+            sendCamundaMessage(message, endpointUrl);
+        } catch (Exception e) {
+            log.error("Failed to send Subscription response to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
     }
 
     @Override
     public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
-        final Map<String, Variable> variables = new HashMap<>();
+        try {
+            final Map<String, Variable> variables = new HashMap<>();
 
-        if (exception.getCause() instanceof TimeoutException) {
-            final Variable txHash = new StringVariable(((TimeoutException) exception.getCause()).getTransactionHash());
-            final Variable doc = new DoubleVariable(((TimeoutException) exception.getCause()).getDoc());
-            variables.put("reachedDoC", doc);
-            variables.put("transactionHash", txHash);
+            if (exception.getCause() instanceof TimeoutException) {
+                final Variable txHash = new StringVariable(((TimeoutException) exception.getCause()).getTransactionHash());
+                final Variable doc = new DoubleVariable(((TimeoutException) exception.getCause()).getDoc());
+                variables.put("reachedDoC", doc);
+                variables.put("transactionHash", txHash);
+            }
+
+            final Variable errCode = new LongVariable(exception.getCode());
+            final Variable errMessage = new StringVariable(exception.getMessage());
+            variables.put("errorCode", errCode);
+            variables.put("errorMessage", errMessage);
+            Message message = Message
+                    .builder()
+                    .messageName("error_SUBSCRIBE_" + exception.getCorrelationIdentifier())
+                    .processInstanceId(exception.getCorrelationIdentifier())
+                    .processVariables(variables).build();
+
+            sendCamundaMessage(message, endpointUrl);
+        } catch (Exception e) {
+            log.error("Failed to send asynchronous error to {}. Reason: {}", endpointUrl, e.getMessage());
         }
-
-        final Variable errCode = new LongVariable(exception.getCode());
-        final Variable errMessage = new StringVariable(exception.getMessage());
-        variables.put("errorCode", errCode);
-        variables.put("errorMessage", errMessage);
-        Message message = Message
-                .builder()
-                .messageName("error_SUBSCRIBE_" + exception.getCorrelationIdentifier())
-                .processInstanceId(exception.getCorrelationIdentifier())
-                .processVariables(variables).build();
-
-        sendCamundaMessage(message, endpointUrl);
     }
 
     private Map<String, Variable> parseParameters(List<Parameter> parameterList) {
