@@ -1,8 +1,8 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
- *
+ * Co-author: Akshay Patel
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
  * which is available at https://www.apache.org/licenses/LICENSE-2.0.
@@ -11,16 +11,13 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainIdNotFoundException;
-import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -63,12 +60,12 @@ public class AdapterManager {
         }
 
         try {
-            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile, blockchainId);
+            final BlockchainAdapter adapter = factory.createBlockchainAdapter(connectionProfile);
             map.put(blockchainId, ImmutablePair.of(adapter, connectionProfile));
             return Objects.requireNonNull(adapter);
         } catch (Exception e) {
             throw new BlockchainNodeUnreachableException("Failed to create a blockchain adapter. Reason: " + e.getMessage());
         }
     }
+
 }
-;

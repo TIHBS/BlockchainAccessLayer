@@ -13,9 +13,9 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.Map;
 
-import blockchains.iaas.uni.stuttgart.de.model.LinearChainTransaction;
-import blockchains.iaas.uni.stuttgart.de.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.model.TransactionState;
+import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
+import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
+import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaVariable;

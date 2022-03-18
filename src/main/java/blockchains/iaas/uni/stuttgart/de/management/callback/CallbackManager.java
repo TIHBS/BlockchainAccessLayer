@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
 import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
-import blockchains.iaas.uni.stuttgart.de.exceptions.TimeoutException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.ScipResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;

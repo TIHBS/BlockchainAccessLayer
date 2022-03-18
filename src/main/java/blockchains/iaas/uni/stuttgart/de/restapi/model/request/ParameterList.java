@@ -17,7 +17,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 // todo rethink type
 @XmlRootElement(name = "Parameters")
 @XmlAccessorType(XmlAccessType.PROPERTY)

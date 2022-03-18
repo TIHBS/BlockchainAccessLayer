@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.jsonrpc.model;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import lombok.Data;
 
 @Data

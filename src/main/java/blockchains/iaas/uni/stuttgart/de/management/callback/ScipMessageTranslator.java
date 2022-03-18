@@ -13,10 +13,10 @@ package blockchains.iaas.uni.stuttgart.de.management.callback;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.Occurrence;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.ScipResponse;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 
 public class ScipMessageTranslator {
     public static ScipResponse getInvocationResponseMessage(String correlationId, List<Parameter> outputs) {

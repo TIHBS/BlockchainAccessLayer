@@ -1,0 +1,29 @@
+{
+  "eth-0": {
+    "@type": "ethereum",
+    "nodeUrl":"http://localhost:7545",
+    "keystorePath":"/account.json",
+    "keystorePassword":"123456789",
+    "adversaryVotingRatio": 0.2,
+    "pollingTimeSeconds": 2
+  },
+  "btc-0" : {
+    "@type": "bitcoin",
+    "rpcProtocol": "http",
+    "rpcHost": "129.69.214.211",
+    "rpcPort": "8332",
+    "rpcUser": "falazigb",
+    "rpcPassword": "123456789",
+    "httpAuthScheme": "Basic",
+    "notificationAlertPort": "5158",
+    "notificationBlockPort": "5159",
+    "notificationWalletPort": "5160",
+    "adversaryVotingRatio": "0.1"
+  },
+  "fabric-0" : {
+    "@type": "fabric",
+    "walletPath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\emc\\javascript\\wallet",
+    "userName": "user1",
+    "connectionProfilePath": "C:\\Users\\falazigb\\Documents\\GitHub\\fabric\\fabric-samples\\first-network\\connection-org1.json"
+  }
+}

@@ -23,7 +23,7 @@ import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubs
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

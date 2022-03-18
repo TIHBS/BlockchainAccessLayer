@@ -13,11 +13,11 @@ package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.model.QueryResult;
-import blockchains.iaas.uni.stuttgart.de.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
+import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
