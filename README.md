@@ -130,12 +130,12 @@ When choosing this format, asynchronous return messages are formatted as follows
 
 ```json
 {
-  "messageName": "message_<METHOD-NAME>_<CORRELATION-ID>",
+  "messageName": "result_<CORRELATION-ID>",
   "processInstanceId": "<CORRELATION-ID>",
   "processVariables": {
     "timestamp": {
       "value": <TX-TIMESTAMP>,
-      "type": "Number"
+      "type": "Long"
     },
     "<RETURN-VAR1-NAME>": {
       "value": "<RETURN-VAR1-VALUE>",
@@ -152,7 +152,6 @@ When choosing this format, asynchronous return messages are formatted as follows
 
 Where:
 
-- `<METHOD-NAME>`: is the name of the SCIP method this callback corresponds to. Either `INVOKE` or `SUBSCRIBE`.
 - `<CORRELATION-ID>`: is the correlation identifier provided in the corresponding SCIP request previously received.
 - `<TX-TIMESTAMP>`: is the UTC timestamp of the transaction that is related to this request if such a transaction
   exists. For `INVOKE` method, if the smart contract function required a transaction to be invoked, i.e., because it is
@@ -169,11 +168,11 @@ Where:
 
 ```json
 {
-  "messageName": "error_<METHOD-NAME>_<CORRELATION-ID>",
+  "messageName": "error_<CORRELATION-ID>",
   "processInstanceId": "<CORRELATION-ID>",
   "processVariables": {
     "reachedDoC": {
-      "type": "Number",
+      "type": "Double",
       "value": <REACHED-DEGREE-OF-CONFIDENCE>
     },
     "transactionHash": {
@@ -185,7 +184,7 @@ Where:
       "value": "<ERROR-MESSAGE>"
     },
     "errorCode": {
-      "type": "Number",
+      "type": "Long",
       "value": <SCIP-ERROR-CODE>
     }
   }

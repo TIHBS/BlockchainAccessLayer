@@ -7,7 +7,7 @@ public class LongVariable extends Variable {
     private final long value;
 
     public LongVariable(long value) {
-        super("Number");
+        super("Long");
         this.value = value;
     }
 }

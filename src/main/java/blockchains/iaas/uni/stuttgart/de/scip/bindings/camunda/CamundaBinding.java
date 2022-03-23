@@ -46,19 +46,10 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendInvocationResponse(String endpointUrl, InvocationResponse response) {
         try {
-            final Map<String, Variable> variables = parseParameters(response.getParams());
-            long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("") ?
-                    0 : Long.parseLong(response.getTimestamp());
-            variables.put("timestamp", new LongVariable(timestamp));
-
-            final Message message = Message
-                    .builder()
-                    .messageName("result_INOKE_" + response.getCorrelationIdentifier())
-                    .processInstanceId(response.getCorrelationIdentifier())
-                    .processVariables(variables)
-                    .build();
-
-            sendCamundaMessage(message, endpointUrl);
+            sendResultResponse(response.getParams(),
+                    response.getTimestamp(),
+                    response.getCorrelationIdentifier(),
+                    endpointUrl);
         } catch (Exception e) {
             log.error("Failed to send Invocation response to {}. Reason: {}", endpointUrl, e.getMessage());
         }
@@ -67,19 +58,10 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendSubscriptionResponse(String endpointUrl, SubscriptionResponse response) {
         try {
-            final Map<String, Variable> variables = parseParameters(response.getParams());
-            long timestamp = response.getTimestamp() == null || response.getTimestamp().equals("") ?
-                    0 : Long.parseLong(response.getTimestamp());
-            variables.put("timestamp", new LongVariable(timestamp));
-
-            final Message message = Message
-                    .builder()
-                    .messageName("result_SUBSCRIBE_" + response.getCorrelationIdentifier())
-                    .processInstanceId(response.getCorrelationIdentifier())
-                    .processVariables(variables)
-                    .build();
-
-            sendCamundaMessage(message, endpointUrl);
+            sendResultResponse(response.getParams(),
+                    response.getTimestamp(),
+                    response.getCorrelationIdentifier(),
+                    endpointUrl);
         } catch (Exception e) {
             log.error("Failed to send Subscription response to {}. Reason: {}", endpointUrl, e.getMessage());
         }
@@ -99,11 +81,12 @@ public class CamundaBinding implements AbstractBinding {
 
             final Variable errCode = new LongVariable(exception.getCode());
             final Variable errMessage = new StringVariable(exception.getMessage());
+            final String messageName = "error_" + exception.getCorrelationIdentifier();
             variables.put("errorCode", errCode);
             variables.put("errorMessage", errMessage);
             Message message = Message
                     .builder()
-                    .messageName("error_SUBSCRIBE_" + exception.getCorrelationIdentifier())
+                    .messageName(messageName)
                     .processInstanceId(exception.getCorrelationIdentifier())
                     .processVariables(variables).build();
 
@@ -123,6 +106,23 @@ public class CamundaBinding implements AbstractBinding {
         }
 
         return variables;
+    }
+
+    private void sendResultResponse(List<Parameter> parameters, String timestamp, String correlationIdentifier,
+                                    String endpointUrl) {
+        final Map<String, Variable> variables = parseParameters(parameters);
+        long timestampL = timestamp == null || timestamp.equals("") ?
+                0 : Long.parseLong(timestamp);
+        variables.put("timestamp", new LongVariable(timestampL));
+
+        final Message message = Message
+                .builder()
+                .messageName("result_" + correlationIdentifier)
+                .processInstanceId(correlationIdentifier)
+                .processVariables(variables)
+                .build();
+
+        sendCamundaMessage(message, endpointUrl);
     }
 
     private void sendCamundaMessage(Message message, String endpointUrl) {

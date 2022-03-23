@@ -18,7 +18,7 @@ public class DoubleVariable extends Variable {
     private final double value;
 
     public DoubleVariable(double value) {
-        super("Number");
+        super("Double");
         this.value = value;
     }
 }
