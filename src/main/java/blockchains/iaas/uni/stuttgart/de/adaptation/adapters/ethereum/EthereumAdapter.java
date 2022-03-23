@@ -98,6 +98,8 @@ public class EthereumAdapter extends AbstractAdapter {
     private final int averageBlockTimeSeconds;
 
     public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds) {
+        if (averageBlockTimeSeconds <= 0)
+            throw new IllegalArgumentException("The average block time must be a value larger than 0");
         this.nodeUrl = nodeUrl;
         this.averageBlockTimeSeconds = averageBlockTimeSeconds;
         // We use a specific implementation so we can change the polling period (useful for prototypes).
