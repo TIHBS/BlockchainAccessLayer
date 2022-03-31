@@ -87,7 +87,6 @@ public class CamundaBinding implements AbstractBinding {
             Message message = Message
                     .builder()
                     .messageName(messageName)
-                    .processInstanceId(exception.getCorrelationIdentifier())
                     .processVariables(variables).build();
 
             sendCamundaMessage(message, endpointUrl);
@@ -118,7 +117,6 @@ public class CamundaBinding implements AbstractBinding {
         final Message message = Message
                 .builder()
                 .messageName("result_" + correlationIdentifier)
-                .processInstanceId(correlationIdentifier)
                 .processVariables(variables)
                 .build();
 

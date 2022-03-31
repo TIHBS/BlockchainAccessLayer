@@ -25,8 +25,6 @@ import lombok.extern.jackson.Jacksonized;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
     @NonNull
-    private String processInstanceId;
-    @NonNull
     private String messageName;
     @NonNull
     private Map<String, Variable> processVariables;
