@@ -73,9 +73,10 @@ mvn install
 Then, the WAR file (which can be found in the folder 'target' generated after a successful build) can be deployed on an
 Apache Tomcat server.
 
-Required VM options while running
+VM options while running
 
-- `pf4j.pluginsDir` path where the plugins will be stored
+- `pf4j.pluginsDir` path where the plugins will be stored. This property is mandatory.
+- `enablePluginsAtStart` boolean flag to enable plugins during startup (default false). This property is optional.
 
 ## Plugin management
 
