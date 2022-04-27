@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.pf4j.DependencyResolver.DependenciesNotFoundException;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +48,12 @@ public class PluginManagerController {
             return Response.status(Response.Status.BAD_REQUEST).entity("File already exists with same name.").build();
         }
         writeToFile(uploadedInputStream, uploadedFileLocation);
-
-        blockchainPluginManager.loadJar(filePath);
-
-        return Response.ok().build();
+        try {
+            blockchainPluginManager.loadJar(filePath);
+            return Response.ok().build();
+        } catch (DependenciesNotFoundException e) {
+            return Response.status(400).entity(e.getMessage()).type("text/plain").build();
+        }
     }
 
     @POST

@@ -16,12 +16,24 @@ import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
-import org.pf4j.*;
+import org.pf4j.DefaultPluginManager;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
+import org.pf4j.ManifestPluginDescriptorFinder;
+import org.pf4j.DependencyResolver.DependenciesNotFoundException;
+import org.pf4j.JarPluginLoader;
+import org.pf4j.PluginDescriptorFinder;
+import org.pf4j.PluginLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
 
 public class BlockchainPluginManager {
+
+    private static final Logger log = LoggerFactory.getLogger(BlockchainPluginManager.class);
 
     private PluginManager pluginManager = null;
     private static BlockchainPluginManager instance = null;
@@ -41,8 +53,12 @@ public class BlockchainPluginManager {
                 return new ManifestPluginDescriptorFinder();
             }
         };
+
         pluginManager.loadPlugins();
 
+        if (Boolean.getBoolean("enablePluginsAtStart")) {
+            pluginManager.startPlugins();
+        }
     }
 
     public static BlockchainPluginManager getInstance() {
