@@ -8,16 +8,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-package blockchains.iaas.uni.stuttgart.de.adaptation.adapters.ethereum;
+package blockchains.iaas.uni.stuttgart.de.adaptation;
 
-import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
@@ -40,10 +41,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-public class TestEthereumAdapter {
+public class TestLoadAdapter {
     // Add -Dpf4j.pluginsDir=<plugin_storage_path> -DethereumPluginJarPath=<path_to_ethereum_plugin_jar>
 
-    private static final Logger log = LoggerFactory.getLogger(TestEthereumAdapter.class);
+    private static final Logger log = LoggerFactory.getLogger(TestLoadAdapter.class);
     private static final String NETWORK_NAME = "eth-0";
     private static final double REQUIRED_CONFIDENCE = 0.6;
     private final BlockchainPluginManager pluginManager = BlockchainPluginManager.getInstance();
@@ -103,7 +104,7 @@ public class TestEthereumAdapter {
         final String DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME = "gatewayConfiguration.json";
 
         final File file = new File(Objects.requireNonNull(
-                TestEthereumAdapter.class.getClassLoader().getResource(DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME)).toURI());
+                TestLoadAdapter.class.getClassLoader().getResource(DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME)).toURI());
 
         ConnectionProfilesManager manager = ConnectionProfilesManager.getInstance();
         manager.resetConnectionProfiles();
