@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -21,10 +21,6 @@ public abstract class BalException extends RuntimeException {
 
     public BalException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    public BalException(Throwable cause) {
-        super(cause);
     }
 
     public abstract int getCode();

@@ -29,7 +29,6 @@ import blockchains.iaas.uni.stuttgart.de.exceptions.BlockchainNodeUnreachableExc
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvalidTransactionException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionFailure;
-import blockchains.iaas.uni.stuttgart.de.exceptions.InvokeSmartContractFunctionRevoke;
 import blockchains.iaas.uni.stuttgart.de.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.model.Occurrence;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2022 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -12,7 +12,8 @@ package blockchains.iaas.uni.stuttgart.de.exceptions;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = ExceptionCode.InvocationError, message = "The smart contract function invocation failed.")
+@JsonRpcError(code = ExceptionCode.InvocationError,
+        message = "The smart contract function invocation failed.")
 public class InvokeSmartContractFunctionFailure extends BalException {
     public InvokeSmartContractFunctionFailure() {
     }

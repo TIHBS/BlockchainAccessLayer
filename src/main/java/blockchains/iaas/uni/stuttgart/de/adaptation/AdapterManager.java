@@ -45,7 +45,7 @@ public class AdapterManager {
 
     public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException, BlockchainNodeUnreachableException {
         AbstractConnectionProfile connectionProfile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);
-        // no connection profile!
+        // no connection profiles!
         if (connectionProfile == null) {
             final String msg = String.format("blockchain-id <%s> does not exist!", blockchainId);
             log.error(msg);

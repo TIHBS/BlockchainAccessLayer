@@ -1,7 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
-
 /********************************************************************************
- * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2022 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,6 +9,10 @@ package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+
+package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
+
+
 public class CallbackMessage {
 
 }

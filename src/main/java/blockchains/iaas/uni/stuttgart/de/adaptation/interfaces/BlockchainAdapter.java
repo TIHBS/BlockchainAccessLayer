@@ -13,7 +13,6 @@
 package blockchains.iaas.uni.stuttgart.de.adaptation.interfaces;
 
 import java.math.BigDecimal;
-import java.time.Period;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
