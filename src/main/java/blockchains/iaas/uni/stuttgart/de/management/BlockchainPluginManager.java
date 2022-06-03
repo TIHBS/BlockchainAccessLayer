@@ -21,7 +21,6 @@ import org.pf4j.PluginManager;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.pf4j.ManifestPluginDescriptorFinder;
-import org.pf4j.DependencyResolver.DependenciesNotFoundException;
 import org.pf4j.JarPluginLoader;
 import org.pf4j.PluginDescriptorFinder;
 import org.pf4j.PluginLoader;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.List;
 
-public class BlockchainPluginManager {
+public class BlockchainPluginManager{
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainPluginManager.class);
 
@@ -56,9 +55,6 @@ public class BlockchainPluginManager {
 
         pluginManager.loadPlugins();
 
-        if (Boolean.getBoolean("enablePluginsAtStart")) {
-            pluginManager.startPlugins();
-        }
     }
 
     public static BlockchainPluginManager getInstance() {
@@ -90,8 +86,14 @@ public class BlockchainPluginManager {
 
     public void startPlugin(String pluginId) {
         pluginManager.startPlugin(pluginId);
+    }
 
+    public void startPlugins() {
+        pluginManager.startPlugins();
+    }
 
+    public List<PluginWrapper> getPlugins(PluginState pluginState) {
+        return pluginManager.getPlugins(pluginState);
     }
 
     public void disablePlugin(String pluginId) {
