@@ -10,19 +10,19 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.InvokeSmartContractFunctionRequest;
 import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("invoke-smart-contract-function")
 public class InvokeSmartContractFunctionController extends SubscriptionController {
@@ -42,13 +42,16 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
                 request.getBlockchainId(),
                 request.getSmartContractPath(),
                 request.getFunctionIdentifier(),
+                request.getTypeArguments().getTypeArguments(),
                 request.getInputs().getArguments(),
                 request.getOutputs().getArguments(),
                 request.getConfidence(),
                 request.getEpUrl(),
                 request.getTimeoutMillis(),
                 request.getSubscriptionId(),
-                request.getSignature()
+                request.getSignature(),
+                request.getSigners().getSigners(),
+                request.getMinimumNumberOfSignatures()
         );
 
         return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))

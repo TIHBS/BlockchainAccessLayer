@@ -10,6 +10,8 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
+import org.web3j.crypto.Sign;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -24,10 +26,13 @@ public class InvokeSmartContractFunctionRequest {
     private double confidence;
     private String subscriptionId;
     private String epUrl;
+    private TypeArgumentList typeArguments;
     private ParameterList inputs;
     private ParameterList outputs;
     private long timeoutMillis;
     private String signature;
+    private SignersList signers;
+    private long minimumNumberOfSignatures;
 
     @XmlElement(name = "Inputs")
     public ParameterList getInputs() {
@@ -117,5 +122,32 @@ public class InvokeSmartContractFunctionRequest {
 
     public void setSignature(String signature) {
         this.signature = signature;
+    }
+
+    @XmlElement(name = "signers")
+    public SignersList getSigners() {
+        return signers;
+    }
+
+    public void setSigners(SignersList signers) {
+        this.signers = signers;
+    }
+
+    @XmlElement(name = "minimumNumberOfSignatures")
+    public long getMinimumNumberOfSignatures() {
+        return minimumNumberOfSignatures;
+    }
+
+    public void setMinimumNumberOfSignatures(long minimumNumberOfSignatures) {
+        this.minimumNumberOfSignatures = minimumNumberOfSignatures;
+    }
+
+    @XmlElement(name = "typeArguments")
+    public TypeArgumentList getTypeArguments() {
+        return typeArguments;
+    }
+
+    public void setTypeArguments(TypeArgumentList typeArguments) {
+        this.typeArguments = typeArguments;
     }
 }

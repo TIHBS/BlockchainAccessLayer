@@ -11,35 +11,26 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.management;
 
+import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
+import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.api.model.*;
+import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
+import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
+import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
+import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
+import blockchains.iaas.uni.stuttgart.de.management.model.*;
+import com.google.common.base.Strings;
+import io.reactivex.disposables.Disposable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-
-import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
-import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
-import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
-import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
-import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
-import blockchains.iaas.uni.stuttgart.de.management.model.CompletableFutureSubscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
-import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
-import com.google.common.base.Strings;
-import io.reactivex.disposables.Disposable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BlockchainManager {
     private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
@@ -358,13 +349,14 @@ public class BlockchainManager {
             final String blockchainIdentifier,
             final String smartContractPath,
             final String functionIdentifier,
+            final List<String> typeArguments,
             final List<Parameter> inputs,
             final List<Parameter> outputs,
             final double requiredConfidence,
             final String callbackUrl,
             final long timeoutMillis,
             final String correlationId,
-            final String signature) throws BalException {
+            final String signature, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
 
         // Validate scip parameters!
         if (Strings.isNullOrEmpty(blockchainIdentifier)
@@ -380,7 +372,7 @@ public class BlockchainManager {
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
+                functionIdentifier, typeArguments, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, signers, minimumNumberOfSignatures);
 
         future.
                 thenAccept(tx -> {
@@ -450,7 +442,7 @@ public class BlockchainManager {
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-        Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
+            Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
                 .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
                 .doFinally(() -> {
                     // remove subscription from subscription list
@@ -547,5 +539,30 @@ public class BlockchainManager {
                 SubscriptionManager.getInstance().getSubscription(key.getCorrelationId(), key.getBlockchainId(), key.getSmartContractPath()).unsubscribe();
             }
         }
+    }
+
+    private void getPendingInvocations() {
+
+    }
+
+    private void signInvocation(String correlationId, String signature) {
+
+    }
+
+    private void tryCancelInvocation(String correlationId) {
+
+    }
+
+    private void tryReplaceInvocation(final String blockchainIdentifier,
+                                      final String smartContractPath,
+                                      final String functionIdentifier,
+                                      final List<Parameter> inputs,
+                                      final List<Parameter> outputs,
+                                      final double requiredConfidence,
+                                      final String callbackUrl,
+                                      final long timeoutMillis,
+                                      final String correlationId,
+                                      final String signature) {
+
     }
 }

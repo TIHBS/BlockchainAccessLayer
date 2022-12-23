@@ -11,13 +11,11 @@
 
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
-import java.util.List;
-
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -26,6 +24,8 @@ import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 @JsonRpcService
 @AllArgsConstructor
@@ -38,18 +38,22 @@ public class BalService {
     @JsonRpcMethod
     public String Invoke(
             @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcParam("typeArguments") List<String> typeArguments,
             @JsonRpcParam("inputs") List<Parameter> inputs,
             @JsonRpcParam("outputs") List<Parameter> outputs,
             @JsonRpcParam("doc") double requiredConfidence,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("timeout") long timeoutMillis,
             @JsonRpcParam("correlationIdentifier") String correlationId,
-            @JsonRpcParam("signature") String signature
+            @JsonRpcParam("signature") String signature,
+            @JsonRpcParam("signers") List<String> signers,
+            @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures
+
     ) {
         log.info("Invoke method is executed!");
         BlockchainManager manager = new BlockchainManager();
-        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
-                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
+                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
 
         return "OK";
     }
