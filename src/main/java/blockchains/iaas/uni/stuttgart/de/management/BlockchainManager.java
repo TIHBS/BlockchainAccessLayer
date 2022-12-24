@@ -577,7 +577,7 @@ public class BlockchainManager {
                         pendingTransaction.getRequiredConfidence(),
                         pendingTransaction.getCallbackUrl(),
                         pendingTransaction.getTimeoutMillis(),
-                        pendingTransaction.getCorrelationId(),
+                        pendingTransaction.getCorrelationIdentifier(),
                         pendingTransaction.getSignature(),
                         pendingTransaction.getSigners(),
                         pendingTransaction.getMinimumNumberOfSignatures());
@@ -618,7 +618,7 @@ public class BlockchainManager {
             p.setInputs(inputs);
             p.setOutputs(outputs);
             p.setSigners(signers);
-            p.setCorrelationId(correlationId);
+            p.setCorrelationIdentifier(correlationId);
             p.setMinimumNumberOfSignatures(minimumNumberOfSignatures);
             p.setTypeArguments(typeArguments);
             p.setRequiredConfidence(requiredConfidence);
@@ -657,7 +657,7 @@ public class BlockchainManager {
         p.setInputs(inputs);
         p.setOutputs(outputs);
         p.setSigners(signers);
-        p.setCorrelationId(correlationId);
+        p.setCorrelationIdentifier(correlationId);
         p.setMinimumNumberOfSignatures(minimumNumberOfSignatures);
         p.setTypeArguments(typeArguments);
         p.setRequiredConfidence(requiredConfidence);

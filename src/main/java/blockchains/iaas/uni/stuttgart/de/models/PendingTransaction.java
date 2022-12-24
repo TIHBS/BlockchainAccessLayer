@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PendingTransaction {
     private String blockchainIdentifier;
-    private String correlationId;
+    private String correlationIdentifier;
     private List<Parameter> inputs;
     private List<Parameter> outputs;
     private List<String> signers;
