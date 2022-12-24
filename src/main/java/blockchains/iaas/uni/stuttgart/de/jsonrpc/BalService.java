@@ -139,7 +139,8 @@ public class BalService {
     @JsonRpcMethod
     public boolean SignInvocation(
             @JsonRpcParam("signature") String signature,
-            @JsonRpcParam("signature") String correlationId
+            @JsonRpcParam("correlationIdentifier") String correlationId,
+            @JsonRpcParam("signer") String signer
     ) {
         log.info("SignInvocation method is executed!");
         //    BlockchainManager manager = new BlockchainManager();
@@ -149,7 +150,8 @@ public class BalService {
     @JsonRpcMethod
     public boolean TryCancelInvocation(
             @JsonRpcParam("signature") String signature,
-            @JsonRpcParam("signature") String correlationId
+            @JsonRpcParam("correlationIdentifier") String correlationId,
+            @JsonRpcParam("signer") String signer
     ) {
         log.info("TryCancelInvocation method is executed!");
         //     BlockchainManager manager = new BlockchainManager();
@@ -169,12 +171,18 @@ public class BalService {
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signature") String signature,
             @JsonRpcParam("signers") List<String> signers,
-            @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures
+            @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures,
+            @JsonRpcParam("signer") String signer
     ) {
         log.info("TryCancelInvocation method is executed!");
         //     BlockchainManager manager = new BlockchainManager();
         return manager.tryReplaceInvocation(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
                 requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
 
+    }
+
+    @JsonRpcMethod
+    public List<PendingTransaction> GetPendingTransactions() {
+        return manager.getPendingInvocations();
     }
 }
