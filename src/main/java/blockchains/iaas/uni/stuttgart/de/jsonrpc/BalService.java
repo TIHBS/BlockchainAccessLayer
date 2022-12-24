@@ -144,7 +144,7 @@ public class BalService {
     ) {
         log.info("SignInvocation method is executed!");
         //    BlockchainManager manager = new BlockchainManager();
-        return manager.signInvocation(signature, correlationId);
+        return manager.signInvocation(correlationId, signature, signer);
     }
 
     @JsonRpcMethod

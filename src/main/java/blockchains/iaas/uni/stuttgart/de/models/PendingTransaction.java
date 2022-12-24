@@ -25,4 +25,5 @@ public class PendingTransaction {
     private String functionIdentifier;
     private String smartContractPath;
     private long timeoutMillis;
+    private String version;
 }

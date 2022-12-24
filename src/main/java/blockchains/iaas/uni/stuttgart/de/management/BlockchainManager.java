@@ -28,10 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -43,12 +40,13 @@ public class BlockchainManager {
     private static BlockchainManager INSTANCE;
 
     public static BlockchainManager getInstance() {
-        if(INSTANCE == null) {
+        if (INSTANCE == null) {
             INSTANCE = new BlockchainManager();
         }
 
         return INSTANCE;
     }
+
     /**
      * Submits a transaction to the blockchain, and sends a callback message informing a remote endpoint of the result.
      * The status of the result could be:
@@ -561,7 +559,7 @@ public class BlockchainManager {
         return pendingTransactionsMap.values().stream().collect(toList());
     }
 
-    public boolean signInvocation(String correlationId, String signature) {
+    public boolean signInvocation(String correlationId, String signature, String signer) {
         // TODO: v2
         if (pendingTransactionsMap.containsKey(correlationId)) {
             PendingTransaction pendingTransaction = pendingTransactionsMap.get(correlationId);
@@ -625,7 +623,11 @@ public class BlockchainManager {
             p.setCallbackUrl(callbackUrl);
             p.setSignature(signature);
             p.setTimeoutMillis(timeoutMillis);
-
+            p.setSignatures(new ArrayList<>());
+            PendingTransaction old = pendingTransactionsMap.get(correlationId);
+            String[] versionInfo = old.getVersion().split("/");
+            String newVersion = versionInfo[0] + "/" + (Long.valueOf(versionInfo[1]) + 1);
+            p.setVersion(newVersion);
             pendingTransactionsMap.replace(correlationId, p);
 
             return true;
@@ -664,6 +666,8 @@ public class BlockchainManager {
         p.setCallbackUrl(callbackUrl);
         p.setSignature(signature);
         p.setTimeoutMillis(timeoutMillis);
+        p.setVersion(correlationId + "/" + 0);
+        p.setSignatures(new ArrayList<>());
 
         pendingTransactionsMap.put(correlationId, p);
 
