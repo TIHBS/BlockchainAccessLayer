@@ -16,24 +16,27 @@ import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.models.PendingTransaction;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @JsonRpcService
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BalService {
     private static final Logger log = LoggerFactory.getLogger(BalService.class);
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
+    BlockchainManager manager = BlockchainManager.getInstance();
 
     @JsonRpcMethod
     public String Invoke(
@@ -50,12 +53,18 @@ public class BalService {
             @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures
 
     ) {
+
+
         log.info("Invoke method is executed!");
-        BlockchainManager manager = new BlockchainManager();
-        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
+        manager.createPendingTransaction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
                 requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
 
+        if (signers.size() == 0) {
+            manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
+        }
         return "OK";
+
     }
 
     @JsonRpcMethod
@@ -68,7 +77,7 @@ public class BalService {
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationIdentifier") String correlationId) {
         log.info("Subscribe method is executed!");
-        BlockchainManager manager = new BlockchainManager();
+        // BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
@@ -94,7 +103,7 @@ public class BalService {
             throw new InvalidScipParameterException();
         }
 
-        BlockchainManager manager = new BlockchainManager();
+        // BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(functionIdentifier)) {
             manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
@@ -118,12 +127,54 @@ public class BalService {
             throw new InvalidScipParameterException();
         }
 
-        BlockchainManager manager = new BlockchainManager();
+        //  BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(eventIdentifier)) {
             return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);
         }
 
         throw new InvalidScipParameterException();
+    }
+
+    @JsonRpcMethod
+    public boolean SignInvocation(
+            @JsonRpcParam("signature") String signature,
+            @JsonRpcParam("signature") String correlationId
+    ) {
+        log.info("SignInvocation method is executed!");
+        //    BlockchainManager manager = new BlockchainManager();
+        return manager.signInvocation(signature, correlationId);
+    }
+
+    @JsonRpcMethod
+    public boolean TryCancelInvocation(
+            @JsonRpcParam("signature") String signature,
+            @JsonRpcParam("signature") String correlationId
+    ) {
+        log.info("TryCancelInvocation method is executed!");
+        //     BlockchainManager manager = new BlockchainManager();
+        return manager.tryCancelInvocation(correlationId, signature);
+
+    }
+
+    @JsonRpcMethod
+    public boolean TryReplaceInvocation(
+            @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcParam("typeArguments") List<String> typeArguments,
+            @JsonRpcParam("inputs") List<Parameter> inputs,
+            @JsonRpcParam("outputs") List<Parameter> outputs,
+            @JsonRpcParam("doc") double requiredConfidence,
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("timeout") long timeoutMillis,
+            @JsonRpcParam("correlationIdentifier") String correlationId,
+            @JsonRpcParam("signature") String signature,
+            @JsonRpcParam("signers") List<String> signers,
+            @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures
+    ) {
+        log.info("TryCancelInvocation method is executed!");
+        //     BlockchainManager manager = new BlockchainManager();
+        return manager.tryReplaceInvocation(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
+                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
+
     }
 }
