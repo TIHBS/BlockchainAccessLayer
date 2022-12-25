@@ -11,6 +11,7 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.management;
 
+import blockchains.iaas.uni.stuttgart.de.Utils;
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
@@ -23,11 +24,16 @@ import blockchains.iaas.uni.stuttgart.de.management.model.*;
 import blockchains.iaas.uni.stuttgart.de.models.PendingTransaction;
 import com.google.common.base.Strings;
 import io.reactivex.disposables.Disposable;
+import org.bouncycastle.asn1.ocsp.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -561,28 +567,44 @@ public class BlockchainManager {
 
     public boolean signInvocation(String correlationId, String signature, String signer) {
         // TODO: v2
-        if (pendingTransactionsMap.containsKey(correlationId)) {
-            PendingTransaction pendingTransaction = pendingTransactionsMap.get(correlationId);
-            pendingTransaction.getSignatures().add(signature);
+        try {
+            boolean isSignatureValid = Utils.ValidateSignature(correlationId, signer, signature.getBytes());
 
-            if (pendingTransaction.getSignatures().size() >= pendingTransaction.getMinimumNumberOfSignatures()) {
-                invokeSmartContractFunction(pendingTransaction.getBlockchainIdentifier(),
-                        pendingTransaction.getSmartContractPath(),
-                        pendingTransaction.getFunctionIdentifier(),
-                        pendingTransaction.getTypeArguments(),
-                        pendingTransaction.getInputs(),
-                        pendingTransaction.getOutputs(),
-                        pendingTransaction.getRequiredConfidence(),
-                        pendingTransaction.getCallbackUrl(),
-                        pendingTransaction.getTimeoutMillis(),
-                        pendingTransaction.getCorrelationIdentifier(),
-                        pendingTransaction.getSignature(),
-                        pendingTransaction.getSigners(),
-                        pendingTransaction.getMinimumNumberOfSignatures());
+            if (!isSignatureValid) {
+                return false;
             }
-            return true;
-        } else {
-            return false;
+
+            if (pendingTransactionsMap.containsKey(correlationId)) {
+                PendingTransaction pendingTransaction = pendingTransactionsMap.get(correlationId);
+                pendingTransaction.getSignatures().add(signature);
+
+                if (pendingTransaction.getSignatures().size() >= pendingTransaction.getMinimumNumberOfSignatures()) {
+                    invokeSmartContractFunction(pendingTransaction.getBlockchainIdentifier(),
+                            pendingTransaction.getSmartContractPath(),
+                            pendingTransaction.getFunctionIdentifier(),
+                            pendingTransaction.getTypeArguments(),
+                            pendingTransaction.getInputs(),
+                            pendingTransaction.getOutputs(),
+                            pendingTransaction.getRequiredConfidence(),
+                            pendingTransaction.getCallbackUrl(),
+                            pendingTransaction.getTimeoutMillis(),
+                            pendingTransaction.getCorrelationIdentifier(),
+                            pendingTransaction.getSignature(),
+                            pendingTransaction.getSigners(),
+                            pendingTransaction.getMinimumNumberOfSignatures());
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SignatureException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -672,4 +694,6 @@ public class BlockchainManager {
         pendingTransactionsMap.put(correlationId, p);
 
     }
+
+
 }
