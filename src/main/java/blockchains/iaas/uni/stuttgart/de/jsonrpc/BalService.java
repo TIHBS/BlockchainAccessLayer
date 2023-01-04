@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
