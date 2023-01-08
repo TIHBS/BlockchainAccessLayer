@@ -2,6 +2,7 @@
  * Copyright (c) 2019 Institute for the Architecture of Application System
  * - University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -51,6 +53,7 @@ public class ConnectionProfilesManager {
     public Map<String, AbstractConnectionProfile> getConnectionProfiles() {
         return this.connectionProfilesMap;
     }
+
 
     public String getConnectionProfilesAsJson() throws JsonProcessingException {
         return this.writer.writeValueAsString(this.connectionProfilesMap);

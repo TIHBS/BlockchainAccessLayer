@@ -1,10 +1,15 @@
 package blockchains.iaas.uni.stuttgart.de.config;
 
-
+import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
 
 import javax.ws.rs.ApplicationPath;
+import java.util.List;
 
 /********************************************************************************
  * Copyright (c) 2018 Institute for the Architecture of Application System -
@@ -20,9 +25,14 @@ import javax.ws.rs.ApplicationPath;
 @ApplicationPath("")
 public class Application extends ResourceConfig {
     public Application() {
+        // Required to load the plugins at startup
+        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+        if (Boolean.getBoolean("enablePluginsAtStart")) {
+            blockchainPluginManager.startPlugins();
+        }
         packages("blockchains.iaas.uni.stuttgart.de");
         register(ObjectMapperProvider.class);
-        register( JacksonFeature.class );
+        register(JacksonFeature.class);
 
     }
 }

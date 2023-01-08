@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
 
 import java.util.concurrent.CompletableFuture;
 
-import blockchains.iaas.uni.stuttgart.de.exceptions.ManualUnsubscriptionException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.ManualUnsubscriptionException;
 
 public class CompletableFutureSubscription<T> extends Subscription {
     private CompletableFuture<T> future;

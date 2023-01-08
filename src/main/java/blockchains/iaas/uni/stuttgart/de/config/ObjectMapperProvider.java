@@ -13,12 +13,17 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.config;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.pf4j.PluginState;
+import org.pf4j.PluginWrapper;
 
+import java.util.List;
 
 
 @Provider
@@ -28,6 +33,13 @@ public class ObjectMapperProvider implements ContextResolver<ObjectMapper> {
 
     public ObjectMapperProvider() {
         defaultObjectMapper = createDefaultMapper();
+        if (Boolean.getBoolean("enablePluginsAtStart")) {
+            BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+            List<PluginWrapper> plugins = blockchainPluginManager.getPlugins(PluginState.STARTED);
+            for (PluginWrapper pluginWrapper : plugins) {
+               blockchainPluginManager.registerConnectionProfileSubtypeClass(defaultObjectMapper, pluginWrapper.getPluginId());
+            }
+        }
     }
 
     @Override
