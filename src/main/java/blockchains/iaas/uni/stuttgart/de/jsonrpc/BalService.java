@@ -23,7 +23,6 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,7 +137,7 @@ public class BalService {
     }
 
     @JsonRpcMethod
-    public boolean SignInvocation(
+    public boolean Sign(
             @JsonRpcParam("signature") String signature,
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signer") String signer
@@ -149,7 +148,7 @@ public class BalService {
     }
 
     @JsonRpcMethod
-    public boolean TryCancelInvocation(
+    public boolean Cancel(
             @JsonRpcParam("signature") String signature,
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signer") String signer
@@ -161,7 +160,7 @@ public class BalService {
     }
 
     @JsonRpcMethod
-    public boolean TryReplaceInvocation(
+    public boolean Replace(
             @JsonRpcParam("functionIdentifier") String functionIdentifier,
             @JsonRpcParam("typeArguments") List<String> typeArguments,
             @JsonRpcParam("inputs") List<Parameter> inputs,
@@ -183,7 +182,7 @@ public class BalService {
     }
 
     @JsonRpcMethod
-    public List<PendingTransaction> GetPendingTransactions() {
+    public List<PendingTransaction> Get() {
         return manager.getPendingInvocations();
     }
 }
