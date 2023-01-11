@@ -49,11 +49,11 @@ public class BalService {
             @JsonRpcParam("timeout") long timeoutMillis,
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signature") String signature,
+            @JsonRpcParam("proposer") String proposer,
             @JsonRpcParam("signers") List<String> signers,
             @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures
 
     ) {
-
 
         log.info("Invoke method is executed!");
         manager.createPendingTransaction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
@@ -61,7 +61,7 @@ public class BalService {
 
         if (signers.size() == 0) {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, proposer, signers, minimumNumberOfSignatures);
         }
         return "OK";
 
@@ -128,10 +128,8 @@ public class BalService {
             throw new InvalidScipParameterException();
         }
 
-        //  BlockchainManager manager = new BlockchainManager();
-
         if (!Strings.isNullOrEmpty(eventIdentifier)) {
-            return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);
+            return manager.queryEvents(blockchainId, smartContractPath, typeArguments, eventIdentifier, outputParameters, filter, timeFrame);
         }
 
         throw new InvalidScipParameterException();
@@ -143,8 +141,7 @@ public class BalService {
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signer") String signer
     ) {
-        log.info("SignInvocation method is executed!");
-        //    BlockchainManager manager = new BlockchainManager();
+        log.info("Sign method is executed!");
         return manager.signInvocation(correlationId, signature, signer);
     }
 
@@ -154,8 +151,7 @@ public class BalService {
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signer") String signer
     ) {
-        log.info("TryCancelInvocation method is executed!");
-        //     BlockchainManager manager = new BlockchainManager();
+        log.info("Cancel method is executed!");
         return manager.tryCancelInvocation(correlationId, signature);
 
     }
@@ -175,15 +171,16 @@ public class BalService {
             @JsonRpcParam("minimumNumberOfSignatures") long minimumNumberOfSignatures,
             @JsonRpcParam("signer") String signer
     ) {
-        log.info("TryCancelInvocation method is executed!");
-        //     BlockchainManager manager = new BlockchainManager();
+        log.info("Replace method is executed!");
         return manager.tryReplaceInvocation(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
-                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
+                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signer, signers, minimumNumberOfSignatures);
 
     }
 
     @JsonRpcMethod
     public List<PendingTransaction> Get() {
+        log.info("Get method is executed!");
+
         return manager.getPendingInvocations();
     }
 }

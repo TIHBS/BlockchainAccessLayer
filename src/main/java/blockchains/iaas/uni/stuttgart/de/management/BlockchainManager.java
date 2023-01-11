@@ -370,7 +370,7 @@ public class BlockchainManager {
             final String callbackUrl,
             final long timeoutMillis,
             final String correlationId,
-            final String signature, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
+            final String signature, final String signer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
 
         // Validate scip parameters!
         if (Strings.isNullOrEmpty(blockchainIdentifier)
@@ -387,7 +387,7 @@ public class BlockchainManager {
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, typeArguments, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, signers, minimumNumberOfSignatures);
+                functionIdentifier, typeArguments, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, signature, signer, signers, minimumNumberOfSignatures);
 
         future.
                 thenAccept(tx -> {
@@ -503,6 +503,7 @@ public class BlockchainManager {
 
     public QueryResult queryEvents(final String blockchainIdentifier,
                                    final String smartContractPath,
+                                   final List<String> typeArguments,
                                    final String eventIdentifier,
                                    final List<Parameter> outputParameters,
                                    final String filter,
@@ -517,7 +518,7 @@ public class BlockchainManager {
         try {
             return AdapterManager.getInstance()
                     .getAdapter(blockchainIdentifier)
-                    .queryEvents(smartContractPath, eventIdentifier, outputParameters, filter, timeFrame)
+                    .queryEvents(smartContractPath, eventIdentifier, typeArguments, outputParameters, filter, timeFrame)
                     .join();
         } catch (CompletionException e) {
             if (e.getCause() instanceof BalException)
@@ -564,8 +565,7 @@ public class BlockchainManager {
     public boolean signInvocation(String correlationId, String signature, String signer) {
 
         if (!pendingTransactionsMap.containsKey(correlationId)) {
-            // TODO: return error
-            return false;
+            throw new TransactionNotFoundException();
         }
 
 
@@ -591,6 +591,7 @@ public class BlockchainManager {
                         pendingTransaction.getTimeoutMillis(),
                         pendingTransaction.getCorrelationIdentifier(),
                         pendingTransaction.getSignature(),
+                        pendingTransaction.getProposer(),
                         pendingTransaction.getSigners(),
                         pendingTransaction.getMinimumNumberOfSignatures());
             }
@@ -621,8 +622,7 @@ public class BlockchainManager {
                                         final String callbackUrl,
                                         final long timeoutMillis,
                                         final String correlationId,
-                                        final String signature, final List<String> signers, final long minimumNumberOfSignatures) {
-        // TODO: v2
+                                        final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
         if (pendingTransactionsMap.containsKey(correlationId)) {
             PendingTransaction p = new PendingTransaction();
             p.setBlockchainIdentifier(blockchainIdentifier);
@@ -639,6 +639,7 @@ public class BlockchainManager {
             p.setSignature(signature);
             p.setTimeoutMillis(timeoutMillis);
             p.setSignatures(new ArrayList<>());
+            p.setProposer(proposer);
             PendingTransaction old = pendingTransactionsMap.get(correlationId);
             String[] versionInfo = old.getVersion().split("/");
             String newVersion = versionInfo[0] + "/" + (Long.valueOf(versionInfo[1]) + 1);
