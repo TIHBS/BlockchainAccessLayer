@@ -117,6 +117,7 @@ public class BalService {
     @JsonRpcMethod
     public QueryResult Query(
             @JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
+            @JsonRpcParam("typeArguments") List<String> typeArguments,
             @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
             @JsonRpcOptional @JsonRpcParam("filter") String filter,
             @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame,
