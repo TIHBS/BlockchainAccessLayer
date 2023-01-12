@@ -661,6 +661,12 @@ public class BlockchainManager {
             throw new InvocationNotFoundException();
         }
 
+        String invocationHash = pendingTransactionsMap.get(correlationId).getInvocationHash();
+        boolean isSignatureValid = Utils.ValidateSignature(invocationHash, proposer, signature);
+        if (!isSignatureValid) {
+            return false;
+        }
+
         PendingTransaction p = new PendingTransaction();
         p.setBlockchainIdentifier(blockchainIdentifier);
         p.setSmartContractPath(smartContractPath);
@@ -677,12 +683,11 @@ public class BlockchainManager {
         p.setTimeoutMillis(timeoutMillis);
         p.setSignatures(new ArrayList<>());
         p.setProposer(proposer);
-        PendingTransaction old = pendingTransactionsMap.get(correlationId);
 
-        String invocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
+        String newInvocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
                 typeArguments, inputs, outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId,
                 signature, proposer, signers, minimumNumberOfSignatures);
-        p.setInvocationHash(invocationHash);
+        p.setInvocationHash(newInvocationHash);
 
         pendingTransactionsMap.replace(correlationId, p);
 
