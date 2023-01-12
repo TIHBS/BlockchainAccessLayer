@@ -340,9 +340,6 @@ public class BlockchainManager {
         }
     }
 
-    // todo add support for timeouts
-    // todo add support for signature checking
-
     /**
      * Invokes a smart contract function, and sends a callback message informing a remote endpoint of the result.
      * The invocation might require the submission of a transaction if the invoked function is not read-only.
@@ -385,6 +382,11 @@ public class BlockchainManager {
                 || MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
                 || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0
                 || minimumNumberOfSignatures > signers.size()) {
+            throw new InvalidScipParameterException();
+        }
+
+        boolean isSignatureValid = Utils.ValidateSignature(correlationId, signer, signature);
+        if (!isSignatureValid) {
             throw new InvalidScipParameterException();
         }
 
@@ -585,7 +587,7 @@ public class BlockchainManager {
     public boolean signInvocation(String correlationId, String signature, String signer) {
 
         if (!pendingTransactionsMap.containsKey(correlationId)) {
-            throw new TransactionNotFoundException();
+            throw new InvocationNotFoundException();
         }
 
 
@@ -622,8 +624,17 @@ public class BlockchainManager {
 
     }
 
-    public boolean tryCancelInvocation(String correlationId, String signature) {
-        // TODO: v2
+    public boolean tryCancelInvocation(String correlationId, String signature, String signer) {
+
+        if (pendingTransactionsMap.containsKey(correlationId)) {
+            throw new InvocationNotFoundException();
+        }
+
+        String invocationHash = pendingTransactionsMap.get(correlationId).getInvocationHash();
+        boolean isSignatureValid = Utils.ValidateSignature(invocationHash, signer, signature);
+        if (!isSignatureValid) {
+            return false;
+        }
         if (pendingTransactionsMap.containsKey(correlationId)) {
             pendingTransactionsMap.remove(correlationId);
             return true;
@@ -643,53 +654,57 @@ public class BlockchainManager {
                                         final long timeoutMillis,
                                         final String correlationId,
                                         final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
+
+
         if (pendingTransactionsMap.containsKey(correlationId)) {
-            PendingTransaction p = new PendingTransaction();
-            p.setBlockchainIdentifier(blockchainIdentifier);
-            p.setSmartContractPath(smartContractPath);
-            p.setFunctionIdentifier(functionIdentifier);
-            p.setInputs(inputs);
-            p.setOutputs(outputs);
-            p.setSigners(signers);
-            p.setCorrelationIdentifier(correlationId);
-            p.setMinimumNumberOfSignatures(minimumNumberOfSignatures);
-            p.setTypeArguments(typeArguments);
-            p.setRequiredConfidence(requiredConfidence);
-            p.setCallbackUrl(callbackUrl);
-            p.setSignature(signature);
-            p.setTimeoutMillis(timeoutMillis);
-            p.setSignatures(new ArrayList<>());
-            p.setProposer(proposer);
-            PendingTransaction old = pendingTransactionsMap.get(correlationId);
-
-            String invocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
-                    typeArguments, inputs, outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId,
-                    signature, proposer, signers, minimumNumberOfSignatures);
-            p.setInvocationHash(invocationHash);
-
-            pendingTransactionsMap.replace(correlationId, p);
-
-            return true;
+            throw new InvocationNotFoundException();
         }
-        return false;
+
+        PendingTransaction p = new PendingTransaction();
+        p.setBlockchainIdentifier(blockchainIdentifier);
+        p.setSmartContractPath(smartContractPath);
+        p.setFunctionIdentifier(functionIdentifier);
+        p.setInputs(inputs);
+        p.setOutputs(outputs);
+        p.setSigners(signers);
+        p.setCorrelationIdentifier(correlationId);
+        p.setMinimumNumberOfSignatures(minimumNumberOfSignatures);
+        p.setTypeArguments(typeArguments);
+        p.setRequiredConfidence(requiredConfidence);
+        p.setCallbackUrl(callbackUrl);
+        p.setSignature(signature);
+        p.setTimeoutMillis(timeoutMillis);
+        p.setSignatures(new ArrayList<>());
+        p.setProposer(proposer);
+        PendingTransaction old = pendingTransactionsMap.get(correlationId);
+
+        String invocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
+                typeArguments, inputs, outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId,
+                signature, proposer, signers, minimumNumberOfSignatures);
+        p.setInvocationHash(invocationHash);
+
+        pendingTransactionsMap.replace(correlationId, p);
+
+        return true;
+
+
     }
 
-    public void createPendingTransaction(final String blockchainIdentifier,
-                                         final String smartContractPath,
-                                         final String functionIdentifier,
-                                         final List<String> typeArguments,
-                                         final List<Parameter> inputs,
-                                         final List<Parameter> outputs,
-                                         final double requiredConfidence,
-                                         final String callbackUrl,
-                                         final long timeoutMillis,
-                                         final String correlationId,
-                                         final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
+    public void createPendingInvocation(final String blockchainIdentifier,
+                                        final String smartContractPath,
+                                        final String functionIdentifier,
+                                        final List<String> typeArguments,
+                                        final List<Parameter> inputs,
+                                        final List<Parameter> outputs,
+                                        final double requiredConfidence,
+                                        final String callbackUrl,
+                                        final long timeoutMillis,
+                                        final String correlationId,
+                                        final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
 
 
         if (pendingTransactionsMap.containsKey(correlationId)) {
-            // TODO: v2
-            throw new InvalidScipParameterException();
+            throw new InvocationNotFoundException();
         }
 
 
@@ -720,17 +735,17 @@ public class BlockchainManager {
 
     }
 
-    public static String generateInvocationHash(final String blockchainIdentifier,
-                                                final String smartContractPath,
-                                                final String functionIdentifier,
-                                                final List<String> typeArguments,
-                                                final List<Parameter> inputs,
-                                                final List<Parameter> outputs,
-                                                final double requiredConfidence,
-                                                final String callbackUrl,
-                                                final long timeoutMillis,
-                                                final String correlationId,
-                                                final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
+    private static String generateInvocationHash(final String blockchainIdentifier,
+                                                 final String smartContractPath,
+                                                 final String functionIdentifier,
+                                                 final List<String> typeArguments,
+                                                 final List<Parameter> inputs,
+                                                 final List<Parameter> outputs,
+                                                 final double requiredConfidence,
+                                                 final String callbackUrl,
+                                                 final long timeoutMillis,
+                                                 final String correlationId,
+                                                 final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("blockchainIdentifier", blockchainIdentifier);
@@ -765,9 +780,6 @@ public class BlockchainManager {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-
-
     }
-
 
 }

@@ -56,7 +56,7 @@ public class BalService {
     ) {
 
         log.info("Invoke method is executed!");
-        manager.createPendingTransaction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
+        manager.createPendingInvocation(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
                 requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, proposer, signers, minimumNumberOfSignatures);
 
         if (signers.size() == 0) {
@@ -153,7 +153,7 @@ public class BalService {
             @JsonRpcParam("signer") String signer
     ) {
         log.info("Cancel method is executed!");
-        return manager.tryCancelInvocation(correlationId, signature);
+        return manager.tryCancelInvocation(correlationId, signature, signer);
 
     }
 
