@@ -591,6 +591,11 @@ public class BlockchainManager {
             throw new InvocationNotFoundException();
         }
 
+        PendingTransaction pendingTransaction = pendingTransactionsMap.get(correlationId);
+        List<String> signers = pendingTransaction.getSigners();
+        if (!signers.contains(signer)) {
+            return false;
+        }
 
         String invocationHash = pendingTransactionsMap.get(correlationId).getInvocationHash();
         boolean isSignatureValid = Utils.ValidateSignature(invocationHash, signer, signature);
@@ -598,31 +603,26 @@ public class BlockchainManager {
             return false;
         }
 
-        if (pendingTransactionsMap.containsKey(correlationId)) {
-            PendingTransaction pendingTransaction = pendingTransactionsMap.get(correlationId);
-            pendingTransaction.getSignatures().add(signature);
+        pendingTransaction.getSignatures().add(signature);
 
-            if (pendingTransaction.getSignatures().size() >= pendingTransaction.getMinimumNumberOfSignatures()) {
-                invokeSmartContractFunction(pendingTransaction.getBlockchainIdentifier(),
-                        pendingTransaction.getSmartContractPath(),
-                        pendingTransaction.getFunctionIdentifier(),
-                        pendingTransaction.getTypeArguments(),
-                        pendingTransaction.getInputs(),
-                        pendingTransaction.getOutputs(),
-                        pendingTransaction.getRequiredConfidence(),
-                        pendingTransaction.getCallbackUrl(),
-                        pendingTransaction.getTimeoutMillis(),
-                        pendingTransaction.getCorrelationIdentifier(),
-                        pendingTransaction.getSignature(),
-                        pendingTransaction.getProposer(),
-                        pendingTransaction.getSigners(),
-                        pendingTransaction.getMinimumNumberOfSignatures());
-            }
-            return true;
-        } else {
-            return false;
+
+        if (pendingTransaction.getSignatures().size() >= pendingTransaction.getMinimumNumberOfSignatures()) {
+            invokeSmartContractFunction(pendingTransaction.getBlockchainIdentifier(),
+                    pendingTransaction.getSmartContractPath(),
+                    pendingTransaction.getFunctionIdentifier(),
+                    pendingTransaction.getTypeArguments(),
+                    pendingTransaction.getInputs(),
+                    pendingTransaction.getOutputs(),
+                    pendingTransaction.getRequiredConfidence(),
+                    pendingTransaction.getCallbackUrl(),
+                    pendingTransaction.getTimeoutMillis(),
+                    pendingTransaction.getCorrelationIdentifier(),
+                    pendingTransaction.getSignature(),
+                    pendingTransaction.getProposer(),
+                    pendingTransaction.getSigners(),
+                    pendingTransaction.getMinimumNumberOfSignatures());
         }
-
+        return true;
     }
 
     public boolean tryCancelInvocation(String correlationId, String signature, String signer) {
@@ -706,7 +706,8 @@ public class BlockchainManager {
                                         final String callbackUrl,
                                         final long timeoutMillis,
                                         final String correlationId,
-                                        final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
+                                        final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) throws
+            BalException {
 
 
         if (pendingTransactionsMap.containsKey(correlationId)) {
