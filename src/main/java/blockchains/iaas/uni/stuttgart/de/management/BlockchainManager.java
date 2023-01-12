@@ -23,6 +23,8 @@ import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTrans
 import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.model.*;
 import blockchains.iaas.uni.stuttgart.de.models.PendingTransaction;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import io.reactivex.disposables.Disposable;
 import org.slf4j.Logger;
@@ -30,6 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -453,30 +458,38 @@ public class BlockchainManager {
                 || MathUtils.doubleCompare(degreeOfConfidence, 100.0) > 0) {
             throw new InvalidScipParameterException();
         }
+        BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainIdentifier);
+        if (adapter.canHandleDelegatedSubscription()) {
+            // Added in v2.0. If adapter itself can manage the subscriptions, hand over the call to adapter.
+            adapter.delegatedSubscribe(smartContractPath, eventIdentifier, outputParameters,
+                    degreeOfConfidence, filter, callbackUrl, correlationIdentifier);
+        } else {
+            // Fallback to initial implementation where subscriptions are managed by the gateway.
+            final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
 
-        final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
+            // first, we cancel previous identical subscriptions.
+            this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
+            Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
+                    .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
+                    .doFinally(() -> {
+                        // remove subscription from subscription list
+                        SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
+                    })
+                    .doOnError(throwable -> log.error("Failed to detect an occurrence. Reason:{}", throwable.getMessage()))
+                    .subscribe(occurrence -> {
+                        if (occurrence != null) {
+                            CallbackManager.getInstance().sendCallback(callbackUrl,
+                                    ScipMessageTranslator.getSubscriptionResponseMessage(correlationIdentifier, occurrence.getParameters(), occurrence.getIsoTimestamp()));
+                        } else {
+                            log.error("detected occurrence is null!");
+                        }
+                    });
 
-        // first, we cancel previous identical subscriptions.
-        this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-        Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
-                .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
-                .doFinally(() -> {
-                    // remove subscription from subscription list
-                    SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
-                })
-                .doOnError(throwable -> log.error("Failed to detect an occurrence. Reason:{}", throwable.getMessage()))
-                .subscribe(occurrence -> {
-                    if (occurrence != null) {
-                        CallbackManager.getInstance().sendCallback(callbackUrl,
-                                ScipMessageTranslator.getSubscriptionResponseMessage(correlationIdentifier, occurrence.getParameters(), occurrence.getIsoTimestamp()));
-                    } else {
-                        log.error("detected occurrence is null!");
-                    }
-                });
+            // Add subscription to the list of subscriptions
+            final Subscription subscription = new MonitorOccurrencesSubscription(result, SubscriptionType.EVENT_OCCURRENCES, eventIdentifier, outputParameters);
+            SubscriptionManager.getInstance().createSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath, subscription);
 
-        // Add subscription to the list of subscriptions
-        final Subscription subscription = new MonitorOccurrencesSubscription(result, SubscriptionType.EVENT_OCCURRENCES, eventIdentifier, outputParameters);
-        SubscriptionManager.getInstance().createSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath, subscription);
+        }
     }
 
     public void cancelEventSubscriptions(String blockchainId, String smartContractId, String correlationId, String eventIdentifier, List<Parameter> parameters) {
@@ -485,12 +498,19 @@ public class BlockchainManager {
             throw new InvalidScipParameterException();
         }
 
-        // get all subscription keys with the specified eventId and params of the current blockchain and smart contract.
-        Collection<SubscriptionKey> keys = SubscriptionManager.getInstance().getAllSubscriptionIdsOfEvent(blockchainId, smartContractId, eventIdentifier, parameters);
-        this.cancelSubscriptions(correlationId, keys);
+        BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainId);
+        if (adapter.canHandleDelegatedSubscription()) {
+            // Added in v2.0. If adapter itself can manage the subscriptions, hand over the call to adapter.
+            adapter.delegatedUnsubscribe(smartContractId, null, eventIdentifier, null, parameters, correlationId);
+        } else {
+
+            // get all subscription keys with the specified eventId and params of the current blockchain and smart contract.
+            Collection<SubscriptionKey> keys = SubscriptionManager.getInstance().getAllSubscriptionIdsOfEvent(blockchainId, smartContractId, eventIdentifier, parameters);
+            this.cancelSubscriptions(correlationId, keys);
+        }
     }
 
-    public void cancelFunctionSubscriptions(String blockchainId, String smartContractId, String correlationId, String functionIdentifier, List<Parameter> parameters) {
+    public void cancelFunctionSubscriptions(String blockchainId, String smartContractId, String correlationId, String functionIdentifier, List<Parameter> parameters, List<String> typeArguments) {
         // Validate scip parameters!
         if (Strings.isNullOrEmpty(blockchainId) || Strings.isNullOrEmpty(smartContractId)) {
             throw new InvalidScipParameterException();
@@ -569,8 +589,8 @@ public class BlockchainManager {
         }
 
 
-        String version = pendingTransactionsMap.get(correlationId).getVersion();
-        boolean isSignatureValid = Utils.ValidateSignature(version, signer, signature);
+        String invocationHash = pendingTransactionsMap.get(correlationId).getInvocationHash();
+        boolean isSignatureValid = Utils.ValidateSignature(invocationHash, signer, signature);
         if (!isSignatureValid) {
             return false;
         }
@@ -641,9 +661,12 @@ public class BlockchainManager {
             p.setSignatures(new ArrayList<>());
             p.setProposer(proposer);
             PendingTransaction old = pendingTransactionsMap.get(correlationId);
-            String[] versionInfo = old.getVersion().split("/");
-            String newVersion = versionInfo[0] + "/" + (Long.valueOf(versionInfo[1]) + 1);
-            p.setVersion(newVersion);
+
+            String invocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
+                    typeArguments, inputs, outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId,
+                    signature, proposer, signers, minimumNumberOfSignatures);
+            p.setInvocationHash(invocationHash);
+
             pendingTransactionsMap.replace(correlationId, p);
 
             return true;
@@ -661,13 +684,15 @@ public class BlockchainManager {
                                          final String callbackUrl,
                                          final long timeoutMillis,
                                          final String correlationId,
-                                         final String signature, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
+                                         final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
 
 
         if (pendingTransactionsMap.containsKey(correlationId)) {
             // TODO: v2
             throw new InvalidScipParameterException();
         }
+
+
         PendingTransaction p = new PendingTransaction();
         p.setBlockchainIdentifier(blockchainIdentifier);
         p.setSmartContractPath(smartContractPath);
@@ -681,11 +706,66 @@ public class BlockchainManager {
         p.setRequiredConfidence(requiredConfidence);
         p.setCallbackUrl(callbackUrl);
         p.setSignature(signature);
+        p.setProposer(proposer);
         p.setTimeoutMillis(timeoutMillis);
-        p.setVersion(correlationId + "/" + 0);
         p.setSignatures(new ArrayList<>());
 
+        String invocationHash = generateInvocationHash(blockchainIdentifier, smartContractPath, functionIdentifier,
+                typeArguments, inputs, outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId,
+                signature, proposer, signers, minimumNumberOfSignatures);
+        p.setInvocationHash(invocationHash);
+
+
         pendingTransactionsMap.put(correlationId, p);
+
+    }
+
+    public static String generateInvocationHash(final String blockchainIdentifier,
+                                                final String smartContractPath,
+                                                final String functionIdentifier,
+                                                final List<String> typeArguments,
+                                                final List<Parameter> inputs,
+                                                final List<Parameter> outputs,
+                                                final double requiredConfidence,
+                                                final String callbackUrl,
+                                                final long timeoutMillis,
+                                                final String correlationId,
+                                                final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("blockchainIdentifier", blockchainIdentifier);
+        map.put("smartContractPath", smartContractPath);
+        map.put("typeArguments", typeArguments);
+        map.put("functionIdentifier", functionIdentifier);
+        map.put("inputs", inputs);
+        map.put("outputs", outputs);
+        map.put("requiredConfidence", requiredConfidence);
+        map.put("callbackUrl", callbackUrl);
+        map.put("timeoutMillis", timeoutMillis);
+        map.put("correlationId", correlationId);
+        map.put("signature", signature);
+        map.put("signers", signers);
+        map.put("proposer", proposer);
+        map.put("minimumNumberOfSignatures", minimumNumberOfSignatures);
+
+        try {
+            String json = new ObjectMapper().writeValueAsString(map);
+
+            MessageDigest msg = MessageDigest.getInstance("SHA-256");
+            byte[] hash = msg.digest(json.getBytes(StandardCharsets.UTF_8));
+            // convert bytes to hexadecimal
+            StringBuilder s = new StringBuilder();
+            for (byte b : hash) {
+                s.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+            }
+            return s.toString();
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
 
     }
 

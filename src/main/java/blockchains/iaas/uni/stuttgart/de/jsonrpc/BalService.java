@@ -57,7 +57,7 @@ public class BalService {
 
         log.info("Invoke method is executed!");
         manager.createPendingTransaction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
-                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, signers, minimumNumberOfSignatures);
+                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, proposer, signers, minimumNumberOfSignatures);
 
         if (signers.size() == 0) {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
@@ -93,6 +93,7 @@ public class BalService {
     @JsonRpcMethod
     public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
                               @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
+                              @JsonRpcOptional @JsonRpcParam("typeArguments") List<String> typeArguments,
                               @JsonRpcParam("parameters") List<Parameter> parameters,
                               @JsonRpcParam("correlationIdentifier") String correlationId) {
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
@@ -106,7 +107,7 @@ public class BalService {
         // BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(functionIdentifier)) {
-            manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
+            manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters, typeArguments);
         } else {
             manager.cancelEventSubscriptions(blockchainId, smartContractPath, correlationId, eventIdentifier, parameters);
         }
