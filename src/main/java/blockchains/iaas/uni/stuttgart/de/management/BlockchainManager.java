@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import static blockchains.iaas.uni.stuttgart.de.api.exceptions.ExceptionCode.NotAuthorized;
 import static java.util.stream.Collectors.toList;
 
 public class BlockchainManager {
@@ -626,7 +627,7 @@ public class BlockchainManager {
 
     public boolean tryCancelInvocation(String correlationId, String signature, String signer) {
 
-        if (pendingTransactionsMap.containsKey(correlationId)) {
+        if (!pendingTransactionsMap.containsKey(correlationId)) {
             throw new InvocationNotFoundException();
         }
 
@@ -656,7 +657,7 @@ public class BlockchainManager {
                                         final String signature, final String proposer, final List<String> signers, final long minimumNumberOfSignatures) {
 
 
-        if (pendingTransactionsMap.containsKey(correlationId)) {
+        if (!pendingTransactionsMap.containsKey(correlationId)) {
             throw new InvocationNotFoundException();
         }
 
@@ -704,7 +705,7 @@ public class BlockchainManager {
 
 
         if (pendingTransactionsMap.containsKey(correlationId)) {
-            throw new InvocationNotFoundException();
+            throw new InvalidScipParameterException();
         }
 
 
