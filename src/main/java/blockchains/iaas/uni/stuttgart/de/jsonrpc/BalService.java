@@ -61,7 +61,7 @@ public class BalService {
 
         if (signers.size() == 0) {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, typeArguments, inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, proposer, signers, minimumNumberOfSignatures);
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature, proposer, signers, null, minimumNumberOfSignatures);
         }
         return "OK";
 

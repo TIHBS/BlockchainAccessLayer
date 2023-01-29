@@ -11,12 +11,14 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.web3j.crypto.Sign;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 @XmlRootElement(name = "InvokeSmartContractRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -36,6 +38,8 @@ public class InvokeSmartContractFunctionRequest {
     private String proposer;
 
     private SignersList signers;
+
+    private SignaturesList signatures;
     private long minimumNumberOfSignatures;
 
     @XmlElement(name = "Inputs")
@@ -162,6 +166,15 @@ public class InvokeSmartContractFunctionRequest {
 
     public void setProposer(String proposer) {
         this.proposer = proposer;
+    }
+
+    @XmlElement(name = "signatures")
+    public SignaturesList getSignatures() {
+        return signatures;
+    }
+
+    public void setSignatures(SignaturesList signatures) {
+        this.signatures = signatures;
     }
 
 }

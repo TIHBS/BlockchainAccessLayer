@@ -27,6 +27,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import io.reactivex.disposables.Disposable;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -373,7 +375,7 @@ public class BlockchainManager {
             final String callbackUrl,
             final long timeoutMillis,
             final String correlationId,
-            final String signature, final String signer, final List<String> signers, final long minimumNumberOfSignatures) throws BalException {
+            final String signature, final String signer, final List<String> signers, final List<ImmutablePair<String, String>> signatures, final long minimumNumberOfSignatures) throws BalException {
 
         // Validate scip parameters!
         if (Strings.isNullOrEmpty(blockchainIdentifier)
@@ -394,8 +396,11 @@ public class BlockchainManager {
         final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
+
+        pendingTransactionsMap.get(correlationId).setSubmitted(true);
+
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, typeArguments, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, signature, signer, signers, minimumNumberOfSignatures);
+                functionIdentifier, typeArguments, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, signature, signer, signers, signatures, minimumNumberOfSignatures);
 
         future.
                 thenAccept(tx -> {
@@ -603,7 +608,17 @@ public class BlockchainManager {
             return false;
         }
 
-        pendingTransaction.getSignatures().add(signature);
+        List<ImmutablePair<String, String>> signatures = pendingTransaction.getSignatures();
+
+        for (Pair<String, String> p : signatures) {
+            if (p.getKey().equals(signer)) {
+                return false;
+            }
+        }
+
+
+        ImmutablePair<String, String> p = new ImmutablePair<>(signer, signature);
+        pendingTransaction.getSignatures().add(p);
 
 
         if (pendingTransaction.getSignatures().size() >= pendingTransaction.getMinimumNumberOfSignatures()) {
@@ -620,6 +635,7 @@ public class BlockchainManager {
                     pendingTransaction.getSignature(),
                     pendingTransaction.getProposer(),
                     pendingTransaction.getSigners(),
+                    pendingTransaction.getSignatures(),
                     pendingTransaction.getMinimumNumberOfSignatures());
         }
         return true;
@@ -630,18 +646,21 @@ public class BlockchainManager {
         if (!pendingTransactionsMap.containsKey(correlationId)) {
             throw new InvocationNotFoundException();
         }
+        PendingTransaction p = pendingTransactionsMap.get(correlationId);
 
-        String invocationHash = pendingTransactionsMap.get(correlationId).getInvocationHash();
+        String invocationHash = p.getInvocationHash();
         boolean isSignatureValid = Utils.ValidateSignature(invocationHash, signer, signature);
         if (!isSignatureValid) {
             return false;
         }
-        if (pendingTransactionsMap.containsKey(correlationId)) {
-            pendingTransactionsMap.remove(correlationId);
-            return true;
-        } else {
-            return false;
+
+        if (p.isSubmitted()) {
+            final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(p.getBlockchainIdentifier());
+            adapter.tryCancelInvocation(correlationId);
         }
+
+        pendingTransactionsMap.remove(correlationId);
+        return true;
     }
 
     public boolean tryReplaceInvocation(final String blockchainIdentifier,
@@ -689,11 +708,29 @@ public class BlockchainManager {
                 signature, proposer, signers, minimumNumberOfSignatures);
         p.setInvocationHash(newInvocationHash);
 
+        if (p.isSubmitted()) {
+            final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(p.getBlockchainIdentifier());
+            adapter.tryCancelInvocation(p.getCorrelationIdentifier());
+
+            invokeSmartContractFunction(p.getBlockchainIdentifier(),
+                    p.getSmartContractPath(),
+                    p.getFunctionIdentifier(),
+                    p.getTypeArguments(),
+                    p.getInputs(),
+                    p.getOutputs(),
+                    p.getRequiredConfidence(),
+                    p.getCallbackUrl(),
+                    p.getTimeoutMillis(),
+                    p.getCorrelationIdentifier(),
+                    p.getSignature(),
+                    p.getProposer(),
+                    p.getSigners(),
+                    p.getSignatures(),
+                    p.getMinimumNumberOfSignatures());
+        }
+
         pendingTransactionsMap.replace(correlationId, p);
-
         return true;
-
-
     }
 
     public void createPendingInvocation(final String blockchainIdentifier,

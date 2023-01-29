@@ -35,7 +35,8 @@ public class PluginManagerController {
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadJar(@FormDataParam("file") InputStream uploadedInputStream,
+    public Response uploadJar(@FormDataParam("plugin-id") String pluginId,
+                              @FormDataParam("file") InputStream uploadedInputStream,
                               @FormDataParam("file") FormDataContentDisposition fileDetails) {
 
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();

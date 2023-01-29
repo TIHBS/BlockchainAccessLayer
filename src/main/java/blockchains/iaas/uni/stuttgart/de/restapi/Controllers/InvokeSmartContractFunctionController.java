@@ -52,6 +52,7 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
                 request.getSignature(),
                 request.getProposer(),
                 request.getSigners().getSigners(),
+                request.getSignatures().getSignatures(),
                 request.getMinimumNumberOfSignatures()
         );
 

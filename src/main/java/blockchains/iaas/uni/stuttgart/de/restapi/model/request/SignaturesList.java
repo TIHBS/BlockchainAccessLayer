@@ -9,6 +9,9 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -16,17 +19,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 // todo rethink type
-@XmlRootElement(name = "signers")
+@XmlRootElement(name = "signatures")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class SignersList {
-    private List<String> signers;
+public class SignaturesList {
+    private List<ImmutablePair<String, String>> signatures;
 
-    @XmlElement(name = "signer")
-    public List<String> getSigners() {
-        return signers;
+    @XmlElement(name = "signature")
+    public List<ImmutablePair<String, String>> getSignatures() {
+        return signatures;
     }
 
-    public void setSigners(List<String> signers) {
-        this.signers = signers;
+    public void setSignatures(List<ImmutablePair<String, String>> signatures) {
+        this.signatures = signatures;
     }
 }

@@ -4,6 +4,8 @@ import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import lombok.*;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
@@ -24,12 +26,12 @@ public class PendingTransaction {
     private String signature;
     private String proposer;
     private long minimumNumberOfSignatures;
-    private List<String> signatures;
+    private List<ImmutablePair<String, String>> signatures;
     private String functionIdentifier;
     private String smartContractPath;
     private long timeoutMillis;
     private String invocationHash;
 
-    private TransactionState transactionState;
+    private boolean submitted;
 
 }
