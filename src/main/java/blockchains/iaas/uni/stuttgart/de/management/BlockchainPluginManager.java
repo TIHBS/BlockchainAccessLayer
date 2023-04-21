@@ -1,7 +1,8 @@
 /********************************************************************************
- * Copyright (c) 2022 Institute for the Architecture of Application System -
+ * Copyright (c) 2022-2023 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Akshay Patel
+ * Co-Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -14,6 +15,7 @@ package blockchains.iaas.uni.stuttgart.de.management;
 import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.pf4j.DefaultPluginManager;
@@ -27,7 +29,9 @@ import org.pf4j.PluginLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Singleton;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class BlockchainPluginManager{
@@ -38,6 +42,8 @@ public class BlockchainPluginManager{
     private static BlockchainPluginManager instance = null;
 
     private BlockchainPluginManager() {
+        String property = System.getProperty("pf4j.pluginsDir");
+        Path PLUGINS_DIRECTORY = Paths.get(property);
         this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
             //
             @Override
@@ -112,11 +118,11 @@ public class BlockchainPluginManager{
         return pluginManager.getPlugin(pluginId).getPluginState();
     }
 
-    public void registerConnectionProfileSubtypeClass(ObjectMapper objectMapper, String pluginId) {
+    public void registerConnectionProfileSubtypeClass(String pluginId) {
         List<IAdapterExtension> adapterExtensions = this.pluginManager.getExtensions(IAdapterExtension.class, pluginId);
         for (IAdapterExtension adapterExtension : adapterExtensions) {
             String namedType = adapterExtension.getConnectionProfileNamedType();
-            objectMapper.registerSubtypes(new NamedType(adapterExtension.getConnectionProfileClass(), namedType));
+            ConnectionProfilesManager.registerConnectionProfileSubtypeClass(adapterExtension.getConnectionProfileClass(), namedType);
         }
     }
 }

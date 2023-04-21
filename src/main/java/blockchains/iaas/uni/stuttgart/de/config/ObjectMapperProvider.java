@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2017 University of Stuttgart
+ * Copyright 2017-2023 University of Stuttgart
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -33,13 +33,6 @@ public class ObjectMapperProvider implements ContextResolver<ObjectMapper> {
 
     public ObjectMapperProvider() {
         defaultObjectMapper = createDefaultMapper();
-        if (Boolean.getBoolean("enablePluginsAtStart")) {
-            BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
-            List<PluginWrapper> plugins = blockchainPluginManager.getPlugins(PluginState.STARTED);
-            for (PluginWrapper pluginWrapper : plugins) {
-               blockchainPluginManager.registerConnectionProfileSubtypeClass(defaultObjectMapper, pluginWrapper.getPluginId());
-            }
-        }
     }
 
     @Override

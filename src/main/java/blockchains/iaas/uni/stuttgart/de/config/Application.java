@@ -12,9 +12,10 @@ import javax.ws.rs.ApplicationPath;
 import java.util.List;
 
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2023 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
+ * Co-Author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -25,14 +26,19 @@ import java.util.List;
 @ApplicationPath("")
 public class Application extends ResourceConfig {
     public Application() {
-        // Required to load the plugins at startup
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
-        if (Boolean.getBoolean("enablePluginsAtStart")) {
-            blockchainPluginManager.startPlugins();
-        }
-        packages("blockchains.iaas.uni.stuttgart.de");
         register(ObjectMapperProvider.class);
         register(JacksonFeature.class);
+        packages("blockchains.iaas.uni.stuttgart.de");
 
+        // Required to load the plugins at startup
+        if (Boolean.getBoolean("enablePluginsAtStart")) {
+            BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+            blockchainPluginManager.startPlugins();
+            List<PluginWrapper> plugins = blockchainPluginManager.getPlugins(PluginState.STARTED);
+
+            for (PluginWrapper pluginWrapper : plugins) {
+                blockchainPluginManager.registerConnectionProfileSubtypeClass(pluginWrapper.getPluginId());
+            }
+        }
     }
 }

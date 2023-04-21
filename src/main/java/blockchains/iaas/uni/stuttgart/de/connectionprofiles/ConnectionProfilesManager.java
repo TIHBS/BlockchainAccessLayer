@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System
+ * Copyright (c) 2019-2023 Institute for the Architecture of Application System
  * - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
@@ -17,14 +17,17 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,16 +41,12 @@ public class ConnectionProfilesManager {
     private static ConnectionProfilesManager instance;
     private ConnectionProfileListener listener;
 
-    private Map<String, AbstractConnectionProfile> connectionProfilesMap;
-    private ObjectReader reader;
-    private ObjectWriter writer;
+
+    private final Map<String, AbstractConnectionProfile> connectionProfilesMap;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private ConnectionProfilesManager() {
         this.connectionProfilesMap = new HashMap<>();
-        this.reader = new ObjectMapper().readerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
-        });
-        this.writer = new ObjectMapper().writerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
-        });
     }
 
     public Map<String, AbstractConnectionProfile> getConnectionProfiles() {
@@ -56,7 +55,9 @@ public class ConnectionProfilesManager {
 
 
     public String getConnectionProfilesAsJson() throws JsonProcessingException {
-        return this.writer.writeValueAsString(this.connectionProfilesMap);
+        ObjectWriter writer = mapper.writerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
+        });
+        return writer.writeValueAsString(this.connectionProfilesMap);
     }
 
     /**
@@ -82,7 +83,9 @@ public class ConnectionProfilesManager {
 
     public void loadConnectionProfilesFromFile(File file) {
         try {
-            Map<String, AbstractConnectionProfile> newMap = this.reader.readValue(file);
+            ObjectReader reader = mapper.readerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
+            });
+            Map<String, AbstractConnectionProfile> newMap = reader.readValue(file);
             this.loadConnectionProfiles(newMap);
         } catch (IOException e) {
             log.error("Failed to load connection profiles from the file!", e);
@@ -91,6 +94,8 @@ public class ConnectionProfilesManager {
 
     public void loadConnectionProfilesFromJson(String jsonString) {
         try {
+            ObjectReader reader = mapper.readerFor(new TypeReference<Map<String, AbstractConnectionProfile>>() {
+            });
             Map<String, AbstractConnectionProfile> newMap = reader.readValue(jsonString);
             this.loadConnectionProfiles(newMap);
         } catch (IOException e) {
@@ -109,6 +114,10 @@ public class ConnectionProfilesManager {
 
     public void setListener(ConnectionProfileListener listener) {
         this.listener = listener;
+    }
+
+    public static void registerConnectionProfileSubtypeClass(Class<? extends AbstractConnectionProfile> clazz, String typeName) {
+        mapper.registerSubtypes(new NamedType(clazz, typeName));
     }
 
     /**

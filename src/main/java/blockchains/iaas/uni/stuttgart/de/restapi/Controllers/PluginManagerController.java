@@ -1,3 +1,16 @@
+/********************************************************************************
+ * Copyright (c) 2022-2023 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Akshay Patel
+ * Co-Author: Ghareeb Falazi
+ *
+ * This program and the accompanying materials are made available under the
+ * terms the Apache Software License 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
@@ -26,9 +39,6 @@ import javax.ws.rs.ext.Providers;
 @Path("plugins")
 public class PluginManagerController {
     private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
-
-    @Context
-    Providers providers;
 
     @Context
     protected UriInfo uriInfo;
@@ -68,11 +78,8 @@ public class PluginManagerController {
     public Response startPlugin(@PathParam("plugin-id") final String pluginId) {
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.startPlugin(pluginId);
+        blockchainPluginManager.registerConnectionProfileSubtypeClass(pluginId);
 
-        ContextResolver<ObjectMapper> resolver = providers.getContextResolver(ObjectMapper.class, MediaType.APPLICATION_JSON_TYPE);
-        ObjectMapper objectMapper = resolver.getContext(ObjectMapper.class);
-
-        blockchainPluginManager.registerConnectionProfileSubtypeClass(objectMapper, pluginId);
         return Response.ok().build();
     }
 
