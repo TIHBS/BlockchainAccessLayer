@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.github.TIHBS</groupId>
             <artifactId>blockchain-access-layer-api</artifactId>
-            <version>1.0.7</version>
+            <version>${adapter.api.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -150,6 +150,7 @@
         <jersey.version>2.9.1</jersey.version>
         <jackson.version>[2.9.9.2,)</jackson.version>
         <jsonrpc.version>0.10</jsonrpc.version>
+        <adapter.api.version>feature~tccsci-1.0.6-gea834b9-12</adapter.api.version>
         <org.slf4j>1.7.25</org.slf4j>
         <ch.qos.logback.logback-classic.version>1.2.3</ch.qos.logback.logback-classic.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
