@@ -1,3 +1,15 @@
+/********************************************************************************
+ * Copyright (c) 2023 Institute for the Architecture of Application System -
+ * University of Stuttgart
+ * Author: Ghareeb Falazi
+ *
+ * This program and the accompanying materials are made available under the
+ * terms the Apache Software License 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
 package blockchains.iaas.uni.stuttgart.de.management.tccsci;
 
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransaction;
@@ -36,6 +48,10 @@ public class DistributedTransactionRepository {
 
     public DistributedTransaction getById(UUID txId) {
         return distributedTransactions.stream().filter(tx->tx.getId().equals(txId)).findFirst().orElse(null);
+    }
+
+    public List<DistributedTransaction> getAll() {
+        return this.distributedTransactions;
     }
 
     public Collection<DistributedTransaction> getByState(DistributedTransactionState state) {
