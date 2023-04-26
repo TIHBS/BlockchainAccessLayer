@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -12,12 +12,15 @@
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
 import java.util.List;
+import java.util.UUID;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionManager;
+import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionRepository;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -34,6 +37,7 @@ public class BalService {
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
+    private static final String DTX_ID_FIELD_NAME = "dtx_id";
 
     @JsonRpcMethod
     public String Invoke(
@@ -47,9 +51,15 @@ public class BalService {
             @JsonRpcParam("signature") String signature
     ) {
         log.info("Invoke method is executed!");
-        BlockchainManager manager = new BlockchainManager();
-        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
-                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
+            DistributedTransactionManager distributedTransactionManager = new DistributedTransactionManager();
+            distributedTransactionManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        } else {
+            BlockchainManager manager = new BlockchainManager();
+            manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        }
 
         return "OK";
     }
@@ -121,5 +131,33 @@ public class BalService {
         }
 
         throw new InvalidScipParameterException();
+    }
+
+    @JsonRpcMethod
+    public String Start_Dtx() {
+        log.info("Start_Dtx method is executed!");
+        DistributedTransactionManager manager = new DistributedTransactionManager();
+
+        return manager.startDtx().toString();
+    }
+
+    @JsonRpcMethod
+    public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+        log.info("Commit_Dtx method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+        DistributedTransactionManager manager = new DistributedTransactionManager();
+        manager.commitDtx(uuid);
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+        log.info("Abort_Dtx method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+        DistributedTransactionManager manager = new DistributedTransactionManager();
+        manager.abortDtx(uuid);
+
+        return "OK";
     }
 }
