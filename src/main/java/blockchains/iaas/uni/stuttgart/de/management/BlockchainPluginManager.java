@@ -34,7 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class BlockchainPluginManager{
+public class BlockchainPluginManager {
 
     private static final Logger log = LoggerFactory.getLogger(BlockchainPluginManager.class);
 
@@ -58,6 +58,7 @@ public class BlockchainPluginManager{
                 return new ManifestPluginDescriptorFinder();
             }
         };
+        log.info("Plugin runtime mode: {}", pluginManager.getRuntimeMode());
 
         pluginManager.loadPlugins();
 
