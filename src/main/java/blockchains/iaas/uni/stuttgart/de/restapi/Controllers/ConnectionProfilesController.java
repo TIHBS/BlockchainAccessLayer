@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akdhay Patel
  *
@@ -13,55 +13,38 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import java.util.Map;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.web.bind.annotation.*;
 
-@Path("configure")
+
+@RestController()
+@RequestMapping("configure")
+@Log4j2
 public class ConnectionProfilesController {
 
-    private static final Logger log = LoggerFactory.getLogger(ConnectionProfilesController.class);
-
-    @Context
-    protected UriInfo uriInfo;
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
+    @PostMapping()
     public void acceptConfiguration(Map<String, AbstractConnectionProfile> profiles) {
+        log.info("Receiving a new set of connection profiles: {}", profiles);
         ConnectionProfilesManager.getInstance().loadConnectionProfiles(profiles);
     }
 
-    @DELETE
-    public Response resetConfigurations() {
+    @DeleteMapping
+    public void resetConfigurations() {
+        log.info("Resetting all connection profiles...");
         ConnectionProfilesManager.getInstance().resetConnectionProfiles();
-        return Response.ok().build();
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @GetMapping()
     public String getConfigurations() throws JsonProcessingException {
         return ConnectionProfilesManager.getInstance().getConnectionProfilesAsJson();
-
     }
 
-    @Path("test")
-    @GET
-    public String testConnection() {
-        String blockchainId = this.uriInfo.getQueryParameters().getFirst("blockchain-id");
+    @GetMapping(path = "/test")
+    public String testConnection(@RequestParam(name = "blockchain-id") String blockchainId) {
         return (new BlockchainManager()).testConnection(blockchainId);
     }
 }

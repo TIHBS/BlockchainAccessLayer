@@ -50,6 +50,10 @@
             <artifactId>pf4j</artifactId>
             <version>3.6.0</version>
         </dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+		</dependency>
         <dependency>
             <groupId>com.github.arteam</groupId>
             <artifactId>simple-json-rpc-server</artifactId>

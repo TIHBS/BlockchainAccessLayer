@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -10,33 +10,30 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.InvokeSmartContractFunctionRequest;
-import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
 
-@Path("invoke-smart-contract-function")
+import java.util.Collection;
+
+@RestController()
+@RequestMapping("invoke-smart-contract-function")
+@Log4j2
 public class InvokeSmartContractFunctionController extends SubscriptionController {
-    private static final Logger log = LoggerFactory.getLogger(InvokeSmartContractFunctionController.class);
 
-    @GET
-    public Response get() {
-        return getSubscriptions(SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION, uriInfo);
+    @GetMapping
+    public Collection<SubscriptionKey> get() {
+        return getSubscriptions(SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION);
     }
 
     // todo try if still working
-    @POST
-    @Consumes(MediaType.APPLICATION_XML)
-    public Response invokeSCFunction(InvokeSmartContractFunctionRequest request) {
+    @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
+    public void invokeSCFunction(@RequestBody InvokeSmartContractFunctionRequest request) {
+        log.info("Received an invokeSCFunction request via REST API");
         final BlockchainManager manager = new BlockchainManager();
         manager.invokeSmartContractFunction(
                 request.getBlockchainId(),
@@ -50,8 +47,5 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
                 request.getSubscriptionId(),
                 request.getSignature()
         );
-
-        return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
-                .build();
     }
 }
