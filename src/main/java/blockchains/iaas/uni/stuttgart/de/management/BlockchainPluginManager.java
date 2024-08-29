@@ -16,8 +16,7 @@ import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
+import lombok.extern.log4j.Log4j2;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.PluginManager;
 import org.pf4j.PluginState;
@@ -29,21 +28,18 @@ import org.pf4j.PluginLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Log4j2
 public class BlockchainPluginManager{
 
-    private static final Logger log = LoggerFactory.getLogger(BlockchainPluginManager.class);
 
     private PluginManager pluginManager = null;
     private static BlockchainPluginManager instance = null;
 
     private BlockchainPluginManager() {
-        String property = System.getProperty("pf4j.pluginsDir");
-        Path PLUGINS_DIRECTORY = Paths.get(property);
         this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
             //
             @Override
@@ -59,6 +55,7 @@ public class BlockchainPluginManager{
             }
         };
 
+        log.info("Attempting to load blockchain adapter plugins from: '{}'...", Constants.PLUGINS_DIRECTORY);
         pluginManager.loadPlugins();
 
     }

@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -12,20 +12,16 @@
 package blockchains.iaas.uni.stuttgart.de.management.model;
 
 import io.reactivex.disposables.Disposable;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class ObservableSubscription extends Subscription {
     private Disposable subscription;
 
     public ObservableSubscription(Disposable subscription, SubscriptionType type) {
         super(type);
-        this.subscription = subscription;
-    }
-
-    public Disposable getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(Disposable subscription) {
         this.subscription = subscription;
     }
 

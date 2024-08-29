@@ -1,13 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import java.math.BigInteger;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -17,6 +9,15 @@ import java.math.BigInteger;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
+
+import jakarta.xml.bind.annotation.*;
+import lombok.Setter;
+
+import java.math.BigInteger;
+
+
+@Setter
 @XmlRootElement(name = "SubmitTransactionRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class SubmitTransactionRequest {
@@ -38,26 +39,14 @@ public class SubmitTransactionRequest {
         return epUrl;
     }
 
-    public void setEpUrl(String epUrl) {
-        this.epUrl = epUrl;
-    }
-
     @XmlElement(name="To")
     public String getTo() {
         return to;
     }
 
-    public void setTo(String to) {
-        this.to = to;
-    }
-
     @XmlElement(name="BlockchainId")
     public String getBlockchainId() {
         return blockchainId;
-    }
-
-    public void setBlockchainId(String blockchainId) {
-        this.blockchainId = blockchainId;
     }
 
     @XmlElement(name="SubscriptionId")
@@ -66,19 +55,11 @@ public class SubmitTransactionRequest {
     }
 
 
-    public void setSubscriptionId(String subscriptionId) {
-        this.subscriptionId = subscriptionId;
-    }
-
     @XmlElement(name="RequiredConfidence")
     public double getRequiredConfidence() {
         return requiredConfidence;
     }
 
-
-    public void setRequiredConfidence(double requiredConfidence) {
-        this.requiredConfidence = requiredConfidence;
-    }
 
     @XmlElement(name="Value")
     public BigInteger getValue(){
@@ -92,10 +73,6 @@ public class SubmitTransactionRequest {
 
     public String getValueAsString() {
         return valueAsString;
-    }
-
-    public void setValueAsString(String value) {
-        this.valueAsString = value;
     }
 
 

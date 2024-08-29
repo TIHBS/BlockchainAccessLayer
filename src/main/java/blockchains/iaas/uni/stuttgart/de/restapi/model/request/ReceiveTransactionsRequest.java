@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -11,11 +11,10 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.*;
+import lombok.Setter;
 
+@Setter
 @XmlRootElement(name = "ReceiveTransactionsRequest")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class ReceiveTransactionsRequest {
@@ -31,17 +30,9 @@ public class ReceiveTransactionsRequest {
         return epUrl;
     }
 
-    public void setEpUrl(String epUrl) {
-        this.epUrl = epUrl;
-    }
-
     @XmlElement(name = "From")
     public String getFrom() {
         return from;
-    }
-
-    public void setFrom(String from) {
-        this.from = from;
     }
 
     @XmlElement(name = "BlockchainId")
@@ -49,17 +40,9 @@ public class ReceiveTransactionsRequest {
         return blockchainId;
     }
 
-    public void setBlockchainId(String blockchainId) {
-        this.blockchainId = blockchainId;
-    }
-
     @XmlElement(name = "SubscriptionId")
     public String getSubscriptionId() {
         return subscriptionId;
-    }
-
-    public void setSubscriptionId(String subscriptionId) {
-        this.subscriptionId = subscriptionId;
     }
 
     @XmlElement(name = "RequiredConfidence")
@@ -67,7 +50,4 @@ public class ReceiveTransactionsRequest {
         return requiredConfidence;
     }
 
-    public void setRequiredConfidence(double requiredConfidence) {
-        this.requiredConfidence = requiredConfidence;
-    }
 }

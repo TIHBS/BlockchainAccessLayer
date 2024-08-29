@@ -70,7 +70,7 @@ public class PluginManagerController {
         BlockchainPluginManager.getInstance().enablePlugin(pluginId);
     }
 
-    @PostMapping(path = "{plugin-id}/enable")
+    @PostMapping(path = "{plugin-id}/start")
     public void startPlugin(@PathVariable("plugin-id") final String pluginId) {
         BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.startPlugin(pluginId);

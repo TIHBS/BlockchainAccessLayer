@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -111,8 +111,7 @@ public class SubscriptionManager {
                 .filter(subscriptionKey -> {
                             if (subscriptionKey.getBlockchainId().equals(blockchainId)
                                     && subscriptionKey.getSmartContractPath().equals(smartContractPath)
-                                    && this.subscriptions.get(subscriptionKey) instanceof MonitorOccurrencesSubscription) {
-                                MonitorOccurrencesSubscription subscription = (MonitorOccurrencesSubscription) this.subscriptions.get(subscriptionKey);
+                                    && this.subscriptions.get(subscriptionKey) instanceof MonitorOccurrencesSubscription subscription) {
                                 if (subscription.getType().equals(type)) {
                                     if (id == null || inputs == null)
                                         return true;

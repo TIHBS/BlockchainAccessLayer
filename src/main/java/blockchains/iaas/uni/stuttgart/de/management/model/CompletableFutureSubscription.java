@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2018-2019 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -14,20 +14,16 @@ package blockchains.iaas.uni.stuttgart.de.management.model;
 import java.util.concurrent.CompletableFuture;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.ManualUnsubscriptionException;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class CompletableFutureSubscription<T> extends Subscription {
     private CompletableFuture<T> future;
 
     public CompletableFutureSubscription(CompletableFuture<T> future, SubscriptionType type) {
         super(type);
-        this.future = future;
-    }
-
-    public CompletableFuture<T> getFuture() {
-        return future;
-    }
-
-    public void setFuture(CompletableFuture<T> future) {
         this.future = future;
     }
 

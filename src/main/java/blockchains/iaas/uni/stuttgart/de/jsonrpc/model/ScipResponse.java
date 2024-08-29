@@ -29,4 +29,15 @@ public class ScipResponse extends CallbackMessage {
     private String isoTimestamp;
     private List<Occurrence> occurrences;
     private BalException exception;
+
+    @Override
+    public String toString() {
+        return "ScipResponseMessage{" +
+                "correlationIdentifier='" + correlationIdentifier + '\'' +
+                ", parameters=" + parameters +
+                ", isoTimestamp='" + isoTimestamp + '\'' +
+                ", occurrences=" + occurrences +
+                ", exception=" + exception +
+                '}';
+    }
 }

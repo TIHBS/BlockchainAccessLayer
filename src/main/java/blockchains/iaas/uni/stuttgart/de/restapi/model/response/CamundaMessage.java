@@ -1,11 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
-
-import javax.xml.bind.annotation.*;
-import java.util.HashMap;
-import java.util.Map;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -15,6 +9,18 @@ import java.util.Map;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
+
+import jakarta.xml.bind.annotation.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
+@Setter
+@Getter
 @XmlRootElement(name="Message")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CamundaMessage extends CallbackMessage {
@@ -27,27 +33,12 @@ public class CamundaMessage extends CallbackMessage {
     @XmlElement(name="ProcessVariable")
     private Map<String, CamundaVariable> processVariables = new HashMap<>();
 
-    public String getProcessInstanceId() {
-        return processInstanceId;
-    }
-
-    public void setProcessInstanceId(String processInstanceId) {
-        this.processInstanceId = processInstanceId;
-    }
-
-    public String getMessageName() {
-        return messageName;
-    }
-
-    public void setMessageName(String messageName) {
-        this.messageName = messageName;
-    }
-
-    public Map<String, CamundaVariable> getProcessVariables() {
-        return processVariables;
-    }
-
-    public void setProcessVariables(Map<String, CamundaVariable> processVariables) {
-        this.processVariables = processVariables;
+    @Override
+    public String toString() {
+        return "CamundaCallbackMessage{" +
+                "processInstanceId='" + processInstanceId + '\'' +
+                ", messageName='" + messageName + '\'' +
+                ", processVariables=" + processVariables +
+                '}';
     }
 }

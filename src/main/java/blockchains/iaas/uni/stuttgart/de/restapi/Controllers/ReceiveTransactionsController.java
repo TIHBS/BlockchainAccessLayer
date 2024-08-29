@@ -1,24 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
-
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
-import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
-import lombok.extern.log4j.Log4j2;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Collection;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -28,6 +9,20 @@ import java.util.Collection;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
+
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collection;
 
 @RestController()
 @RequestMapping("receive-transactions")

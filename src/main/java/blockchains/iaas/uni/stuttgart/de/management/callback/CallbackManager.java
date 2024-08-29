@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -11,19 +11,6 @@
 
 package blockchains.iaas.uni.stuttgart.de.management.callback;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import blockchains.iaas.uni.stuttgart.de.adaptation.BlockchainAdapterFactory;
-import blockchains.iaas.uni.stuttgart.de.config.ObjectMapperProvider;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.ScipResponse;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CallbackMessage;
@@ -31,21 +18,19 @@ import blockchains.iaas.uni.stuttgart.de.restapi.model.response.CamundaMessage;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.github.arteam.simplejsonrpc.client.Transport;
 import com.github.arteam.simplejsonrpc.client.builder.NotificationRequestBuilder;
-import com.google.common.base.Charsets;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.glassfish.jersey.jackson.JacksonFeature;
+import lombok.extern.log4j.Log4j2;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@Log4j2
 public class CallbackManager {
     private static CallbackManager instance = null;
-    private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
     private ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     private CallbackManager() {
@@ -60,6 +45,7 @@ public class CallbackManager {
     }
 
     public void sendCallback(final String endpointUrl, final CallbackMessage responseBody) {
+        log.info("Sending callback message {} to ({})", responseBody, endpointUrl);
         if (responseBody instanceof CamundaMessage) {
             this.sendRestCallback(endpointUrl, responseBody);
         } else if (responseBody instanceof ScipResponse) {
@@ -70,32 +56,36 @@ public class CallbackManager {
     }
 
     private void sendRestCallback(final String endpointUrl, final CallbackMessage responseBody) {
-        final Client client = ClientBuilder.newBuilder()
-                .register(ObjectMapperProvider.class)  // No need to register this provider if no special configuration is required.
-                .register(JacksonFeature.class)
-                .build();
-        final Entity entity = Entity.entity(responseBody, MediaType.APPLICATION_JSON);
-        final Response response = client.target(endpointUrl).request(MediaType.APPLICATION_JSON)
-                .post(entity);
+        ResponseEntity<String> response = RestClient.create()
+                .post()
+                .uri(endpointUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseBody)
+                .retrieve()
+                .toEntity(String.class);
 
-        log.info("Callback client responded with code({})", response.getStatus());
+        log.info("Callback client responded with {} (code: {})",
+                () -> response.getBody(), () -> response.getStatusCode());
     }
 
     private void sendJsonRpcCallback(final String endpointUrl, final ScipResponse response) {
         final String METHOD_NAME = "ReceiveResponse";
         JsonRpcClient client = new JsonRpcClient(new Transport() {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-
             @NotNull
             @Override
             public String pass(@NotNull String request) throws IOException {
-                // Used Apache HttpClient 4.3.1 as an example
-                HttpPost post = new HttpPost(endpointUrl);
-                post.setEntity(new StringEntity(request, Charsets.UTF_8));
-                post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                try (CloseableHttpResponse httpResponse = httpClient.execute(post)) {
-                    return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
-                }
+                ResponseEntity<String> response = RestClient.create()
+                        .post()
+                        .uri(endpointUrl)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(String.class);
+
+                log.info("Callback client responded with {} (code: {})",
+                        () -> response.getBody(), () -> response.getStatusCode());
+
+                return response.getBody() != null ? response.getBody() : "";
             }
         });
 
