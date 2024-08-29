@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -16,9 +16,11 @@ import java.util.Collections;
 import blockchains.iaas.uni.stuttgart.de.management.model.MonitorOccurrencesSubscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest
 class SubscriptionManagerTest {
     @Test
     void testReplacingSubscription() {

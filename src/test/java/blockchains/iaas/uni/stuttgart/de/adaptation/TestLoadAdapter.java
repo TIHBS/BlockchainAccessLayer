@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2022-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Akshay Patel
  *
  * This program and the accompanying materials are made available under the
@@ -23,14 +23,12 @@ import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.web3j.crypto.CipherException;
-import org.web3j.crypto.ECKeyPair;
-import org.web3j.crypto.WalletUtils;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
+
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +39,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
+@SpringBootTest
 public class TestLoadAdapter {
     // Add -Dpf4j.pluginsDir=<plugin_storage_path> -DethereumPluginJarPath=<path_to_ethereum_plugin_jar>
 
@@ -65,24 +67,24 @@ public class TestLoadAdapter {
 
         // Basic test to check if plugin is loaded correctly
 
-        assert pluginManager.getPlugins().size() == 0;
+        assertEquals(0, pluginManager.getPlugins().size());
 
         Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
 
         Files.copy(pluginPath, uploadedPluginPath);
 
         pluginManager.loadJar(pluginPath);
-        Assertions.assertEquals(1, pluginManager.getPlugins().size());
+        assertEquals(1, pluginManager.getPlugins().size());
 
         PluginWrapper pluginWrapper = pluginManager.getPlugins().get(0);
         String pluginId = pluginWrapper.getPluginId();
 
-        Assertions.assertEquals("ethereum-plugin", pluginId);
+        assertEquals("ethereum-plugin", pluginId);
 
-        Assertions.assertEquals(PluginState.RESOLVED, pluginManager.getPluginState(pluginId));
+        assertEquals(PluginState.RESOLVED, pluginManager.getPluginState(pluginId));
         pluginManager.startPlugin(pluginId);
 
-        Assertions.assertEquals(PluginState.STARTED, pluginManager.getPluginState(pluginId));
+        assertEquals(PluginState.STARTED, pluginManager.getPluginState(pluginId));
 
     }
 
@@ -111,7 +113,7 @@ public class TestLoadAdapter {
         manager.loadConnectionProfilesFromFile(file);
 
         BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(NETWORK_NAME);
-        Assertions.assertEquals("true", adapter.testConnection());
+        assertEquals("true", adapter.testConnection());
 
         final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
         final BigDecimal value = new BigDecimal(5000);
@@ -135,15 +137,6 @@ public class TestLoadAdapter {
         map.put("pollingTimeSeconds", 2);
 
         return map;
-    }
-
-    void createNewKeystoreFile() throws CipherException, IOException {
-        final String filePath = "C:\\Ethereum\\keystore";
-        final File file = new File(filePath);
-        final String password = "123456789";
-        final String privateKey = "6871412854632d2ccd9c99901f5a0a3d838b31dbc6bfecae5f2382d6b7658bbf";
-        ECKeyPair pair = ECKeyPair.create(new BigInteger(privateKey, 16));
-        WalletUtils.generateWalletFile(password, pair, file, false);
     }
 
     /*

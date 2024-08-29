@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -16,9 +16,11 @@ import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesMa
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class AdapterManagerTest {
     @Test
     void testRecreation() {

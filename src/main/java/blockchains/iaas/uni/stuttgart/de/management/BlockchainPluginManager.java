@@ -40,7 +40,7 @@ public class BlockchainPluginManager{
     private static BlockchainPluginManager instance = null;
 
     private BlockchainPluginManager() {
-        this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
+        this.pluginManager = new DefaultPluginManager(getPluginsPath()) {
             //
             @Override
             protected PluginLoader createPluginLoader() {
@@ -55,7 +55,7 @@ public class BlockchainPluginManager{
             }
         };
 
-        log.info("Attempting to load blockchain adapter plugins from: '{}'...", Constants.PLUGINS_DIRECTORY);
+        log.info("Attempting to load blockchain adapter plugins from: '{}'...", () -> getPluginsPath());
         pluginManager.loadPlugins();
 
     }
@@ -76,7 +76,9 @@ public class BlockchainPluginManager{
     }
 
     public Path getPluginsPath() {
-        return Constants.PLUGINS_DIRECTORY;
+        final String systemProperty = System.getProperty(Constants.PF4j_PLUGIN_DIR_PROPERTY);
+
+        return systemProperty != null ? Paths.get(systemProperty) : null;
     }
 
     public List<PluginWrapper> getPlugins() {
