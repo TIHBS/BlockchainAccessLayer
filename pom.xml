@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>blockchains.iaas.uni.stuttgart.de</groupId>
 	<artifactId>blockchain-access-layer</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
+	<version>3.0.0</version>
 	<name>Blockchain Access Layer</name>
 	<description>An extensible abstraction layer that unifies access to permissionless and permissioned blockchain systems and provides an asynchrounous API to its clients focusing on tasks to handle the uncertainty of transaction durability in blockchains.</description>
 	<url />
@@ -39,16 +39,15 @@
     </repositories>
 
 	<dependencies>
-
 		<dependency>
             <groupId>com.github.TIHBS</groupId>
             <artifactId>blockchain-access-layer-api</artifactId>
-            <version>1.0.7</version>
+            <version>3.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.pf4j</groupId>
             <artifactId>pf4j</artifactId>
-            <version>3.6.0</version>
+            <version>3.12.0</version>
         </dependency>
 		<dependency>
 			<groupId>org.codehaus.mojo</groupId>
