@@ -10,47 +10,64 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
+import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import lombok.extern.log4j.Log4j2;
+import org.junit.jupiter.api.*;
 import org.pf4j.PluginState;
 import org.pf4j.PluginWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
-
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 @SpringBootTest
+@Log4j2
 public class TestLoadAdapter {
-    // Add -Dpf4j.pluginsDir=<plugin_storage_path> -DethereumPluginJarPath=<path_to_ethereum_plugin_jar>
-
-    private static final Logger log = LoggerFactory.getLogger(TestLoadAdapter.class);
     private static final String NETWORK_NAME = "eth-0";
-    private static final double REQUIRED_CONFIDENCE = 0.6;
-    private final BlockchainPluginManager pluginManager = BlockchainPluginManager.getInstance();
-    private final Path pluginPath = Paths.get(System.getProperty("ethereumPluginJarPath"));
+    private static String originalPf4jPath;
+    private final Path pluginPath = Paths.get(Objects.requireNonNull(TestLoadAdapter.class.getClassLoader().getResource("plugins/ethereum.jar")).toURI());
+    private final String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
+    @Autowired
+    private BlockchainPluginManager pluginManager;
+    @Autowired
+    private AdapterManager adapterManager;
+
+    public TestLoadAdapter() throws URISyntaxException {
+    }
+
+    @BeforeAll
+    public static void setPf4jDir() throws IOException {
+        originalPf4jPath = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
+        String tmpdir = Files.createTempDirectory("pf4j-temp-plugin-directory").toFile().getAbsolutePath();
+        log.info("BeforeAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath, tmpdir);
+        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, tmpdir);
+    }
+
+    @AfterAll
+    public static void restorePf4Dir() {
+
+        String temp = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
+        log.info("AfterAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, temp, originalPf4jPath);
+        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath == null ? "" : originalPf4jPath);
+    }
 
     @BeforeEach
     public void setUp() {
@@ -62,63 +79,54 @@ public class TestLoadAdapter {
         clearPluginDirectory();
     }
 
-    @Test
-    public void testLoadEthereumPlugin() throws IOException {
-
-        // Basic test to check if plugin is loaded correctly
-
-        assertEquals(0, pluginManager.getPlugins().size());
-
-        Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
-
-        Files.copy(pluginPath, uploadedPluginPath);
-
-        pluginManager.loadJar(pluginPath);
-        assertEquals(1, pluginManager.getPlugins().size());
-
-        PluginWrapper pluginWrapper = pluginManager.getPlugins().get(0);
-        String pluginId = pluginWrapper.getPluginId();
-
-        assertEquals("ethereum-plugin", pluginId);
-
-        assertEquals(PluginState.RESOLVED, pluginManager.getPluginState(pluginId));
-        pluginManager.startPlugin(pluginId);
-
-        assertEquals(PluginState.STARTED, pluginManager.getPluginState(pluginId));
-
+    private void loadPlugin() throws IOException {
+        if (pluginManager.getPlugins().stream().filter(p -> "ethereum-plugin".equals(p.getPluginId())).findAny().isEmpty()) {
+            Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
+            Files.copy(pluginPath, uploadedPluginPath);
+            pluginManager.loadJar(pluginPath);
+        }
     }
 
     @Test
-    public void testSendEthereumTransaction() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
+    public void testLoadEthereumPlugin() throws IOException {
+        // Basic test to check if plugin is loaded correctly
+        assertEquals(0, pluginManager.getPlugins().size());
+        loadPlugin();
+        assertEquals(1, pluginManager.getPlugins().size());
+        PluginWrapper pluginWrapper = pluginManager.getPlugins().get(0);
+        String pluginId = pluginWrapper.getPluginId();
+        assertEquals("ethereum-plugin", pluginId);
+        assertEquals(PluginState.RESOLVED, pluginManager.getPluginState(pluginId));
+        pluginManager.startPlugin(pluginId);
+        assertEquals(PluginState.STARTED, pluginManager.getPluginState(pluginId));
+    }
 
-        Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
-        Files.copy(pluginPath, uploadedPluginPath);
-        pluginManager.loadJar(pluginPath);
-
+    @Test
+    public void testLoadConnectionProfile() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
+        loadPlugin();
         String pluginId = pluginManager.getPlugins().get(0).getPluginId();
         pluginManager.startPlugin(pluginId);
-
-        assert pluginManager.getPluginState(pluginId) == PluginState.STARTED;
-
+        assertEquals(PluginState.STARTED, pluginManager.getPluginState(pluginId));
         List<IAdapterExtension> adapterExtensions = pluginManager.getExtensions();
-        assert adapterExtensions.size() == 1;
-
+        assertEquals(1, adapterExtensions.size());
         final String DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME = "gatewayConfiguration.json";
-
         final File file = new File(Objects.requireNonNull(
                 TestLoadAdapter.class.getClassLoader().getResource(DEFAULT_CONNECTION_PROFILES_CONFIGURATION_FILE_NAME)).toURI());
-
         ConnectionProfilesManager manager = ConnectionProfilesManager.getInstance();
         manager.resetConnectionProfiles();
+        assertEquals(0, manager.getConnectionProfiles().size());
         manager.loadConnectionProfilesFromFile(file);
-
-        BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(NETWORK_NAME);
-        assertEquals("true", adapter.testConnection());
-
-        final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
-        final BigDecimal value = new BigDecimal(5000);
-        LinearChainTransaction result = (LinearChainTransaction) adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
-        log.debug("transaction hash is: " + result.getTransactionHash());
+        assertEquals(1, manager.getConnectionProfiles().size());
+        AbstractConnectionProfile profile = manager.getConnectionProfiles().get(NETWORK_NAME);
+        assertNotNull(profile);
+        // we manually set the keystore path to the file included in the test resources (to minimize external dependencies).
+        assertNotNull(profile.getProperty(KEYSTORE_PATH_KEY));
+        profile.setProperty(KEYSTORE_PATH_KEY,
+                Paths.get(this.getClass().getClassLoader().getResource("").toURI())
+                        .resolve(profile.getProperty(KEYSTORE_PATH_KEY).toString()).toString());
+        log.debug("New keystorePath property for connection profile {} is: {}", NETWORK_NAME, profile.getProperty("keystorePath"));
+        BlockchainAdapter adapter = adapterManager.getAdapter(NETWORK_NAME);
+        assertNotNull(adapter);
     }
 
     private void clearPluginDirectory() {
@@ -127,33 +135,4 @@ public class TestLoadAdapter {
         for (File f : files) f.delete();
     }
 
-    private Map<String, Object> getConfiguration() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("nodeUrl", "http://localhost:7545/");
-        map.put("keystorePath", "/account.json");
-        map.put("averageBlockTimeSeconds", "2");
-        map.put("keystorePassword", "123456789");
-        map.put("adversaryVotingRatio", 0.2);
-        map.put("pollingTimeSeconds", 2);
-
-        return map;
-    }
-
-    /*
-    * Creating account.json file using node 16
-    *
-     ```bash
-        npm install web3
-     ```
-
-     ```javascript
-        var Web3 = require('web3');
-        var web3 = new Web3(Web3.givenProvider || 'ws://localhost:7545');
-        var privateKey="<your_private_key>";
-        var password="123456789";
-        var JsonWallet = web3.eth.accounts.encrypt(privateKey, password);
-        console.log(JSON.stringify(JsonWallet)
-     ```
-     Copy the output to a file `account.json` on the machine.
-    * */
 }

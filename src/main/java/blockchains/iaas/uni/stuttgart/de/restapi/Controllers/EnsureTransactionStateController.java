@@ -10,10 +10,10 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.EnsureTransactionStateRequest;
+import com.oracle.js.parser.ir.Block;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +26,10 @@ import java.util.Collection;
 @Log4j2
 public class EnsureTransactionStateController extends SubscriptionController {
 
+    public EnsureTransactionStateController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get(){
 
@@ -35,7 +39,6 @@ public class EnsureTransactionStateController extends SubscriptionController {
     @PostMapping(consumes= MediaType.APPLICATION_XML_VALUE)
     public void ensureTransactionState(@RequestBody EnsureTransactionStateRequest request){
         log.info("Received an ensureTransactionState request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
         manager.ensureTransactionState(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(),
                 request.getRequiredConfidence(), request.getEpUrl());
     }

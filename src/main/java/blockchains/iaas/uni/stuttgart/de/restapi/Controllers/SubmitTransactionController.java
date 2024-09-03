@@ -30,6 +30,10 @@ import java.util.Collection;
 @Log4j2
 public class SubmitTransactionController extends SubscriptionController {
 
+    public SubmitTransactionController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get() {
         return getSubscriptions(SubscriptionType.SUBMIT_TRANSACTION);
@@ -38,7 +42,6 @@ public class SubmitTransactionController extends SubscriptionController {
     @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_XML_VALUE)
     public void submitTransaction(SubmitTransactionRequest request) {
         log.info("Received an submitTransaction request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
         manager.submitNewTransaction(request.getSubscriptionId(), request.getTo(), request.getValue(), request.getBlockchainId(),
                 request.getRequiredConfidence(), request.getEpUrl());
     }

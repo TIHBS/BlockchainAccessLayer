@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.log4j.Log4j2;
 import org.pf4j.DependencyResolver.DependenciesNotFoundException;
 import org.pf4j.PluginWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,12 +38,16 @@ import java.util.List;
 @RequestMapping("plugins")
 @Log4j2
 public class PluginManagerController {
+    final
+    BlockchainPluginManager blockchainPluginManager;
+
+    public PluginManagerController(BlockchainPluginManager blockchainPluginManager) {
+        this.blockchainPluginManager = blockchainPluginManager;
+    }
 
     @PostMapping
     public ResponseEntity<String> uploadJar(@RequestParam("file") MultipartFile file,
                                             RedirectAttributes redirectAttributes) {
-
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         final String fileName = file.getOriginalFilename();
         log.info("Received file {}", fileName);
         String uploadedFileLocation = blockchainPluginManager.getPluginsPath() + "/" + fileName;
@@ -67,35 +72,31 @@ public class PluginManagerController {
 
     @PostMapping(path = "{plugin-id}/enable")
     public void enablePlugin(@PathVariable("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().enablePlugin(pluginId);
+        blockchainPluginManager.enablePlugin(pluginId);
     }
 
     @PostMapping(path = "{plugin-id}/start")
     public void startPlugin(@PathVariable("plugin-id") final String pluginId) {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.startPlugin(pluginId);
-        blockchainPluginManager.registerConnectionProfileSubtypeClass(pluginId);
     }
 
     @PostMapping(path = "{plugin-id}/disable")
     public void disablePlugin(@PathVariable("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().disablePlugin(pluginId);
+        blockchainPluginManager.disablePlugin(pluginId);
     }
 
     @PostMapping(path = "{plugin-id}/unload")
     public void unloadPlugin(@PathVariable("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().unloadPlugin(pluginId);
+        blockchainPluginManager.unloadPlugin(pluginId);
     }
 
     @DeleteMapping("{plugin-id}")
     public void deletePlugin(@PathVariable("plugin-id") final String pluginId) {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         blockchainPluginManager.deletePlugin(pluginId);
     }
 
     @GetMapping
     public ArrayNode getPlugins() {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
         List<PluginWrapper> plugins = blockchainPluginManager.getPlugins();
 
         ObjectMapper objectMapper = new ObjectMapper();

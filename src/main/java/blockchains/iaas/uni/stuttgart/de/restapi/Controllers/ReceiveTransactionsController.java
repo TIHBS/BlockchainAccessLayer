@@ -29,6 +29,10 @@ import java.util.Collection;
 @Log4j2
 public class ReceiveTransactionsController extends SubscriptionController {
 
+    public ReceiveTransactionsController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get(){
         return getSubscriptions(SubscriptionType.RECEIVE_TRANSACTIONS);
@@ -37,7 +41,6 @@ public class ReceiveTransactionsController extends SubscriptionController {
     @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
     public void receiveTransaction(ReceiveTransactionsRequest request){
         log.info("Received an receiveTransaction request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
         manager.receiveTransactions(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
                 request.getRequiredConfidence(), request.getEpUrl());
     }

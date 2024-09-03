@@ -25,6 +25,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("configure")
 @Log4j2
 public class ConnectionProfilesController {
+    final BlockchainManager manager;
+
+    public ConnectionProfilesController(BlockchainManager manager) {
+        this.manager = manager;
+    }
 
     @PostMapping()
     public void acceptConfiguration(Map<String, AbstractConnectionProfile> profiles) {
@@ -45,6 +50,6 @@ public class ConnectionProfilesController {
 
     @GetMapping(path = "/test")
     public String testConnection(@RequestParam(name = "blockchain-id") String blockchainId) {
-        return (new BlockchainManager()).testConnection(blockchainId);
+        return manager.testConnection(blockchainId);
     }
 }

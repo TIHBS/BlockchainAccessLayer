@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2023 Institute for the Architecture of Application System
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System
  * - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
@@ -26,17 +26,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Manages the connection profiles recognized by the BAL. When it first initialized, it loads the profiles stored in
  * .bal/connectionProfiles.json inside the user home directory. If the file does not exist, no profiles will be loaded.
  */
+@Log4j2
 public class ConnectionProfilesManager {
-    private static final Logger log = LoggerFactory.getLogger(ConnectionProfilesManager.class);
     public static final Path initialConfigurationFilePath = Paths.get(System.getProperty("user.home"), ".bal", "connectionProfiles.json");
     private static ConnectionProfilesManager instance;
+    @Setter
     private ConnectionProfileListener listener;
 
 
@@ -108,10 +109,6 @@ public class ConnectionProfilesManager {
         }
 
         return instance;
-    }
-
-    public void setListener(ConnectionProfileListener listener) {
-        this.listener = listener;
     }
 
     public static void registerConnectionProfileSubtypeClass(Class<? extends AbstractConnectionProfile> clazz, String typeName) {

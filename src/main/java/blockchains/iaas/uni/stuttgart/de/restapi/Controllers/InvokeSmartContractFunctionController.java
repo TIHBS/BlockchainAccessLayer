@@ -25,6 +25,10 @@ import java.util.Collection;
 @Log4j2
 public class InvokeSmartContractFunctionController extends SubscriptionController {
 
+    public InvokeSmartContractFunctionController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get() {
         return getSubscriptions(SubscriptionType.INVOKE_SMART_CONTRACT_FUNCTION);
@@ -34,7 +38,6 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
     @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
     public void invokeSCFunction(@RequestBody InvokeSmartContractFunctionRequest request) {
         log.info("Received an invokeSCFunction request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
         manager.invokeSmartContractFunction(
                 request.getBlockchainId(),
                 request.getSmartContractPath(),

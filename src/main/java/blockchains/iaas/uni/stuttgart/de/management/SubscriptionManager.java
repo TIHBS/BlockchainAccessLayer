@@ -24,13 +24,12 @@ import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 
 // todo this class should persist subscriptions to stable storage!
 // todo rethink subscription logic!
+@Log4j2
 public class SubscriptionManager {
-    private static final Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
     private static SubscriptionManager instance = null;
     private Map<SubscriptionKey, Subscription> subscriptions = Collections.synchronizedMap(new HashMap<>());
 

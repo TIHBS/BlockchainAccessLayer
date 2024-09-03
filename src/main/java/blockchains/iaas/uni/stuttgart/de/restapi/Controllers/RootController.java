@@ -12,6 +12,7 @@
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.jsonrpc.BalService;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -22,13 +23,18 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/")
 @Log4j2
 public class RootController {
+    private final BlockchainManager manager;
+
+    public RootController(BlockchainManager manager) {
+        this.manager = manager;
+    }
 
     @PostMapping
     public ResponseEntity<String> performJsonRpcCall(@RequestBody String jsonRequest,
                                                      @RequestParam(name = "blockchain") final String blockchainType,
                                                      @RequestParam(name = "blockchain-id") final String blockchainId,
                                                      @RequestParam(name = "address") final String smartContractAddress) {
-        BalService service = new BalService(blockchainType, blockchainId, smartContractAddress);
+        BalService service = new BalService(blockchainType, blockchainId, smartContractAddress, manager);
         JsonRpcServer server = new JsonRpcServer();
         String response = server.handle(jsonRequest, service);
 

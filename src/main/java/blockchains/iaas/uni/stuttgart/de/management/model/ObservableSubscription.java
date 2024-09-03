@@ -26,6 +26,8 @@ public class ObservableSubscription extends Subscription {
     }
 
     public void unsubscribe() {
-        this.subscription.dispose();
+        if (subscription != null && !subscription.isDisposed()) {
+            this.subscription.dispose();
+        }
     }
 }

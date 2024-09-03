@@ -15,6 +15,7 @@ import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
+import com.oracle.js.parser.ir.Block;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,10 @@ import java.util.Collection;
 @Log4j2
 public class ReceiveTransactionController extends SubscriptionController {
 
+    public ReceiveTransactionController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get() {
         return getSubscriptions(SubscriptionType.RECEIVE_TRANSACTION);
@@ -38,7 +43,6 @@ public class ReceiveTransactionController extends SubscriptionController {
     @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
     public void receiveTransaction(ReceiveTransactionsRequest request) {
         log.info("Received an receiveTransaction request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
         manager.receiveTransaction(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
                 request.getRequiredConfidence(), request.getEpUrl());
     }

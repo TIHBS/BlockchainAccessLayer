@@ -11,6 +11,7 @@
  ********************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.SubscriptionManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
@@ -24,6 +25,11 @@ import java.util.Collection;
 
 
 public abstract class SubscriptionController {
+    protected final BlockchainManager manager;
+
+    protected SubscriptionController(BlockchainManager manager) {
+        this.manager = manager;
+    }
 
     Collection<SubscriptionKey> getSubscriptions(final SubscriptionType type) {
         final SubscriptionManager manager = SubscriptionManager.getInstance();

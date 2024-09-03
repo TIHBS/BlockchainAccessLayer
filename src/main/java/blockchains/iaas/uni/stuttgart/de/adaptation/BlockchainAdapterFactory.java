@@ -17,15 +17,15 @@ import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnecti
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import lombok.extern.log4j.Log4j2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @Log4j2
 public class BlockchainAdapterFactory {
-    public BlockchainAdapterFactory() {
+    private final BlockchainPluginManager manager;
 
+    public BlockchainAdapterFactory(BlockchainPluginManager manager) {
+        this.manager = manager;
     }
 
     public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile) throws Exception {
@@ -40,7 +40,7 @@ public class BlockchainAdapterFactory {
     }
 
     private BlockchainAdapter createAdapter(AbstractConnectionProfile connectionProfile) {
-        List<IAdapterExtension> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
+        List<IAdapterExtension> adapterExtensions = manager.getExtensions();
         for (IAdapterExtension adapterExtension : adapterExtensions) {
             if (connectionProfile.getClass() == adapterExtension.getConnectionProfileClass()) {
                 return adapterExtension.getAdapter(connectionProfile);

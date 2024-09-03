@@ -30,6 +30,10 @@ import java.util.Collection;
 @Log4j2
 public class OrphanedTransactionController extends SubscriptionController {
 
+    public OrphanedTransactionController(BlockchainManager manager) {
+        super(manager);
+    }
+
     @GetMapping
     public Collection<SubscriptionKey> get(){
         return getSubscriptions(SubscriptionType.DETECT_ORPHANED_TRANSACTION);
@@ -38,7 +42,7 @@ public class OrphanedTransactionController extends SubscriptionController {
     @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
     public void detectOprphanedTransaction(DetectOrphanedTransactionRequest request){
         log.info("Received an detectOprphanedTransaction request via REST API");
-        final BlockchainManager manager = new BlockchainManager();
+        log.info("Received an detectOprphanedTransaction request via REST API");
         manager.detectOrphanedTransaction(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(),
                  request.getEpUrl());
     }

@@ -38,12 +38,17 @@ import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import com.google.common.base.Strings;
 import io.reactivex.disposables.Disposable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
+@Log4j2
+@Component
 public class BlockchainManager {
-    private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
+    private final AdapterManager adapterManager;
 
+    public BlockchainManager(AdapterManager adapterManager) {
+        this.adapterManager = adapterManager;
+    }
     /**
      * Submits a transaction to the blockchain, and sends a callback message informing a remote endpoint of the result.
      * The status of the result could be:
@@ -61,8 +66,6 @@ public class BlockchainManager {
      */
     public void submitNewTransaction(final String correlationId, final String to, final BigInteger value,
                                      final String blockchainId, final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
-
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
@@ -128,7 +131,6 @@ public class BlockchainManager {
      */
     public void receiveTransactions(final String correlationId, final String from, final String blockchainId,
                                     final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
@@ -176,7 +178,6 @@ public class BlockchainManager {
      */
     public void receiveTransaction(final String correlationId, final String from, final String blockchainId,
                                    final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
@@ -233,7 +234,6 @@ public class BlockchainManager {
      */
     public void detectOrphanedTransaction(final String correlationId, final String transactionId, final String blockchainId,
                                           final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.detectOrphanedTransaction(transactionId);
@@ -289,7 +289,6 @@ public class BlockchainManager {
      */
     public void ensureTransactionState(final String correlationId, final String transactionId, final String blockchainId,
                                        final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
@@ -376,7 +375,6 @@ public class BlockchainManager {
             throw new InvalidScipParameterException();
         }
 
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
@@ -450,7 +448,7 @@ public class BlockchainManager {
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-        Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
+        Disposable result = this.adapterManager.getAdapter(blockchainIdentifier)
                 .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
                 .doFinally(() -> {
                     // remove subscription from subscription list
@@ -507,7 +505,7 @@ public class BlockchainManager {
         }
 
         try {
-            return AdapterManager.getInstance()
+            return adapterManager
                     .getAdapter(blockchainIdentifier)
                     .queryEvents(smartContractPath, eventIdentifier, outputParameters, filter, timeFrame)
                     .join();
@@ -528,7 +526,7 @@ public class BlockchainManager {
      */
     public String testConnection(String blockchainIdentifier) {
         try {
-            final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainIdentifier);
+            final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
             return adapter.testConnection();
         } catch (Exception e) {
             return e.getMessage();

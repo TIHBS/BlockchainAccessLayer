@@ -29,6 +29,8 @@ public class CompletableFutureSubscription<T> extends Subscription {
 
     @Override
     public void unsubscribe() {
-        future.completeExceptionally(new ManualUnsubscriptionException());
+        if (future != null) {
+            future.completeExceptionally(new ManualUnsubscriptionException());
+        }
     }
 }
