@@ -15,7 +15,6 @@ import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.*;
@@ -132,7 +131,11 @@ public class TestLoadAdapter {
     private void clearPluginDirectory() {
         Path path = pluginManager.getPluginsPath();
         final File[] files = path.toFile().listFiles();
-        for (File f : files) f.delete();
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
+            }
+        }
     }
 
 }
