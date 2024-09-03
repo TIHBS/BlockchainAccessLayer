@@ -61,6 +61,7 @@ public class BlockchainPluginManager {
         } else {
             log.info("Attempting to load blockchain adapter plugins from: '{}'...", () -> pluginDirPath);
             pluginManager.loadPlugins();
+            startPlugins();
         }
 
     }

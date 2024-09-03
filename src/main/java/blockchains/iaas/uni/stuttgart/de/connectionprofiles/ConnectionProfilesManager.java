@@ -123,6 +123,7 @@ public class ConnectionProfilesManager {
     }
 
     private void loadInitialConnectionProfilesIfExist() {
+        log.info("Loading connection profiles from file: {}", initialConfigurationFilePath);
         File initialFile = initialConfigurationFilePath.toFile();
 
         if (initialFile.exists() && initialFile.isFile()) {
