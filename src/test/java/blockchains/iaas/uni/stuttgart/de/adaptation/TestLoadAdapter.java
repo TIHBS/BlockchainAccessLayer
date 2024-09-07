@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -115,15 +116,18 @@ public class TestLoadAdapter {
         assertNotNull(adapter);
     }
 
-    private void clearPluginDirectory() {
-        log.info("Cleaning up plugin directory: {}...", () -> pluginManager.getPluginsPath());
+    private void clearPluginDirectory() throws IOException {
+        log.info("Cleaning up plugin directory: {}", () -> pluginManager.getPluginsPath());
         Path path = pluginManager.getPluginsPath();
-        final File[] files = path.toFile().listFiles();
-        log.info("Cleaning up plugin directory: Found the following files: {}", List.of(files));
-        if (files != null) {
-            for (File f : files) {
-                f.delete();
-            }
+        try(Stream<Path> files = Files.list(path)) {
+            files.forEach(filePath -> {
+                log.info("Removing file: {}", filePath);
+                try {
+                    Files.delete(filePath);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 
