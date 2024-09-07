@@ -31,7 +31,7 @@ public class BlockchainPluginManager {
     private final String pluginDirStr;
     private static final String DEFAULT_PLUGIN_DIR = Paths.get(System.getProperty("user.home"), ".bal").toString();
 
-    private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + "}")
+    private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + ":}")
                                     String pluginDir) {
         log.info("Initializing Blockchain Plugin Manager: pluginDir={}.", pluginDir);
 
