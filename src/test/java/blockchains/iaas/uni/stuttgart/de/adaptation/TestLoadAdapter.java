@@ -114,17 +114,20 @@ public class TestLoadAdapter {
     private void clearPluginDirectory() throws IOException {
         log.info("Cleaning up plugin directory from potential plugin files: {}", () -> pluginManager.getPluginsPath());
         Path path = pluginManager.getPluginsPath();
-        try(Stream<Path> files = Files.list(path)) {
-            files.forEach(filePath -> {
-                try {
-                    if (Files.isRegularFile(filePath)) {
-                        log.info("Removing file: {}", filePath);
-                        Files.delete(filePath);
+        
+        if (Files.exists(path)) {
+            try (Stream<Path> files = Files.list(path)) {
+                files.forEach(filePath -> {
+                    try {
+                        if (Files.isRegularFile(filePath)) {
+                            log.info("Removing file: {}", filePath);
+                            Files.delete(filePath);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+                });
+            }
         }
     }
 
