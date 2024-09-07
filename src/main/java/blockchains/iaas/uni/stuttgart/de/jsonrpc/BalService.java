@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -23,17 +23,22 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 
 @JsonRpcService
-@AllArgsConstructor
+@Log4j2
 public class BalService {
-    private static final Logger log = LoggerFactory.getLogger(BalService.class);
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
+    private final BlockchainManager manager;
+
+    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager) {
+        this.blockchainType = blockchainType;
+        this.blockchainId = blockchainId;
+        this.smartContractPath = smartContractPath;
+        this.manager = manager;
+    }
 
     @JsonRpcMethod
     public String Invoke(
@@ -46,8 +51,7 @@ public class BalService {
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signature") String signature
     ) {
-        log.info("Invoke method is executed!");
-        BlockchainManager manager = new BlockchainManager();
+        log.info("SCIP Invoke method is executed!");
         manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
                 requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
 
@@ -63,8 +67,7 @@ public class BalService {
             @JsonRpcParam("filter") String filter,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationIdentifier") String correlationId) {
-        log.info("Subscribe method is executed!");
-        BlockchainManager manager = new BlockchainManager();
+        log.info("SCIP Subscribe method is executed!");
 
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
@@ -82,6 +85,7 @@ public class BalService {
                               @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
                               @JsonRpcParam("parameters") List<Parameter> parameters,
                               @JsonRpcParam("correlationIdentifier") String correlationId) {
+        log.info("SCIP Unsubscribe method is executed!");
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
         }
@@ -90,7 +94,6 @@ public class BalService {
             throw new InvalidScipParameterException();
         }
 
-        BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(functionIdentifier)) {
             manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
@@ -108,13 +111,11 @@ public class BalService {
             @JsonRpcOptional @JsonRpcParam("filter") String filter,
             @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame,
             @JsonRpcParam("parameters") List<Parameter> outputParameters) {
-        log.info("Query method is executed!");
+        log.info("SCIP Query method is executed!");
 
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
         }
-
-        BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(eventIdentifier)) {
             return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);

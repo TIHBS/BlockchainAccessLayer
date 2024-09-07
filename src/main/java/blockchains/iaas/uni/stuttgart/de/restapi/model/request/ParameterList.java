@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -12,13 +12,13 @@ package blockchains.iaas.uni.stuttgart.de.restapi.model.request;
 
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.*;
 
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import lombok.Setter;
+
 // todo rethink type
+@Setter
 @XmlRootElement(name = "Parameters")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class ParameterList {
@@ -29,7 +29,4 @@ public class ParameterList {
         return arguments;
     }
 
-    public void setArguments(List<Parameter> arguments) {
-        this.arguments = arguments;
-    }
 }

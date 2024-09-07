@@ -14,37 +14,34 @@ package blockchains.iaas.uni.stuttgart.de.management;
 
 import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
-
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
-import org.pf4j.DefaultPluginManager;
-import org.pf4j.PluginManager;
-import org.pf4j.PluginState;
-import org.pf4j.PluginWrapper;
-import org.pf4j.ManifestPluginDescriptorFinder;
-import org.pf4j.JarPluginLoader;
-import org.pf4j.PluginDescriptorFinder;
-import org.pf4j.PluginLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.pf4j.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class BlockchainPluginManager{
-
-    private static final Logger log = LoggerFactory.getLogger(BlockchainPluginManager.class);
-
+@Log4j2
+@Component
+public class BlockchainPluginManager {
     private PluginManager pluginManager = null;
-    private static BlockchainPluginManager instance = null;
+    private final String pluginDirStr;
 
-    private BlockchainPluginManager() {
-        String property = System.getProperty("pf4j.pluginsDir");
-        Path PLUGINS_DIRECTORY = Paths.get(property);
-        this.pluginManager = new DefaultPluginManager(Constants.PLUGINS_DIRECTORY) {
+    private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + "}")
+                                    String pluginDir) {
+        log.info("Initializing Blockchain Plugin Manager: pluginDir={}.", pluginDir);
+        this.pluginDirStr = pluginDir;
+        Path[] dirPaths = new Path[0];
+        Path pluginDirPath = getPluginsPath();
+
+        if (pluginDirPath != null) {
+            dirPaths = new Path[]{pluginDirPath};
+        }
+
+        this.pluginManager = new DefaultPluginManager(dirPaths) {
             //
             @Override
             protected PluginLoader createPluginLoader() {
@@ -59,16 +56,16 @@ public class BlockchainPluginManager{
             }
         };
 
-        pluginManager.loadPlugins();
-
-    }
-
-    public static BlockchainPluginManager getInstance() {
-        if (instance == null) {
-            instance = new BlockchainPluginManager();
+        if (pluginDirPath == null) {
+            log.info("Plugin directory not specified. Not loading plugins at startup.");
+        } else {
+            log.info("Attempting to load blockchain adapter plugins from: '{}'...", () -> pluginDirPath);
+            pluginManager.loadPlugins();
+            startPlugins();
         }
-        return instance;
+
     }
+
 
     public List<IAdapterExtension> getExtensions() {
         return this.pluginManager.getExtensions(IAdapterExtension.class);
@@ -79,7 +76,7 @@ public class BlockchainPluginManager{
     }
 
     public Path getPluginsPath() {
-        return Constants.PLUGINS_DIRECTORY;
+        return pluginDirStr != null ? Paths.get(pluginDirStr) : null;
     }
 
     public List<PluginWrapper> getPlugins() {
@@ -92,10 +89,16 @@ public class BlockchainPluginManager{
 
     public void startPlugin(String pluginId) {
         pluginManager.startPlugin(pluginId);
+        registerConnectionProfileSubtypeClass(pluginId);
     }
 
     public void startPlugins() {
         pluginManager.startPlugins();
+        List<PluginWrapper> plugins = getPlugins(PluginState.STARTED);
+
+        for (PluginWrapper pluginWrapper : plugins) {
+            registerConnectionProfileSubtypeClass(pluginWrapper.getPluginId());
+        }
     }
 
     public List<PluginWrapper> getPlugins(PluginState pluginState) {
@@ -118,7 +121,7 @@ public class BlockchainPluginManager{
         return pluginManager.getPlugin(pluginId).getPluginState();
     }
 
-    public void registerConnectionProfileSubtypeClass(String pluginId) {
+    private void registerConnectionProfileSubtypeClass(String pluginId) {
         List<IAdapterExtension> adapterExtensions = this.pluginManager.getExtensions(IAdapterExtension.class, pluginId);
         for (IAdapterExtension adapterExtension : adapterExtensions) {
             String namedType = adapterExtension.getConnectionProfileNamedType();

@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
@@ -16,19 +16,17 @@ import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
 
+@Log4j2
 public class BlockchainAdapterFactory {
+    private final BlockchainPluginManager manager;
 
-
-    public BlockchainAdapterFactory() {
-
+    public BlockchainAdapterFactory(BlockchainPluginManager manager) {
+        this.manager = manager;
     }
-
-    private static final Logger log = LoggerFactory.getLogger(BlockchainAdapterFactory.class);
 
     public BlockchainAdapter createBlockchainAdapter(AbstractConnectionProfile connectionProfile) throws Exception {
 
@@ -36,19 +34,20 @@ public class BlockchainAdapterFactory {
             return createAdapter(connectionProfile);
         } catch (Exception e) {
             final String msg = String.format("Error while creating a blockchain adapter for. Details: %s", e.getMessage());
-            log.error(msg);
+            log.error(msg, e);
             throw new Exception(msg, e);
         }
     }
 
     private BlockchainAdapter createAdapter(AbstractConnectionProfile connectionProfile) {
-        List<IAdapterExtension> adapterExtensions = BlockchainPluginManager.getInstance().getExtensions();
+        List<IAdapterExtension> adapterExtensions = manager.getExtensions();
         for (IAdapterExtension adapterExtension : adapterExtensions) {
             if (connectionProfile.getClass() == adapterExtension.getConnectionProfileClass()) {
                 return adapterExtension.getAdapter(connectionProfile);
             }
         }
-        System.err.println("No extension for blockchain-id: " + connectionProfile);
+        log.error("No extension for blockchain-id: {}", connectionProfile);
+
         return null;
     }
 

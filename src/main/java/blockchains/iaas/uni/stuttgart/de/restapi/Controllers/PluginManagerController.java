@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2022-2023 Institute for the Architecture of Application System -
+ * Copyright (c) 2022-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Akshay Patel
  * Co-Author: Ghareeb Falazi
@@ -10,138 +10,129 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-
 package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import lombok.extern.log4j.Log4j2;
 import org.pf4j.DependencyResolver.DependenciesNotFoundException;
 import org.pf4j.PluginWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Providers;
 
-@Path("plugins")
+@RestController()
+@RequestMapping("plugins")
+@Log4j2
 public class PluginManagerController {
-    private static final Logger log = LoggerFactory.getLogger(PluginManagerController.class);
+    final
+    BlockchainPluginManager blockchainPluginManager;
 
-    @Context
-    protected UriInfo uriInfo;
+    public PluginManagerController(BlockchainPluginManager blockchainPluginManager) {
+        this.blockchainPluginManager = blockchainPluginManager;
+    }
 
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadJar(@FormDataParam("file") InputStream uploadedInputStream,
-                              @FormDataParam("file") FormDataContentDisposition fileDetails) {
-
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
-        String fileName = fileDetails.getFileName();
+    @PostMapping
+    public ResponseEntity<String> uploadJar(@RequestParam("file") MultipartFile file,
+                                            RedirectAttributes redirectAttributes) {
+        final String fileName = file.getOriginalFilename();
         log.info("Received file {}", fileName);
-        String uploadedFileLocation = blockchainPluginManager.getPluginsPath() + "/" + fileDetails.getFileName();
+        String uploadedFileLocation = blockchainPluginManager.getPluginsPath() + "/" + fileName;
         java.nio.file.Path filePath = Paths.get(uploadedFileLocation);
+
         if (Files.exists(filePath)) {
             log.error("Received file {} already exists in plugins directory.", fileName);
-            return Response.status(Response.Status.BAD_REQUEST).entity("File already exists with same name.").build();
+            return ResponseEntity.badRequest().body("File already exists with same name.");
         }
-        writeToFile(uploadedInputStream, uploadedFileLocation);
+
+        writeToFile(file, uploadedFileLocation);
+
         try {
             blockchainPluginManager.loadJar(filePath);
-            return Response.ok().build();
+            log.info("Successfully loaded jar file.");
+
+            return ResponseEntity.ok().build();
         } catch (DependenciesNotFoundException e) {
-            return Response.status(400).entity(e.getMessage()).type("text/plain").build();
+            return ResponseEntity.status(400).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
         }
     }
 
-    @POST
-    @Path("{plugin-id}/enable")
-    public Response enablePlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().enablePlugin(pluginId);
-        return Response.ok().build();
+    @PostMapping(path = "{plugin-id}/enable")
+    public void enablePlugin(@PathVariable("plugin-id") final String pluginId) {
+        blockchainPluginManager.enablePlugin(pluginId);
     }
 
-    @POST
-    @Path("{plugin-id}/start")
-    public Response startPlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+    @PostMapping(path = "{plugin-id}/start")
+    public void startPlugin(@PathVariable("plugin-id") final String pluginId) {
         blockchainPluginManager.startPlugin(pluginId);
-        blockchainPluginManager.registerConnectionProfileSubtypeClass(pluginId);
-
-        return Response.ok().build();
     }
 
-    @POST
-    @Path("{plugin-id}/disable")
-    public Response disablePlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().disablePlugin(pluginId);
-        return Response.ok().build();
+    @PostMapping(path = "{plugin-id}/disable")
+    public void disablePlugin(@PathVariable("plugin-id") final String pluginId) {
+        blockchainPluginManager.disablePlugin(pluginId);
     }
 
-    @POST
-    @Path("{plugin-id}/unload")
-    public Response unloadPlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager.getInstance().unloadPlugin(pluginId);
-        return Response.ok().build();
+    @PostMapping(path = "{plugin-id}/unload")
+    public void unloadPlugin(@PathVariable("plugin-id") final String pluginId) {
+        blockchainPluginManager.unloadPlugin(pluginId);
     }
 
-    @DELETE
-    @Path("{plugin-id}")
-    public Response deletePlugin(@PathParam("plugin-id") final String pluginId) {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+    @DeleteMapping("{plugin-id}")
+    public void deletePlugin(@PathVariable("plugin-id") final String pluginId) {
         blockchainPluginManager.deletePlugin(pluginId);
-        return Response.ok().build();
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getPlugins() {
-        BlockchainPluginManager blockchainPluginManager = BlockchainPluginManager.getInstance();
+    @GetMapping
+    public ArrayNode getPlugins() {
         List<PluginWrapper> plugins = blockchainPluginManager.getPlugins();
 
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode parentArray = objectMapper.createArrayNode();
+
         for (PluginWrapper p : plugins) {
             ObjectNode pluginInfo = objectMapper.createObjectNode();
             pluginInfo.put("plugin-id", p.getPluginId());
             pluginInfo.put("status", String.valueOf(p.getPluginState()));
             parentArray.add(pluginInfo);
         }
-        return Response.ok().entity(parentArray).build();
+
+        return parentArray;
     }
 
-    private void writeToFile(InputStream uploadedInputStream,
+    private void writeToFile(MultipartFile file,
                              String uploadedFileLocation) {
+        try (InputStream uploadedInputStream = file.getInputStream()) {
 
-        try {
-            OutputStream out = new FileOutputStream(new File(
-                    uploadedFileLocation));
-            try {
-                int read = 0;
+            try (OutputStream out = new FileOutputStream(uploadedFileLocation)) {
+                int read;
                 byte[] bytes = new byte[1024];
 
-                out = new FileOutputStream(new File(uploadedFileLocation));
                 while ((read = uploadedInputStream.read(bytes)) != -1) {
                     out.write(bytes, 0, read);
                 }
-            } finally {
+
                 out.flush();
-                out.close();
+                log.debug("File {} written to disk", uploadedFileLocation);
+            } catch (IOException e) {
+                log.error("Failure occurred while saving the received file to disk", e);
+                throw new RuntimeException(e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to create an input stream from the received file.", e);
+            throw new RuntimeException(e);
         }
     }
 }

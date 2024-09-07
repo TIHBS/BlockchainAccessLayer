@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System -
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -38,12 +38,17 @@ import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import com.google.common.base.Strings;
 import io.reactivex.disposables.Disposable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
+@Log4j2
+@Component
 public class BlockchainManager {
-    private static final Logger log = LoggerFactory.getLogger(BlockchainManager.class);
+    private final AdapterManager adapterManager;
 
+    public BlockchainManager(AdapterManager adapterManager) {
+        this.adapterManager = adapterManager;
+    }
     /**
      * Submits a transaction to the blockchain, and sends a callback message informing a remote endpoint of the result.
      * The status of the result could be:
@@ -61,8 +66,6 @@ public class BlockchainManager {
      */
     public void submitNewTransaction(final String correlationId, final String to, final BigInteger value,
                                      final String blockchainId, final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
-
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
@@ -81,7 +84,7 @@ public class BlockchainManager {
                             log.info("resulting transaction is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to submit a transaction. Reason: {}", e.getMessage());
+                        log.error("Failed to submit a transaction.", e);
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, ((BlockchainNodeUnreachableException) e).getCode()));
@@ -128,7 +131,6 @@ public class BlockchainManager {
      */
     public void receiveTransactions(final String correlationId, final String from, final String blockchainId,
                                     final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
@@ -136,7 +138,7 @@ public class BlockchainManager {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
-                    .doOnError(throwable -> log.error("Failed to receive transaction. Reason:{}", throwable.getMessage()))
+                    .doOnError(throwable -> log.error("Failed to receive transaction.", throwable))
                     .subscribe(transaction -> {
                         if (transaction != null) {
                             CallbackManager.getInstance().sendCallback(epUrl,
@@ -176,7 +178,6 @@ public class BlockchainManager {
      */
     public void receiveTransaction(final String correlationId, final String from, final String blockchainId,
                                    final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
@@ -185,13 +186,13 @@ public class BlockchainManager {
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
                     .doOnError(throwable -> {
-                        log.error("Failed to receive transaction. Reason: " + throwable.getMessage());
+                        log.error("Failed to receive transaction.", throwable);
 
                         if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
                             CallbackManager.getInstance().sendCallbackAsync(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, (new BlockchainNodeUnreachableException()).getCode()));
                         } else {
-                            log.error("Unhandled exception. Exception details: " + throwable.getMessage());
+                            log.error("Unhandled exception.", throwable);
                         }
                     })
                     .take(1)
@@ -199,7 +200,7 @@ public class BlockchainManager {
                         if (transaction != null) {
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, transaction, false));
-                            log.info("usubscribing from receiveTransactions");
+                            log.info("Usubscribing from receiveTransactions");
                         } else {
                             log.error("received transaction is null!");
                         }
@@ -233,7 +234,6 @@ public class BlockchainManager {
      */
     public void detectOrphanedTransaction(final String correlationId, final String transactionId, final String blockchainId,
                                           final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.detectOrphanedTransaction(transactionId);
@@ -243,10 +243,10 @@ public class BlockchainManager {
                             CallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, txState, false, 0));
                         } else // we should never reach here!
-                            log.error("resulting transactionState is null");
+                            log.error("Resulting transactionState is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
+                        log.info("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
@@ -289,7 +289,6 @@ public class BlockchainManager {
      */
     public void ensureTransactionState(final String correlationId, final String transactionId, final String blockchainId,
                                        final double requiredConfidence, final String epUrl) {
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         try {
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
@@ -306,7 +305,7 @@ public class BlockchainManager {
                             log.error("resulting transactionState is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction. Reason: {}", e.getMessage());
+                        log.info("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             CallbackManager.getInstance().sendCallback(epUrl,
@@ -376,7 +375,6 @@ public class BlockchainManager {
             throw new InvalidScipParameterException();
         }
 
-        final AdapterManager adapterManager = AdapterManager.getInstance();
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
@@ -404,11 +402,11 @@ public class BlockchainManager {
                             }
                         }
                     } else {
-                        log.info("resulting transaction is null");
+                        log.info("Resulting transaction is null");
                     }
                 }).
                 exceptionally((e) -> {
-                    log.info("Failed to invoke smart contract function. Reason: {}", e.getMessage());
+                    log.info("Failed to invoke smart contract function.", e);
                     // happens if the node is unreachable, or something goes wrong while trying to invoke the sc function.
                     if (e.getCause() instanceof BalException)
                         CallbackManager.getInstance().sendCallback(callbackUrl,
@@ -450,13 +448,13 @@ public class BlockchainManager {
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-        Disposable result = AdapterManager.getInstance().getAdapter(blockchainIdentifier)
+        Disposable result = this.adapterManager.getAdapter(blockchainIdentifier)
                 .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
                 .doFinally(() -> {
                     // remove subscription from subscription list
                     SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
                 })
-                .doOnError(throwable -> log.error("Failed to detect an occurrence. Reason:{}", throwable.getMessage()))
+                .doOnError(throwable -> log.error("Failed to detect an occurrence.", throwable))
                 .subscribe(occurrence -> {
                     if (occurrence != null) {
                         CallbackManager.getInstance().sendCallback(callbackUrl,
@@ -507,7 +505,7 @@ public class BlockchainManager {
         }
 
         try {
-            return AdapterManager.getInstance()
+            return adapterManager
                     .getAdapter(blockchainIdentifier)
                     .queryEvents(smartContractPath, eventIdentifier, outputParameters, filter, timeFrame)
                     .join();
@@ -515,7 +513,7 @@ public class BlockchainManager {
             if (e.getCause() instanceof BalException)
                 throw (BalException) e.getCause();
 
-            log.error("caught a non-BALException! " + e.getCause().getClass().getName());
+            log.error("caught a non-BALException!", e);
             throw new UnknownException();
         }
     }
@@ -524,11 +522,11 @@ public class BlockchainManager {
      * Tests whether the connection with the specified blockchain instance is functioning correctly
      *
      * @param blockchainIdentifier the identifier of the blockchain instance to test.
-     * @return true if the connection is functional, false otherwise.
+     * @return "true" if the connection is functional, "false" otherwise.
      */
     public String testConnection(String blockchainIdentifier) {
         try {
-            final BlockchainAdapter adapter = AdapterManager.getInstance().getAdapter(blockchainIdentifier);
+            final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
             return adapter.testConnection();
         } catch (Exception e) {
             return e.getMessage();
