@@ -35,7 +35,7 @@ public class BlockchainPluginManager {
                                     String pluginDir) {
         log.info("Initializing Blockchain Plugin Manager: pluginDir={}.", pluginDir);
 
-        if (pluginDir == null) {
+        if (pluginDir == null || pluginDir.trim().isEmpty()) {
             log.info("No plugin directory is provided. Using default directory instead: {}", DEFAULT_PLUGIN_DIR);
             pluginDir = DEFAULT_PLUGIN_DIR;
         }

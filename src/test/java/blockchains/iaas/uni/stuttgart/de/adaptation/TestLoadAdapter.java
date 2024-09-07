@@ -116,8 +116,10 @@ public class TestLoadAdapter {
     }
 
     private void clearPluginDirectory() {
+        log.info("Cleaning up plugin directory: {}...", () -> pluginManager.getPluginsPath());
         Path path = pluginManager.getPluginsPath();
         final File[] files = path.toFile().listFiles();
+        log.info("Cleaning up plugin directory: Found the following files: {}", List.of(files));
         if (files != null) {
             for (File f : files) {
                 f.delete();
