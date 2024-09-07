@@ -59,16 +59,11 @@ public class TestLoadAdapter {
         clearPluginDirectory();
     }
 
-    @AfterEach
-    public void tearDown() throws IOException {
-        clearPluginDirectory();
-    }
-
     private void loadPlugin() throws IOException {
         if (pluginManager.getPlugins().stream().filter(p -> "ethereum-plugin".equals(p.getPluginId())).findAny().isEmpty()) {
             Path uploadedPluginPath = pluginManager.getPluginsPath().resolve("ethereum.jar");
             log.info("Loading Plugin: Copying {} to {}...", pluginPath, uploadedPluginPath);
-            Files.createDirectories(uploadedPluginPath);
+            Files.createDirectories(pluginManager.getPluginsPath());
             Files.copy(pluginPath, uploadedPluginPath);
             pluginManager.loadJar(pluginPath);
         }
@@ -89,7 +84,7 @@ public class TestLoadAdapter {
     }
 
     @Test
-    public void testLoadConnectionProfile() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
+    public void testLoadConnectionProfile() throws IOException, URISyntaxException {
         loadPlugin();
         String pluginId = pluginManager.getPlugins().get(0).getPluginId();
         pluginManager.startPlugin(pluginId);
@@ -117,13 +112,15 @@ public class TestLoadAdapter {
     }
 
     private void clearPluginDirectory() throws IOException {
-        log.info("Cleaning up plugin directory: {}", () -> pluginManager.getPluginsPath());
+        log.info("Cleaning up plugin directory from potential plugin files: {}", () -> pluginManager.getPluginsPath());
         Path path = pluginManager.getPluginsPath();
         try(Stream<Path> files = Files.list(path)) {
             files.forEach(filePath -> {
-                log.info("Removing file: {}", filePath);
                 try {
-                    Files.delete(filePath);
+                    if (Files.isRegularFile(filePath)) {
+                        log.info("Removing file: {}", filePath);
+                        Files.delete(filePath);
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
