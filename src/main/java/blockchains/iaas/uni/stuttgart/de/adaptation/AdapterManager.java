@@ -18,27 +18,22 @@ import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+@Log4j2
+@Component
 public class AdapterManager {
-    private static final Logger log = LoggerFactory.getLogger(AdapterManager.class);
-    private BlockchainAdapterFactory factory = new BlockchainAdapterFactory();
-    private static AdapterManager instance = null;
     private final Map<String, Pair<BlockchainAdapter, AbstractConnectionProfile>> map = Collections.synchronizedMap(new HashMap<>());
+    private final BlockchainAdapterFactory factory;
 
-    private AdapterManager() {
+    private AdapterManager(BlockchainPluginManager pluginManager) {
+        this.factory = new BlockchainAdapterFactory(pluginManager);
     }
 
-    public static AdapterManager getInstance() {
-        if (instance == null) {
-            instance = new AdapterManager();
-        }
-
-        return instance;
-    }
 
     public BlockchainAdapter getAdapter(String blockchainId) throws BlockchainIdNotFoundException, BlockchainNodeUnreachableException {
         AbstractConnectionProfile connectionProfile = ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId);

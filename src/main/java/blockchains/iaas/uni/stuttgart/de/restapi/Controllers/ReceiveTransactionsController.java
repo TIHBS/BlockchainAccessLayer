@@ -1,16 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
-
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
-import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -20,23 +9,39 @@ import javax.ws.rs.core.Response;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
-@Path("receive-transactions")
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
+import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
+import blockchains.iaas.uni.stuttgart.de.restapi.model.request.ReceiveTransactionsRequest;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collection;
+
+@RestController()
+@RequestMapping("receive-transactions")
+@Log4j2
 public class ReceiveTransactionsController extends SubscriptionController {
 
-    @GET
-    public Response get(){
-        return getSubscriptions(SubscriptionType.RECEIVE_TRANSACTIONS, uriInfo);
+    public ReceiveTransactionsController(BlockchainManager manager) {
+        super(manager);
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_XML)
-    public Response receiveTransaction(ReceiveTransactionsRequest request){
-        final BlockchainManager manager = new BlockchainManager();
+    @GetMapping
+    public Collection<SubscriptionKey> get(){
+        return getSubscriptions(SubscriptionType.RECEIVE_TRANSACTIONS);
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
+    public void receiveTransaction(ReceiveTransactionsRequest request){
+        log.info("Received an receiveTransaction request via REST API");
         manager.receiveTransactions(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
                 request.getRequiredConfidence(), request.getEpUrl());
-
-        return Response.created(UriUtil.generateSubResourceURI(this.uriInfo, request.getSubscriptionId(), false))
-                .build();
     }
 }

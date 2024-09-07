@@ -1,12 +1,5 @@
-package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 /********************************************************************************
- * Copyright (c) 2018 Institute for the Architecture of Application System -
+ * Copyright (c) 2018-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -16,6 +9,14 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
+package blockchains.iaas.uni.stuttgart.de.restapi.model.response;
+
+import jakarta.xml.bind.annotation.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 @XmlRootElement(name="Variable")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CamundaVariable {
@@ -27,24 +28,10 @@ public class CamundaVariable {
     public CamundaVariable(){
 
     }
+
     public CamundaVariable(String value, String type) {
         this.value = value;
         this.type = type;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 }

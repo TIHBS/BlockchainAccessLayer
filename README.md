@@ -62,6 +62,13 @@ example for this file that accesses a geth node, a bitcoind node and a Hyperledg
 }
 ```
 
+### Loading Plugins
+
+- Place plugin jars in a local folder on the file system
+- Refer to this folder in the property `pf4j.pluginsDir`, e.g., via application.properties.
+- Put the value `true` as a value for the property `pf4j.autoLoadPlugins`, e.g., via application.properties
+- When the application starts, the plugins will be loaded and started
+
 ## Building and Deployment
 
 After cloning, you can build the project and package it into a WAR file using the following command:

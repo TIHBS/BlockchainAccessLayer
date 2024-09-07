@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -15,9 +15,11 @@ import java.util.List;
 
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import io.reactivex.disposables.Disposable;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Setter
+@Getter
 public class MonitorOccurrencesSubscription extends ObservableSubscription {
     private String identifier;
     private List<Parameter> parameters;

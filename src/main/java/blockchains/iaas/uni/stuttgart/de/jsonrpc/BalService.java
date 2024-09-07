@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -26,18 +26,23 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 
 @JsonRpcService
-@AllArgsConstructor
+@Log4j2
 public class BalService {
     private static final Logger log = LoggerFactory.getLogger(BalService.class);
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
-    private static final String DTX_ID_FIELD_NAME = "dtx_id";
+    private final BlockchainManager manager;
+
+    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager) {
+        this.blockchainType = blockchainType;
+        this.blockchainId = blockchainId;
+        this.smartContractPath = smartContractPath;
+        this.manager = manager;
+    }
 
     @JsonRpcMethod
     public String Invoke(
@@ -50,17 +55,15 @@ public class BalService {
             @JsonRpcParam("correlationIdentifier") String correlationId,
             @JsonRpcParam("signature") String signature
     ) {
-        log.info("Invoke method is executed!");
+        log.info("SCIP Invoke method is executed!");
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
             DistributedTransactionManager distributedTransactionManager = new DistributedTransactionManager();
             distributedTransactionManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
                     requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
         } else {
-            BlockchainManager manager = new BlockchainManager();
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
                     requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
         }
-
         return "OK";
     }
 
@@ -73,8 +76,7 @@ public class BalService {
             @JsonRpcParam("filter") String filter,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationIdentifier") String correlationId) {
-        log.info("Subscribe method is executed!");
-        BlockchainManager manager = new BlockchainManager();
+        log.info("SCIP Subscribe method is executed!");
 
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
@@ -92,6 +94,7 @@ public class BalService {
                               @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
                               @JsonRpcParam("parameters") List<Parameter> parameters,
                               @JsonRpcParam("correlationIdentifier") String correlationId) {
+        log.info("SCIP Unsubscribe method is executed!");
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
         }
@@ -99,8 +102,6 @@ public class BalService {
         if (Strings.isNullOrEmpty(functionIdentifier) && Strings.isNullOrEmpty(eventIdentifier) && parameters != null) {
             throw new InvalidScipParameterException();
         }
-
-        BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(functionIdentifier)) {
             manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
@@ -118,13 +119,11 @@ public class BalService {
             @JsonRpcOptional @JsonRpcParam("filter") String filter,
             @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame,
             @JsonRpcParam("parameters") List<Parameter> outputParameters) {
-        log.info("Query method is executed!");
+        log.info("SCIP Query method is executed!");
 
         if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
             throw new InvalidScipParameterException();
         }
-
-        BlockchainManager manager = new BlockchainManager();
 
         if (!Strings.isNullOrEmpty(eventIdentifier)) {
             return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);
@@ -135,7 +134,7 @@ public class BalService {
 
     @JsonRpcMethod
     public String Start_Dtx() {
-        log.info("Start_Dtx method is executed!");
+        log.info("SCIP-T Start_Dtx method is executed!");
         DistributedTransactionManager manager = new DistributedTransactionManager();
 
         return manager.startDtx().toString();
@@ -143,7 +142,7 @@ public class BalService {
 
     @JsonRpcMethod
     public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("Commit_Dtx method is executed!");
+        log.info("SCIP-T Commit_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         DistributedTransactionManager manager = new DistributedTransactionManager();
         manager.commitDtx(uuid);
@@ -153,7 +152,7 @@ public class BalService {
 
     @JsonRpcMethod
     public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("Abort_Dtx method is executed!");
+        log.info("SCIP-T Abort_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         DistributedTransactionManager manager = new DistributedTransactionManager();
         manager.abortDtx(uuid);
