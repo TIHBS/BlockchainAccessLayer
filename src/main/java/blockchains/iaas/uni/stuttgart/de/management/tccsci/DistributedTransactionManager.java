@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2023 Institute for the Architecture of Application System -
+ * Copyright (c) 2023-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * Author: Ghareeb Falazi
  *
@@ -18,16 +18,12 @@ import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransactionVerdict;
-import io.reactivex.disposables.Disposable;
 import lombok.extern.log4j.Log4j2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Log4j2
 @Component
@@ -43,8 +39,9 @@ public class DistributedTransactionManager {
     public UUID startDtx() {
         DistributedTransaction tx = new DistributedTransaction();
         DistributedTransactionRepository.getInstance().addDistributedTransaction(tx);
-        log.info("Received start_tx request and generated the following id: " + tx.getId());
-        return tx.getId();
+        final UUID transactionId = tx.getId();
+        log.info("Received start_tx request and generated the following id: {}", () -> transactionId);
+        return transactionId;
     }
 
     public void invokeSc(final String blockchainIdentifier,
@@ -58,23 +55,23 @@ public class DistributedTransactionManager {
                          final String correlationId,
                          final String signature) {
         UUID txId = UUID.fromString(inputs.get(0).getValue());
-        log.info("Received invoke_sc request for dtx: " + txId);
+        log.info("Received invoke_sc request for dtx: {}", txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
         if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
             if (!dtx.getBlockchainIds().contains(blockchainIdentifier)) {
                 ResourceManagerSmartContract rmsc = this.adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
                 SmartContractEvent abortEvent = rmsc.getAbortEvent();
-
+                final UUID dtxId = dtx.getId();
                 this.blockchainManager.subscribeToEvent(blockchainIdentifier,
                                 rmsc.getSmartContractPath(),
                                 abortEvent.getFunctionIdentifier(),
                                 abortEvent.getOutputs(),
                                 0.0,
-                                buildEventFilter(abortEvent, dtx.getId()))
+                                buildEventFilter(abortEvent, dtxId))
                         .take(1)
                         .subscribe(this::handleScError);
-                log.info("Subscribed to the abort error of blockchain: " + blockchainIdentifier + " for the dtx: " + dtx.getId());
+                log.info("Subscribed to the abort error of blockchain: {} for the dtx: {}", blockchainIdentifier, dtxId);
                 dtx.getBlockchainIds().add(blockchainIdentifier);
             }
 
@@ -85,7 +82,7 @@ public class DistributedTransactionManager {
     }
 
     public void abortDtx(UUID txId) {
-        log.info("Received abort_dtx request for dtx: " + txId);
+        log.info("Received abort_dtx request for dtx: {}", txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
         if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
@@ -94,7 +91,7 @@ public class DistributedTransactionManager {
     }
 
     public void commitDtx(UUID txId) {
-        log.info("Received commit_dtx request for dtx: " + txId);
+        log.info("Received commit_dtx request for dtx: {}", txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
         if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
@@ -106,25 +103,26 @@ public class DistributedTransactionManager {
             for (String blockchainIdentifier : ids) {
                 ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
                 SmartContractEvent voteEvent = rmsc.getVoteEvent();
+                final UUID dtxId = dtx.getId();
                 blockchainManager.subscribeToEvent(blockchainIdentifier,
                                 rmsc.getSmartContractPath(),
                                 voteEvent.getFunctionIdentifier(),
                                 voteEvent.getOutputs(),
                                 0.0,
-                                buildEventFilter(voteEvent, dtx.getId()))
+                                buildEventFilter(voteEvent, dtxId))
                         .take(1)
                         .subscribe(occurrence -> handleVoteEvent(occurrence, dtx, ids.size()));
-                log.info("Subscribed to the Vote event of blockchain: " + blockchainIdentifier + " for the dtx: " + dtx.getId());
+                log.info("Subscribed to the Vote event of blockchain: {} for the dtx: {}", blockchainIdentifier, dtxId);
             }
 
 
             CompletableFuture.allOf(ids
                             .stream()
                             .map(bcId -> invokePrepare(bcId, txId))
-                            .collect(Collectors.toList())
+                            .toList()
                             .toArray(new CompletableFuture[ids.size()]))
                     .whenComplete((v, th) -> {
-                        log.info("Invoked prepare* of all RMSCs of dtx: " + txId.toString());
+                        log.info("Invoked prepare* of all RMSCs of dtx: {}", txId);
                     });
         }
     }
@@ -136,7 +134,7 @@ public class DistributedTransactionManager {
 
     private void handleScError(Occurrence errorDetails) {
         String txIdString = errorDetails.getParameters().get(0).getValue();
-        log.info("Received an abort event for dtx: " + txIdString);
+        log.info("Received an abort event for dtx: {}", txIdString);
         UUID txId = UUID.fromString(txIdString);
         doAbort(txId);
     }
@@ -144,29 +142,30 @@ public class DistributedTransactionManager {
     // todo make synchronized so we do not miss counting votes!
     // todo use a better way to get to the special event arguments (a different blockchain system might have a different order!)
     private void handleVoteEvent(Occurrence voteDetails, DistributedTransaction tx, int bcCount) {
-        log.info("Received Vote event for dtx: " + tx.getId().toString());
+        final UUID txId = tx.getId();
+        log.info("Received Vote event for dtx: {}", txId);
         boolean isYesVote = Boolean.parseBoolean(voteDetails.getParameters().get(1).getValue());
 
         if (!isYesVote) {
-            doAbort(tx.getId());
+            doAbort(txId);
         } else {
             tx.setYes(tx.getYes() + 1);
 
             if (tx.getYes() == bcCount) {
-                doCommit(tx.getId());
+                doCommit(txId);
             }
         }
     }
 
     private void doAbort(UUID txId) {
-        log.info("Aborting transaction: " + txId);
+        log.info("Aborting transaction: {}", txId);
         DistributedTransaction tx = DistributedTransactionRepository.getInstance().getById(txId);
         tx.setVerdict(DistributedTransactionVerdict.ABORT);
 
         CompletableFuture.allOf(tx.getBlockchainIds()
                         .stream()
                         .map(bcId -> invokeAbort(bcId, txId))
-                        .collect(Collectors.toList())
+                        .toList()
                         .toArray(new CompletableFuture[tx.getBlockchainIds().size()]))
                 .whenComplete((v, th) -> {
                     tx.setState(DistributedTransactionState.ABORTED);
@@ -174,14 +173,14 @@ public class DistributedTransactionManager {
     }
 
     private void doCommit(UUID txId) {
-        log.info("Committing transaction: " + txId);
+        log.info("Committing transaction: {}", txId);
         DistributedTransaction tx = DistributedTransactionRepository.getInstance().getById(txId);
         tx.setVerdict(DistributedTransactionVerdict.COMMIT);
 
         CompletableFuture.allOf(tx.getBlockchainIds()
                         .stream()
                         .map(bcId -> invokeCommit(bcId, txId))
-                        .collect(Collectors.toList())
+                        .toList()
                         .toArray(new CompletableFuture[tx.getBlockchainIds().size()]))
                 .whenComplete((v, th) -> {
                     tx.setState(DistributedTransactionState.COMMITTED);
