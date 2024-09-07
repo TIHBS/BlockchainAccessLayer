@@ -29,10 +29,17 @@ import java.util.List;
 public class BlockchainPluginManager {
     private PluginManager pluginManager = null;
     private final String pluginDirStr;
+    private static final String DEFAULT_PLUGIN_DIR = Paths.get(System.getProperty("user.home"), ".bal").toString();
 
     private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + "}")
                                     String pluginDir) {
         log.info("Initializing Blockchain Plugin Manager: pluginDir={}.", pluginDir);
+
+        if (pluginDir == null) {
+            log.info("No plugin directory is provided. Using default directory instead: {}", DEFAULT_PLUGIN_DIR);
+            pluginDir = DEFAULT_PLUGIN_DIR;
+        }
+
         this.pluginDirStr = pluginDir;
         Path[] dirPaths = new Path[0];
         Path pluginDirPath = getPluginsPath();

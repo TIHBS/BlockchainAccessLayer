@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,29 +44,13 @@ public class TestLoadAdapter {
     private static final String NETWORK_NAME = "eth-0";
     private static String originalPf4jPath;
     private final Path pluginPath = Paths.get(Objects.requireNonNull(TestLoadAdapter.class.getClassLoader().getResource("plugins/ethereum.jar")).toURI());
-    private final String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
+    private final static String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
     @Autowired
     private BlockchainPluginManager pluginManager;
     @Autowired
     private AdapterManager adapterManager;
 
     public TestLoadAdapter() throws URISyntaxException {
-    }
-
-    @BeforeAll
-    public static void setPf4jDir() throws IOException {
-        originalPf4jPath = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
-        String tmpdir = Files.createTempDirectory("pf4j-temp-plugin-directory").toFile().getAbsolutePath();
-        log.info("BeforeAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath, tmpdir);
-        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, tmpdir);
-    }
-
-    @AfterAll
-    public static void restorePf4Dir() {
-
-        String temp = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
-        log.info("AfterAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, temp, originalPf4jPath);
-        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath == null ? "" : originalPf4jPath);
     }
 
     @BeforeEach
@@ -82,6 +67,7 @@ public class TestLoadAdapter {
         if (pluginManager.getPlugins().stream().filter(p -> "ethereum-plugin".equals(p.getPluginId())).findAny().isEmpty()) {
             Path uploadedPluginPath = pluginManager.getPluginsPath().resolve("ethereum.jar");
             log.info("Loading Plugin: Copying {} to {}...", pluginPath, uploadedPluginPath);
+            Files.createDirectories(uploadedPluginPath);
             Files.copy(pluginPath, uploadedPluginPath);
             pluginManager.loadJar(pluginPath);
         }
