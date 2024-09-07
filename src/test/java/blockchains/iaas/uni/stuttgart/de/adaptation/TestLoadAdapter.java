@@ -80,7 +80,8 @@ public class TestLoadAdapter {
 
     private void loadPlugin() throws IOException {
         if (pluginManager.getPlugins().stream().filter(p -> "ethereum-plugin".equals(p.getPluginId())).findAny().isEmpty()) {
-            Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
+            Path uploadedPluginPath = pluginManager.getPluginsPath().resolve("ethereum.jar");
+            log.info("Loading Plugin: Copying {} to {}...", pluginPath, uploadedPluginPath);
             Files.copy(pluginPath, uploadedPluginPath);
             pluginManager.loadJar(pluginPath);
         }

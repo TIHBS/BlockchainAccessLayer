@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2023 Institute for the Architecture of Application System -
+ * Copyright (c) 2023-2024 Institute for the Architecture of Application System -
  * University of Stuttgart
  * 
  * Author: Ghareeb Falazi
@@ -15,49 +15,34 @@ package blockchains.iaas.uni.stuttgart.de.restapi.Controllers;
 
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionRepository;
-import blockchains.iaas.uni.stuttgart.de.restapi.model.response.LinkCollectionResponse;
-import blockchains.iaas.uni.stuttgart.de.restapi.util.UriUtil;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.UUID;
 
-@Path("distributed-transactions")
+@RestController()
+@RequestMapping("distributed-transactions")
+@Log4j2
 public class DistributedTransactionsController {
 
-    @Context
-    protected UriInfo uriInfo;
-    @GET
-    public Response get() {
-        List<DistributedTransaction> all = DistributedTransactionRepository.getInstance().getAll();
-        final LinkCollectionResponse response = new LinkCollectionResponse();
-
-        for (final DistributedTransaction dtx : all) {
-            response.add(UriUtil.generateSubResourceLink(uriInfo, dtx.getId().toString(), false, "self"));
-        }
-
-        return Response.ok(response).build();
+    @GetMapping()
+    public List<DistributedTransaction> get() {
+        return DistributedTransactionRepository.getInstance().getAll();
     }
 
-    @GET
-    @Path("/{dtxId}")
-    public Response getSubscriptionDetails(@PathParam("dtxId") final String dtxId) {
+    @GetMapping(path = "/{dtxId}")
+    public ResponseEntity<DistributedTransaction> getSubscriptionDetails(@PathVariable("dtxId") final String dtxId) {
         UUID uuid = UUID.fromString(dtxId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         if (dtx != null) {
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(dtx)
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+            return ResponseEntity.ok(dtx);
         } else {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return ResponseEntity.notFound().build();
         }
     }
 

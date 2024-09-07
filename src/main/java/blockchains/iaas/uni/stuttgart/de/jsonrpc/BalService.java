@@ -31,17 +31,19 @@ import lombok.extern.log4j.Log4j2;
 @JsonRpcService
 @Log4j2
 public class BalService {
-    private static final Logger log = LoggerFactory.getLogger(BalService.class);
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
     private final BlockchainManager manager;
+    private final DistributedTransactionManager dtxManager;
+    private static final String DTX_ID_FIELD_NAME = "dtx_id";
 
-    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager) {
+    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager, DistributedTransactionManager dtxManager) {
         this.blockchainType = blockchainType;
         this.blockchainId = blockchainId;
         this.smartContractPath = smartContractPath;
         this.manager = manager;
+        this.dtxManager = dtxManager;
     }
 
     @JsonRpcMethod
@@ -57,8 +59,7 @@ public class BalService {
     ) {
         log.info("SCIP Invoke method is executed!");
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
-            DistributedTransactionManager distributedTransactionManager = new DistributedTransactionManager();
-            distributedTransactionManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+            dtxManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
                     requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
         } else {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
@@ -135,17 +136,15 @@ public class BalService {
     @JsonRpcMethod
     public String Start_Dtx() {
         log.info("SCIP-T Start_Dtx method is executed!");
-        DistributedTransactionManager manager = new DistributedTransactionManager();
 
-        return manager.startDtx().toString();
+        return dtxManager.startDtx().toString();
     }
 
     @JsonRpcMethod
     public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Commit_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
-        DistributedTransactionManager manager = new DistributedTransactionManager();
-        manager.commitDtx(uuid);
+        dtxManager.commitDtx(uuid);
 
         return "OK";
     }
@@ -154,8 +153,7 @@ public class BalService {
     public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Abort_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
-        DistributedTransactionManager manager = new DistributedTransactionManager();
-        manager.abortDtx(uuid);
+        dtxManager.abortDtx(uuid);
 
         return "OK";
     }

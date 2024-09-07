@@ -19,16 +19,26 @@ import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransaction
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.management.model.DistributedTransactionVerdict;
 import io.reactivex.disposables.Disposable;
+import lombok.extern.log4j.Log4j2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+@Log4j2
+@Component
 public class DistributedTransactionManager {
-    private static final Logger log = LoggerFactory.getLogger(DistributedTransactionManager.class);
+    private final AdapterManager adapterManager;
+    private final BlockchainManager blockchainManager;
+
+    public DistributedTransactionManager(AdapterManager adapterManager, BlockchainManager blockchainManager){
+        this.adapterManager = adapterManager;
+        this.blockchainManager = blockchainManager;
+    }
 
     public UUID startDtx() {
         DistributedTransaction tx = new DistributedTransaction();
@@ -47,17 +57,16 @@ public class DistributedTransactionManager {
                          final long timeoutMillis,
                          final String correlationId,
                          final String signature) {
-        BlockchainManager manager = new BlockchainManager();
         UUID txId = UUID.fromString(inputs.get(0).getValue());
         log.info("Received invoke_sc request for dtx: " + txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
         if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
             if (!dtx.getBlockchainIds().contains(blockchainIdentifier)) {
-                ResourceManagerSmartContract rmsc = AdapterManager.getInstance().getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
+                ResourceManagerSmartContract rmsc = this.adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
                 SmartContractEvent abortEvent = rmsc.getAbortEvent();
 
-                manager.subscribeToEvent(blockchainIdentifier,
+                this.blockchainManager.subscribeToEvent(blockchainIdentifier,
                                 rmsc.getSmartContractPath(),
                                 abortEvent.getFunctionIdentifier(),
                                 abortEvent.getOutputs(),
@@ -69,7 +78,7 @@ public class DistributedTransactionManager {
                 dtx.getBlockchainIds().add(blockchainIdentifier);
             }
 
-            manager.invokeSmartContractFunction(blockchainIdentifier, smartContractPath, functionIdentifier, inputs,
+            blockchainManager.invokeSmartContractFunction(blockchainIdentifier, smartContractPath, functionIdentifier, inputs,
                     outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
         }
 
@@ -91,14 +100,13 @@ public class DistributedTransactionManager {
         if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
             dtx.setState(DistributedTransactionState.AWAITING_VOTES);
             dtx.setYes(0);
-            BlockchainManager manager = new BlockchainManager();
             List<String> ids = dtx.getBlockchainIds();
 
 
             for (String blockchainIdentifier : ids) {
-                ResourceManagerSmartContract rmsc = AdapterManager.getInstance().getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
+                ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
                 SmartContractEvent voteEvent = rmsc.getVoteEvent();
-                manager.subscribeToEvent(blockchainIdentifier,
+                blockchainManager.subscribeToEvent(blockchainIdentifier,
                                 rmsc.getSmartContractPath(),
                                 voteEvent.getFunctionIdentifier(),
                                 voteEvent.getOutputs(),
@@ -182,32 +190,32 @@ public class DistributedTransactionManager {
 
 
     private CompletableFuture<Transaction> invokeAbort(String blockchainId, UUID txId) {
-        ResourceManagerSmartContract rmsc = AdapterManager.getInstance().getAdapter(blockchainId).getResourceManagerSmartContract();
+        ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainId).getResourceManagerSmartContract();
         SmartContractFunction abortFunction = rmsc.getAbortFunction();
         List<Parameter> functionInputs = abortFunction.getInputs();
         functionInputs.get(0).setValue(txId.toString());
-        BlockchainManager manager = new BlockchainManager();
-        return manager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), abortFunction.getFunctionIdentifier(),
+
+        return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), abortFunction.getFunctionIdentifier(),
                 functionInputs, abortFunction.getOutputs(), 0.0, 0, null);
     }
 
     private CompletableFuture<Transaction> invokeCommit(String blockchainId, UUID txId) {
-        ResourceManagerSmartContract rmsc = AdapterManager.getInstance().getAdapter(blockchainId).getResourceManagerSmartContract();
+        ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainId).getResourceManagerSmartContract();
         SmartContractFunction commitFunction = rmsc.getCommitFunction();
         List<Parameter> functionInputs = commitFunction.getInputs();
         functionInputs.get(0).setValue(txId.toString());
-        BlockchainManager manager = new BlockchainManager();
-        return manager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), commitFunction.getFunctionIdentifier(),
+
+        return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), commitFunction.getFunctionIdentifier(),
                 functionInputs, commitFunction.getOutputs(), 0.0, 0, null);
     }
 
     private CompletableFuture<Transaction> invokePrepare(String blockchainId, UUID txId) {
-        ResourceManagerSmartContract rmsc = AdapterManager.getInstance().getAdapter(blockchainId).getResourceManagerSmartContract();
+        ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainId).getResourceManagerSmartContract();
         SmartContractFunction prepareFunction = rmsc.getPrepareFunction();
         List<Parameter> functionInputs = prepareFunction.getInputs();
         functionInputs.get(0).setValue(txId.toString());
-        BlockchainManager manager = new BlockchainManager();
-        return manager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), prepareFunction.getFunctionIdentifier(),
+
+        return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), prepareFunction.getFunctionIdentifier(),
                 functionInputs, prepareFunction.getOutputs(), 0.0, 0, null);
     }
 
