@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -12,12 +12,15 @@
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
 import java.util.List;
+import java.util.UUID;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionManager;
+import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionRepository;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -32,12 +35,15 @@ public class BalService {
     private final String blockchainId;
     private final String smartContractPath;
     private final BlockchainManager manager;
+    private final DistributedTransactionManager dtxManager;
+    private static final String DTX_ID_FIELD_NAME = "dtx_id";
 
-    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager) {
+    public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager, DistributedTransactionManager dtxManager) {
         this.blockchainType = blockchainType;
         this.blockchainId = blockchainId;
         this.smartContractPath = smartContractPath;
         this.manager = manager;
+        this.dtxManager = dtxManager;
     }
 
     @JsonRpcMethod
@@ -52,9 +58,13 @@ public class BalService {
             @JsonRpcParam("signature") String signature
     ) {
         log.info("SCIP Invoke method is executed!");
-        manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
-                requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
-
+        if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
+            dtxManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        } else {
+            manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+        }
         return "OK";
     }
 
@@ -94,7 +104,6 @@ public class BalService {
             throw new InvalidScipParameterException();
         }
 
-
         if (!Strings.isNullOrEmpty(functionIdentifier)) {
             manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
         } else {
@@ -122,5 +131,30 @@ public class BalService {
         }
 
         throw new InvalidScipParameterException();
+    }
+
+    @JsonRpcMethod
+    public String Start_Dtx() {
+        log.info("SCIP-T Start_Dtx method is executed!");
+
+        return dtxManager.startDtx().toString();
+    }
+
+    @JsonRpcMethod
+    public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+        log.info("SCIP-T Commit_Dtx method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+        dtxManager.commitDtx(uuid);
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+        log.info("SCIP-T Abort_Dtx method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+        dtxManager.abortDtx(uuid);
+
+        return "OK";
     }
 }

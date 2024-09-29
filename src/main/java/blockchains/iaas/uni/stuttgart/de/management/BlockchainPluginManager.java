@@ -24,24 +24,28 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static blockchains.iaas.uni.stuttgart.de.Constants.PF4J_AUTOLOAD_PROPERTY;
+
 @Log4j2
 @Component
 public class BlockchainPluginManager {
     private PluginManager pluginManager = null;
     private final String pluginDirStr;
+    private static final String DEFAULT_PLUGIN_DIR = Paths.get(System.getProperty("user.home"), ".bal").toString();
 
-    private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + "}")
-                                    String pluginDir) {
-        log.info("Initializing Blockchain Plugin Manager: pluginDir={}.", pluginDir);
-        this.pluginDirStr = pluginDir;
-        Path[] dirPaths = new Path[0];
-        Path pluginDirPath = getPluginsPath();
+    private BlockchainPluginManager(@Value("${" + Constants.PF4J_PLUGIN_DIR_PROPERTY + ":}")
+                                    String pluginDir, @Value("${" + PF4J_AUTOLOAD_PROPERTY + ":false}") String strConf) {
+        log.info("Initializing Blockchain Plugin Manager: pluginDir={}, autoLoadPlugins={}.", pluginDir, strConf);
 
-        if (pluginDirPath != null) {
-            dirPaths = new Path[]{pluginDirPath};
+        if (pluginDir == null || pluginDir.trim().isEmpty()) {
+            log.info("No plugin directory is provided. Using default directory instead: {}", DEFAULT_PLUGIN_DIR);
+            pluginDir = DEFAULT_PLUGIN_DIR;
         }
 
-        this.pluginManager = new DefaultPluginManager(dirPaths) {
+        this.pluginDirStr = pluginDir;
+        Path pluginDirPath = getPluginsPath();
+
+        this.pluginManager = new DefaultPluginManager(pluginDirPath) {
             //
             @Override
             protected PluginLoader createPluginLoader() {
@@ -56,10 +60,10 @@ public class BlockchainPluginManager {
             }
         };
 
-        if (pluginDirPath == null) {
-            log.info("Plugin directory not specified. Not loading plugins at startup.");
+        if (pluginDirPath == null || !Boolean.parseBoolean(strConf)) {
+            log.info("Plugin directory not specified or auto loading is disabled. Not loading plugins at startup.");
         } else {
-            log.info("Attempting to load blockchain adapter plugins from: '{}'...", () -> pluginDirPath);
+            log.info("Attempting to load blockchain adapter plugins from: '{}'", () -> pluginDirPath);
             pluginManager.loadPlugins();
             startPlugins();
         }

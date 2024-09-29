@@ -26,12 +26,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,7 +45,7 @@ public class TestLoadAdapter {
     private static final String NETWORK_NAME = "eth-0";
     private static String originalPf4jPath;
     private final Path pluginPath = Paths.get(Objects.requireNonNull(TestLoadAdapter.class.getClassLoader().getResource("plugins/ethereum.jar")).toURI());
-    private final String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
+    private final static String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
     @Autowired
     private BlockchainPluginManager pluginManager;
     @Autowired
@@ -52,35 +54,16 @@ public class TestLoadAdapter {
     public TestLoadAdapter() throws URISyntaxException {
     }
 
-    @BeforeAll
-    public static void setPf4jDir() throws IOException {
-        originalPf4jPath = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
-        String tmpdir = Files.createTempDirectory("pf4j-temp-plugin-directory").toFile().getAbsolutePath();
-        log.info("BeforeAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath, tmpdir);
-        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, tmpdir);
-    }
-
-    @AfterAll
-    public static void restorePf4Dir() {
-
-        String temp = System.getProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY);
-        log.info("AfterAll: Changing system property {} from \"{}\" to \"{}\"", Constants.PF4J_PLUGIN_DIR_PROPERTY, temp, originalPf4jPath);
-        System.setProperty(Constants.PF4J_PLUGIN_DIR_PROPERTY, originalPf4jPath == null ? "" : originalPf4jPath);
-    }
-
     @BeforeEach
-    public void setUp() {
-        clearPluginDirectory();
-    }
-
-    @AfterEach
-    public void tearDown() {
+    public void setUp() throws IOException {
         clearPluginDirectory();
     }
 
     private void loadPlugin() throws IOException {
         if (pluginManager.getPlugins().stream().filter(p -> "ethereum-plugin".equals(p.getPluginId())).findAny().isEmpty()) {
-            Path uploadedPluginPath = Paths.get(pluginManager.getPluginsPath() + "/ethereum.jar");
+            Path uploadedPluginPath = pluginManager.getPluginsPath().resolve("ethereum.jar");
+            log.info("Loading Plugin: Copying {} to {}...", pluginPath, uploadedPluginPath);
+            Files.createDirectories(pluginManager.getPluginsPath());
             Files.copy(pluginPath, uploadedPluginPath);
             pluginManager.loadJar(pluginPath);
         }
@@ -101,7 +84,7 @@ public class TestLoadAdapter {
     }
 
     @Test
-    public void testLoadConnectionProfile() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
+    public void testLoadConnectionProfile() throws IOException, URISyntaxException {
         loadPlugin();
         String pluginId = pluginManager.getPlugins().get(0).getPluginId();
         pluginManager.startPlugin(pluginId);
@@ -128,12 +111,22 @@ public class TestLoadAdapter {
         assertNotNull(adapter);
     }
 
-    private void clearPluginDirectory() {
+    private void clearPluginDirectory() throws IOException {
+        log.info("Cleaning up plugin directory from potential plugin files: {}", () -> pluginManager.getPluginsPath());
         Path path = pluginManager.getPluginsPath();
-        final File[] files = path.toFile().listFiles();
-        if (files != null) {
-            for (File f : files) {
-                f.delete();
+
+        if (Files.exists(path)) {
+            try (Stream<Path> files = Files.list(path)) {
+                files.forEach(filePath -> {
+                    try {
+                        if (Files.isRegularFile(filePath)) {
+                            log.info("Removing file: {}", filePath);
+                            Files.delete(filePath);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
         }
     }

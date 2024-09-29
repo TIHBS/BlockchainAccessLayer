@@ -20,6 +20,7 @@ import java.util.concurrent.CompletionException;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
+import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CallbackManager;
 import blockchains.iaas.uni.stuttgart.de.management.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.management.callback.ScipMessageTranslator;
@@ -31,12 +32,8 @@ import blockchains.iaas.uni.stuttgart.de.management.model.ObservableSubscription
 import blockchains.iaas.uni.stuttgart.de.management.model.Subscription;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionKey;
 import blockchains.iaas.uni.stuttgart.de.management.model.SubscriptionType;
-import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
-import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
-import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
-import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
 import com.google.common.base.Strings;
+import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -365,41 +362,33 @@ public class BlockchainManager {
             final String correlationId,
             final String signature) throws BalException {
 
-        // Validate scip parameters!
-        if (Strings.isNullOrEmpty(blockchainIdentifier)
-                || Strings.isNullOrEmpty(smartContractPath)
-                || Strings.isNullOrEmpty(functionIdentifier)
-                || timeoutMillis < 0
-                || MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
-                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
-            throw new InvalidScipParameterException();
-        }
-
-        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
-        final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
-        final CompletableFuture<Transaction> future = adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
+        final CompletableFuture<Transaction> future = this.invokeSmartContractFunction(blockchainIdentifier, smartContractPath,
+                functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature);
 
         future.
                 thenAccept(tx -> {
                     if (tx != null) {
-                        if (tx.getState() == TransactionState.CONFIRMED || tx.getState() == TransactionState.RETURN_VALUE) {
-                            CallbackManager.getInstance().sendCallback(callbackUrl,
-                                    ScipMessageTranslator.getInvocationResponseMessage(
-                                            correlationId,
-                                            tx.getReturnValues()));
-                        } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
-                            if (tx.getState() == TransactionState.NOT_FOUND) {
+                        if (callbackUrl != null) {
+                            if (tx.getState() == TransactionState.CONFIRMED || tx.getState() == TransactionState.RETURN_VALUE) {
                                 CallbackManager.getInstance().sendCallback(callbackUrl,
-                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                        ScipMessageTranslator.getInvocationResponseMessage(
                                                 correlationId,
-                                                new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
-                            } else {
-                                CallbackManager.getInstance().sendCallback(callbackUrl,
-                                        ScipMessageTranslator.getAsynchronousErrorResponseMessage(
-                                                correlationId,
-                                                new InvokeSmartContractFunctionFailure("The smart contract function invocation reported an error.")));
+                                                tx.getReturnValues()));
+                            } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
+                                if (tx.getState() == TransactionState.NOT_FOUND) {
+                                    CallbackManager.getInstance().sendCallback(callbackUrl,
+                                            ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                    correlationId,
+                                                    new TransactionNotFoundException("The transaction associated with a function invocation is invalidated after it was mined.")));
+                                } else {
+                                    CallbackManager.getInstance().sendCallback(callbackUrl,
+                                            ScipMessageTranslator.getAsynchronousErrorResponseMessage(
+                                                    correlationId,
+                                                    new InvokeSmartContractFunctionFailure("The smart contract function invocation reported an error.")));
+                                }
                             }
+                        } else {
+                            log.info("callbackUrl is null");
                         }
                     } else {
                         log.info("Resulting transaction is null");
@@ -412,6 +401,9 @@ public class BlockchainManager {
                         CallbackManager.getInstance().sendCallback(callbackUrl,
                                 ScipMessageTranslator.getAsynchronousErrorResponseMessage(correlationId, (BalException) e.getCause()));
 
+                    if (e instanceof ManualUnsubscriptionException || e.getCause() instanceof ManualUnsubscriptionException) {
+                        log.info("Manual unsubscription of SC invocation!");
+                    }
                     // ManualUnsubscriptionException is also captured here
                     return null;
                 }).
@@ -425,6 +417,32 @@ public class BlockchainManager {
         SubscriptionManager.getInstance().createSubscription(correlationId, blockchainIdentifier, smartContractPath, subscription);
     }
 
+    public CompletableFuture<Transaction> invokeSmartContractFunction(
+            final String blockchainIdentifier,
+            final String smartContractPath,
+            final String functionIdentifier,
+            final List<Parameter> inputs,
+            final List<Parameter> outputs,
+            final double requiredConfidence,
+            final long timeoutMillis,
+            final String signature) throws BalException {
+
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainIdentifier)
+                || Strings.isNullOrEmpty(smartContractPath)
+                || Strings.isNullOrEmpty(functionIdentifier)
+                || timeoutMillis < 0
+                || MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+        final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
+        return adapter.invokeSmartContract(smartContractPath,
+                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
+    }
+
     public void subscribeToEvent(
             final String blockchainIdentifier,
             final String smartContractPath,
@@ -435,21 +453,13 @@ public class BlockchainManager {
             final String callbackUrl,
             final String correlationIdentifier) {
 
-        // Validate scip parameters!
-        if (Strings.isNullOrEmpty(blockchainIdentifier)
-                || Strings.isNullOrEmpty(smartContractPath)
-                || Strings.isNullOrEmpty(eventIdentifier)
-                || MathUtils.doubleCompare(degreeOfConfidence, 0.0) < 0
-                || MathUtils.doubleCompare(degreeOfConfidence, 100.0) > 0) {
-            throw new InvalidScipParameterException();
-        }
 
-        final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-        Disposable result = this.adapterManager.getAdapter(blockchainIdentifier)
-                .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter)
+
+
+        Disposable result = this.subscribeToEvent(blockchainIdentifier, smartContractPath, eventIdentifier, outputParameters, degreeOfConfidence, filter)
                 .doFinally(() -> {
                     // remove subscription from subscription list
                     SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
@@ -468,6 +478,28 @@ public class BlockchainManager {
         final Subscription subscription = new MonitorOccurrencesSubscription(result, SubscriptionType.EVENT_OCCURRENCES, eventIdentifier, outputParameters);
         SubscriptionManager.getInstance().createSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath, subscription);
     }
+
+    public Observable<Occurrence> subscribeToEvent(String blockchainIdentifier,
+                                                   final String smartContractPath,
+                                                   final String eventIdentifier,
+                                                   final List<Parameter> outputParameters,
+                                                   final double degreeOfConfidence,
+                                                   final String filter) {
+        // Validate scip parameters!
+        if (Strings.isNullOrEmpty(blockchainIdentifier)
+                || Strings.isNullOrEmpty(smartContractPath)
+                || Strings.isNullOrEmpty(eventIdentifier)
+                || MathUtils.doubleCompare(degreeOfConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(degreeOfConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
+
+        return this.adapterManager.getAdapter(blockchainIdentifier)
+                .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter);
+    }
+
 
     public void cancelEventSubscriptions(String blockchainId, String smartContractId, String correlationId, String eventIdentifier, List<Parameter> parameters) {
         // Validate scip parameters!
