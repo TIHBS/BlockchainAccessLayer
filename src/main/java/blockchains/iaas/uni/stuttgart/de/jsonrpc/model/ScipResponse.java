@@ -34,10 +34,11 @@ public class ScipResponse extends CallbackMessage {
     public String toString() {
         return "ScipResponseMessage{" +
                 "correlationIdentifier='" + correlationIdentifier + '\'' +
-                ", parameters=" + parameters +
+                ", parameters=[" + parameters.stream().map(p-> "{ name: " + p.getName() + ", value: " + p.getValue() + ", type: " + p.getType() + " }") +
                 ", isoTimestamp='" + isoTimestamp + '\'' +
                 ", occurrences=" + occurrences +
                 ", exception=" + exception +
                 '}';
     }
+
 }
