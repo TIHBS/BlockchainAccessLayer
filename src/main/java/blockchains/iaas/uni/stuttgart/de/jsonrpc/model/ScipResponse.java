@@ -35,7 +35,8 @@ public class ScipResponse extends CallbackMessage {
     public String toString() {
         return "ScipResponseMessage{" +
                 "correlationIdentifier='" + correlationIdentifier + '\'' +
-                ", parameters=[" + parameters.stream().map(p-> "{ name: " + p.getName() + ", value: " + p.getValue() + ", type: " + p.getType() + " }").collect(Collectors.joining(",")) + "]" +
+                ", parameters=[" + (parameters == null? "]":
+                        parameters.stream().map(p-> "{ name: " + p.getName() + ", value: " + p.getValue() + ", type: " + p.getType() + " }").collect(Collectors.joining(",")) + "]") +
                 ", isoTimestamp='" + isoTimestamp + '\'' +
                 ", occurrences=" + occurrences +
                 ", exception=" + exception +
