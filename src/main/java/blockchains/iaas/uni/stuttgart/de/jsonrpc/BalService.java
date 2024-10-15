@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -12,9 +12,11 @@
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
+import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.MemberSignature;
 import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
@@ -48,66 +50,66 @@ public class BalService {
 
     @JsonRpcMethod
     public String Invoke(
-            @JsonRpcParam("functionIdentifier") String functionIdentifier,
-            @JsonRpcParam("inputs") List<Parameter> inputs,
-            @JsonRpcParam("outputs") List<Parameter> outputs,
-            @JsonRpcParam("doc") double requiredConfidence,
+            @JsonRpcParam("signature") MemberSignature memberSignature,
+            @JsonRpcParam("inputArguments") List<Parameter> inputs,
+            @JsonRpcParam("outputParams") List<Parameter> outputs,
             @JsonRpcParam("callbackUrl") String callbackUrl,
-            @JsonRpcParam("timeout") long timeoutMillis,
-            @JsonRpcParam("correlationIdentifier") String correlationId,
-            @JsonRpcParam("signature") String signature
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcParam("sideEffects") boolean sideEffects,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double requiredConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeoutMillis,
+            @JsonRpcOptional @JsonRpcParam("Nonce") Long nonce,
+            @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
     ) {
         log.info("SCIP Invoke method is executed!");
-        if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
-            dtxManager.invokeSc(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
-        } else {
-            manager.invokeSmartContractFunction(blockchainId, smartContractPath, functionIdentifier, inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+
+        for(Parameter input : inputs) {
+            Optional<Parameter> fromSig = memberSignature.getParameters().stream().filter(p -> p.getName().equals(input.getName())).findFirst();
+            input.setType(fromSig.orElseThrow(InvalidScipParameterException::new).getType());
         }
+
+        if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
+            dtxManager.invokeSc(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+        } else {
+            manager.invokeSmartContractFunction(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
+                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+        }
+
         return "OK";
     }
 
     @JsonRpcMethod
     public String Subscribe(
-            @JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
-            @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
-            @JsonRpcParam("parameters") List<Parameter> outputParameters,
-            @JsonRpcParam("doc") double degreeOfConfidence,
-            @JsonRpcParam("filter") String filter,
+            @JsonRpcParam("signature") MemberSignature memberSignature,
             @JsonRpcParam("callbackUrl") String callbackUrl,
-            @JsonRpcParam("correlationIdentifier") String correlationId) {
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("filter") String filter
+            ) {
         log.info("SCIP Subscribe method is executed!");
 
-        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
-            throw new InvalidScipParameterException();
-        }
 
-        if (!Strings.isNullOrEmpty(eventIdentifier)) {
-            manager.subscribeToEvent(blockchainId, smartContractPath, eventIdentifier, outputParameters, degreeOfConfidence, filter, callbackUrl, correlationId);
+        if (!memberSignature.isFunction()) {
+            manager.subscribeToEvent(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), degreeOfConfidence, filter, callbackUrl, correlationId);
+        } else {
+            log.error("Not all SCIP adapters support subscribing to function occurrences. Cannot process request!");
+            throw new InvalidScipParameterException();
         }
 
         return "OK";
     }
 
     @JsonRpcMethod
-    public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
-                              @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
-                              @JsonRpcParam("parameters") List<Parameter> parameters,
-                              @JsonRpcParam("correlationIdentifier") String correlationId) {
+    public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
+                              @JsonRpcParam("correlationId") String correlationId) {
         log.info("SCIP Unsubscribe method is executed!");
-        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
-            throw new InvalidScipParameterException();
-        }
 
-        if (Strings.isNullOrEmpty(functionIdentifier) && Strings.isNullOrEmpty(eventIdentifier) && parameters != null) {
-            throw new InvalidScipParameterException();
-        }
-
-        if (!Strings.isNullOrEmpty(functionIdentifier)) {
-            manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, functionIdentifier, parameters);
+        if (memberSignature.isFunction()) {
+            manager.cancelFunctionSubscriptions(blockchainId, smartContractPath, correlationId, memberSignature.getName(), memberSignature.getParameters());
         } else {
-            manager.cancelEventSubscriptions(blockchainId, smartContractPath, correlationId, eventIdentifier, parameters);
+            manager.cancelEventSubscriptions(blockchainId, smartContractPath, correlationId, memberSignature.getName(), memberSignature.getParameters());
         }
 
         return "OK";
@@ -115,22 +117,18 @@ public class BalService {
 
     @JsonRpcMethod
     public QueryResult Query(
-            @JsonRpcOptional @JsonRpcParam("functionIdentifier") String functionIdentifier,
-            @JsonRpcOptional @JsonRpcParam("eventIdentifier") String eventIdentifier,
+            @JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
             @JsonRpcOptional @JsonRpcParam("filter") String filter,
-            @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame,
-            @JsonRpcParam("parameters") List<Parameter> outputParameters) {
+            @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame) {
         log.info("SCIP Query method is executed!");
-
-        if (!Strings.isNullOrEmpty(functionIdentifier) && !Strings.isNullOrEmpty(eventIdentifier)) {
+        
+        if (!memberSignature.isFunction()) {
+            return manager.queryEvents(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), filter, timeFrame);
+        } else {
+            log.error("Not all SCIP adapters support subscribing to function occurrences. Cannot process request!");
             throw new InvalidScipParameterException();
         }
 
-        if (!Strings.isNullOrEmpty(eventIdentifier)) {
-            return manager.queryEvents(blockchainId, smartContractPath, eventIdentifier, outputParameters, filter, timeFrame);
-        }
-
-        throw new InvalidScipParameterException();
     }
 
     @JsonRpcMethod
