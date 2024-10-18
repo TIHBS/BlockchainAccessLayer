@@ -10,12 +10,11 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.adaptation;
 
-import blockchains.iaas.uni.stuttgart.de.Constants;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
+import blockchains.iaas.uni.stuttgart.de.plugin.PluginManager;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.*;
 import org.pf4j.PluginState;
@@ -26,13 +25,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,7 +44,7 @@ public class TestLoadAdapter {
     private final Path pluginPath = Paths.get(Objects.requireNonNull(TestLoadAdapter.class.getClassLoader().getResource("plugins/ethereum.jar")).toURI());
     private final static String KEYSTORE_PATH_KEY = "ethereum.keystorePath";
     @Autowired
-    private BlockchainPluginManager pluginManager;
+    private PluginManager pluginManager;
     @Autowired
     private AdapterManager adapterManager;
 

@@ -15,16 +15,16 @@ package blockchains.iaas.uni.stuttgart.de.adaptation;
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
+import blockchains.iaas.uni.stuttgart.de.plugin.PluginManager;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
 
 @Log4j2
 public class BlockchainAdapterFactory {
-    private final BlockchainPluginManager manager;
+    private final PluginManager manager;
 
-    public BlockchainAdapterFactory(BlockchainPluginManager manager) {
+    public BlockchainAdapterFactory(PluginManager manager) {
         this.manager = manager;
     }
 

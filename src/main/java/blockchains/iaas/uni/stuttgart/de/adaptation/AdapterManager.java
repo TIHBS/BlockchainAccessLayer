@@ -18,7 +18,7 @@ import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainIdNotFoundException;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BlockchainNodeUnreachableException;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainPluginManager;
+import blockchains.iaas.uni.stuttgart.de.plugin.PluginManager;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,7 +30,7 @@ public class AdapterManager {
     private final Map<String, Pair<BlockchainAdapter, AbstractConnectionProfile>> map = Collections.synchronizedMap(new HashMap<>());
     private final BlockchainAdapterFactory factory;
 
-    private AdapterManager(BlockchainPluginManager pluginManager) {
+    private AdapterManager(PluginManager pluginManager) {
         this.factory = new BlockchainAdapterFactory(pluginManager);
     }
 
