@@ -20,7 +20,7 @@ import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslat
 import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
 import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
 import blockchains.iaas.uni.stuttgart.de.subscription.SubscriptionManager;

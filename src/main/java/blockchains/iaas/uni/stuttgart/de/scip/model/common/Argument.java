@@ -9,17 +9,16 @@
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
 
-package blockchains.iaas.uni.stuttgart.de.scip.model.responses;
+package blockchains.iaas.uni.stuttgart.de.scip.model.common;
 
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Argument {
     @NonNull private String name;
     @NonNull private String value;
@@ -27,6 +26,8 @@ public class Argument {
     public static Argument fromParameter(Parameter parameter) {
         return Argument.builder().name(parameter.getName()).value(parameter.getValue()).build();
     }
+
+
 
     @Override
     public String toString() {

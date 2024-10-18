@@ -16,8 +16,8 @@ import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterExce
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.scip.model.MemberSignature;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.MemberSignature;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;

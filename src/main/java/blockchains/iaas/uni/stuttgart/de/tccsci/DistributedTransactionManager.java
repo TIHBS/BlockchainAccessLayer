@@ -15,7 +15,6 @@ package blockchains.iaas.uni.stuttgart.de.tccsci;
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Argument;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionVerdict;

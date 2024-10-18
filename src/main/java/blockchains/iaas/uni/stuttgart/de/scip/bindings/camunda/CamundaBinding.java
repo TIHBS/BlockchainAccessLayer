@@ -25,7 +25,7 @@ import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.StringVaria
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model.Variable;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
 import lombok.extern.log4j.Log4j2;

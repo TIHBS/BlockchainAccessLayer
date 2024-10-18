@@ -11,6 +11,7 @@
 
 package blockchains.iaas.uni.stuttgart.de.scip.model.responses;
 
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
