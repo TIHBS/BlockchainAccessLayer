@@ -31,9 +31,14 @@ public class DistributedTransactionManager {
     private final AdapterManager adapterManager;
     private final BlockchainManager blockchainManager;
 
-    public DistributedTransactionManager(AdapterManager adapterManager, BlockchainManager blockchainManager){
+    public DistributedTransactionManager(AdapterManager adapterManager, BlockchainManager blockchainManager) {
         this.adapterManager = adapterManager;
         this.blockchainManager = blockchainManager;
+    }
+
+    private static String buildEventFilter(SmartContractEvent abortEvent, UUID txId) {
+        String param1Name = abortEvent.getOutputs().get(0).getName();
+        return param1Name + "==\"" + txId.toString() + "\"";
     }
 
     public UUID startDtx() {
@@ -50,6 +55,9 @@ public class DistributedTransactionManager {
                          final List<Parameter> inputs,
                          final List<Parameter> outputs,
                          final double requiredConfidence,
+                         final String callbackBinding,
+                         final boolean sideEffects,
+                         final Long nonce,
                          final String callbackUrl,
                          final long timeoutMillis,
                          final String correlationId,
@@ -76,7 +84,7 @@ public class DistributedTransactionManager {
             }
 
             blockchainManager.invokeSmartContractFunction(blockchainIdentifier, smartContractPath, functionIdentifier, inputs,
-                    outputs, requiredConfidence, callbackUrl, timeoutMillis, correlationId, signature);
+                    outputs, requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, signature);
         }
 
     }
@@ -125,11 +133,6 @@ public class DistributedTransactionManager {
                         log.info("Invoked prepare* of all RMSCs of dtx: {}", txId);
                     });
         }
-    }
-
-    private static String buildEventFilter(SmartContractEvent abortEvent, UUID txId) {
-        String param1Name = abortEvent.getOutputs().get(0).getName();
-        return param1Name + "==\"" + txId.toString() + "\"";
     }
 
     private void handleScError(Occurrence errorDetails) {

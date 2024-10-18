@@ -11,34 +11,32 @@
 
 package blockchains.iaas.uni.stuttgart.de.jsonrpc;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
-import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.MemberSignature;
-import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
+import blockchains.iaas.uni.stuttgart.de.jsonrpc.model.MemberSignature;
+import blockchains.iaas.uni.stuttgart.de.management.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionManager;
-import blockchains.iaas.uni.stuttgart.de.management.tccsci.DistributedTransactionRepository;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
-import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @JsonRpcService
 @Log4j2
 public class BalService {
+    private static final String DTX_ID_FIELD_NAME = "dtx_id";
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
     private final BlockchainManager manager;
     private final DistributedTransactionManager dtxManager;
-    private static final String DTX_ID_FIELD_NAME = "dtx_id";
 
     public BalService(String blockchainType, String blockchainId, String smartContractPath, BlockchainManager manager, DistributedTransactionManager dtxManager) {
         this.blockchainType = blockchainType;
@@ -64,17 +62,17 @@ public class BalService {
     ) {
         log.info("SCIP Invoke method is executed!");
 
-        for(Parameter input : inputs) {
+        for (Parameter input : inputs) {
             Optional<Parameter> fromSig = memberSignature.getParameters().stream().filter(p -> p.getName().equals(input.getName())).findFirst();
             input.setType(fromSig.orElseThrow(InvalidScipParameterException::new).getType());
         }
 
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
             dtxManager.invokeSc(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+                    requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, digitalSignature);
         } else {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
-                    requiredConfidence, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+                    requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, digitalSignature);
         }
 
         return "OK";
@@ -85,14 +83,14 @@ public class BalService {
             @JsonRpcParam("signature") MemberSignature memberSignature,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
             @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
             @JsonRpcOptional @JsonRpcParam("filter") String filter
-            ) {
+    ) {
         log.info("SCIP Subscribe method is executed!");
 
-
         if (!memberSignature.isFunction()) {
-            manager.subscribeToEvent(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), degreeOfConfidence, filter, callbackUrl, correlationId);
+            manager.subscribeToEvent(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), degreeOfConfidence, filter, callbackBinding, callbackUrl, correlationId);
         } else {
             log.error("Not all SCIP adapters support subscribing to function occurrences. Cannot process request!");
             throw new InvalidScipParameterException();
@@ -121,7 +119,7 @@ public class BalService {
             @JsonRpcOptional @JsonRpcParam("filter") String filter,
             @JsonRpcOptional @JsonRpcParam("timeframe") TimeFrame timeFrame) {
         log.info("SCIP Query method is executed!");
-        
+
         if (!memberSignature.isFunction()) {
             return manager.queryEvents(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), filter, timeFrame);
         } else {

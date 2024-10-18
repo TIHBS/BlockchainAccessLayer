@@ -51,7 +51,7 @@ public class BlockchainManager {
      * The status of the result could be:
      * <p>
      * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible.
-     * INVALID: the submitted transaction faild validation at the node
+     * INVALID: the submitted transaction failed validation at the node
      * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
      *
      * @param correlationId      supplied by the remote application as a means for correlation
@@ -328,6 +328,7 @@ public class BlockchainManager {
 
     // todo add support for timeouts
     // todo add support for signature checking
+    // todo add support for nonce
 
     /**
      * Invokes a smart contract function, and sends a callback message informing a remote endpoint of the result.
@@ -345,10 +346,13 @@ public class BlockchainManager {
      * @param inputs               the arguments to be passed to the smart contract function
      * @param outputs              the types of output parameters expected from the function
      * @param requiredConfidence   the minimum confidence that the submitted transaction must reach before returning a CONFIRMED response (percentage)
+     * @param callbackBinding      the binding to use when sending asynchronous callback messages.
+     * @param nonce                a monotonically increasing number for the invocation requests sent by the user
+     * @param sideEffects          indicates whether the function being invoked might have side effects in the blockchain.
      * @param callbackUrl          the url of the endpoint to send the callback message to
      * @param timeoutMillis        the number of milliseconds during which the doc must be reached, otherwise a timeout error message has to be returned.
      * @param correlationId        applied by the remote application as a means for correlation
-     * @param signature            the user signature of the previous fields (apart from smart contract path)
+     * @param signature            the user's digital signature of the previous fields (apart from smart contract path)
      */
     public void invokeSmartContractFunction(
             final String blockchainIdentifier,
@@ -357,6 +361,9 @@ public class BlockchainManager {
             final List<Parameter> inputs,
             final List<Parameter> outputs,
             final double requiredConfidence,
+            final String callbackBinding,
+            final boolean sideEffects,
+            final Long nonce,
             final String callbackUrl,
             final long timeoutMillis,
             final String correlationId,
@@ -450,14 +457,12 @@ public class BlockchainManager {
             final List<Parameter> outputParameters,
             final double degreeOfConfidence,
             final String filter,
+            final String callbackBinding,
             final String callbackUrl,
             final String correlationIdentifier) {
 
-
-
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
-
 
         Disposable result = this.subscribeToEvent(blockchainIdentifier, smartContractPath, eventIdentifier, outputParameters, degreeOfConfidence, filter)
                 .doFinally(() -> {

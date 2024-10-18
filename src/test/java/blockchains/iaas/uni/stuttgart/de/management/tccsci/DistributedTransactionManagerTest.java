@@ -100,7 +100,7 @@ class DistributedTransactionManagerTest {
         /* DtxInvoke 1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
         dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L, "callback-url", 0, "ABC", "");
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(1, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
@@ -112,7 +112,7 @@ class DistributedTransactionManagerTest {
 
         /* DtxInvoke 2 */
         dManager.invokeSc("bc1", "sc2", "userF2", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(1, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
@@ -124,7 +124,7 @@ class DistributedTransactionManagerTest {
 
         /* DtxInvoke 3 */
         dManager.invokeSc("bc2", "sc3", "userF3", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(2, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
@@ -150,11 +150,11 @@ class DistributedTransactionManagerTest {
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
         dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
         dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
         dManager.commitDtx(uuid);
@@ -191,11 +191,11 @@ class DistributedTransactionManagerTest {
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
         dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
         dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
         dManager.commitDtx(uuid);
@@ -230,11 +230,11 @@ class DistributedTransactionManagerTest {
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
         dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
         dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* SC Error */
        manager.emitAborts(uuid, "bc2");
@@ -262,11 +262,11 @@ class DistributedTransactionManagerTest {
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
         dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
         dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
-                0, "callback-url", 0, "ABC", "");
+                0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* SC Error */
         dManager.abortDtx(uuid);
@@ -325,6 +325,9 @@ class DistributedTransactionManagerTest {
                 final List<Parameter> inputs,
                 final List<Parameter> outputs,
                 final double requiredConfidence,
+                final String callbackBinding,
+                final boolean sideEffects,
+                final Long nonce,
                 final String callbackUrl,
                 final long timeoutMillis,
                 final String correlationId,
