@@ -18,10 +18,7 @@ import blockchains.iaas.uni.stuttgart.de.subscription.model.SubscriptionType;
 import blockchains.iaas.uni.stuttgart.de.restapi.model.request.SubmitTransactionRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 
@@ -47,8 +44,8 @@ public class SubmitTransactionController extends SubscriptionController {
     }
 
     @PostMapping(path = "/dummy")
-    public ResponseEntity<String> dummyEndPoint(Object remoteResponse) {
-        log.info("dummy path received the following response: {}", remoteResponse.toString());
+    public ResponseEntity<String> dummyEndPoint(@RequestBody Object remoteResponse) {
+        log.info("dummy path received the following response: {}", remoteResponse);
         return ResponseEntity.accepted().build();
     }
 }
