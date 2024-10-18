@@ -48,15 +48,15 @@ public class ScipService {
 
     @JsonRpcMethod
     public String Invoke(
-            @JsonRpcParam("signature") MemberSignature memberSignature,
+            @JsonRpcParam("signature") MemberSignature signature,
             @JsonRpcParam("inputArguments") List<Argument> inputArguments,
-            @JsonRpcParam("outputParams") List<Parameter> outputs,
+            @JsonRpcParam("outputParams") List<Parameter> outputParams,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationId") String correlationId,
             @JsonRpcParam("callbackBinding") String callbackBinding,
             @JsonRpcParam("sideEffects") boolean sideEffects,
-            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double requiredConfidence,
-            @JsonRpcOptional @JsonRpcParam("timeout") Long timeoutMillis,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
             @JsonRpcOptional @JsonRpcParam("nonce") Long nonce,
             @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
     ) {
@@ -65,16 +65,16 @@ public class ScipService {
                 .map(arg -> Parameter.builder()
                         .name(arg.getName())
                         .value(arg.getValue())
-                        .type(memberSignature.getParameters().stream().filter(p -> p.getName().equals(arg.getName())).map(Parameter::getType).findFirst().orElse(""))
+                        .type(signature.getParameters().stream().filter(p -> p.getName().equals(arg.getName())).map(Parameter::getType).findFirst().orElse(""))
                         .build())
                 .toList();
 
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
-            dtxManager.invokeSc(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
-                    requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+            dtxManager.invokeSc(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
         } else {
-            manager.invokeSmartContractFunction(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
-                    requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, digitalSignature);
+            manager.invokeSmartContractFunction(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
         }
 
         return "OK";
