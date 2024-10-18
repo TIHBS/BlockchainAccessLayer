@@ -198,7 +198,7 @@ public class DistributedTransactionManager {
         functionInputs.get(0).setValue(txId.toString());
 
         return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), abortFunction.getFunctionIdentifier(),
-                functionInputs, abortFunction.getOutputs(), 0.0, 0, null);
+                functionInputs, abortFunction.getOutputs(), 0.0, 0, null, true);
     }
 
     private CompletableFuture<Transaction> invokeCommit(String blockchainId, UUID txId) {
@@ -208,7 +208,7 @@ public class DistributedTransactionManager {
         functionInputs.get(0).setValue(txId.toString());
 
         return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), commitFunction.getFunctionIdentifier(),
-                functionInputs, commitFunction.getOutputs(), 0.0, 0, null);
+                functionInputs, commitFunction.getOutputs(), 0.0, 0, null, true);
     }
 
     private CompletableFuture<Transaction> invokePrepare(String blockchainId, UUID txId) {
@@ -218,7 +218,7 @@ public class DistributedTransactionManager {
         functionInputs.get(0).setValue(txId.toString());
 
         return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), prepareFunction.getFunctionIdentifier(),
-                functionInputs, prepareFunction.getOutputs(), 0.0, 0, null);
+                functionInputs, prepareFunction.getOutputs(), 0.0, 0, null, true);
     }
 
 

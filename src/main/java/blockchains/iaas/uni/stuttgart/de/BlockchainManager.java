@@ -288,7 +288,7 @@ public class BlockchainManager {
     // todo add support for nonce
 
     /**
-     * Detects that a specific transasction got enough block-confirmations. It sends also sends a callback if the transaction
+     * Detects that a specific transaction got enough block-confirmations. It sends also sends a callback if the transaction
      * is not found (probably due to invalidation)
      * Resulting states:
      * <p>
@@ -351,9 +351,10 @@ public class BlockchainManager {
      * The invocation might require the submission of a transaction if the invoked function is not read-only.
      * The status of the result could be:
      * <p>
-     * UNKNOWN: the blockchain network is not recognized, or connection to node is not possible or the function is not recognized
-     * INVALID: the submitted transaction failed validation at the node (if a transaction was required)
-     * CONFIRMED (along with the tx itself): the submitted transaction received the desired number of block-confirmations
+     * {@link TransactionState#UNKNOWN}: the blockchain network is not recognized, or connection to node is not possible or the function is not recognized
+     * {@link TransactionState#INVALID}: the submitted transaction failed validation at the node (if a transaction was required)
+     * {@link TransactionState#ERRORED}: the smart contract function threw an exception.
+     * {@link TransactionState#CONFIRMED} (along with the tx itself): the submitted transaction received the desired number of block-confirmations
      * or the result returned from a read-only smart contract function.
      *
      * @param blockchainIdentifier the unique identifier of the blockchain system we
@@ -386,7 +387,7 @@ public class BlockchainManager {
             final String signature) throws BalException {
 
         final CompletableFuture<Transaction> future = this.invokeSmartContractFunction(blockchainIdentifier, smartContractPath,
-                functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature);
+                functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature, sideEffects);
 
         future.
                 thenAccept(tx -> {
@@ -463,7 +464,8 @@ public class BlockchainManager {
             final List<Parameter> outputs,
             final double requiredConfidence,
             final long timeoutMillis,
-            final String signature) throws BalException {
+            final String signature,
+            final boolean sideEffects) throws BalException {
 
         // Validate scip parameters!
         if (Strings.isNullOrEmpty(blockchainIdentifier)
@@ -478,7 +480,7 @@ public class BlockchainManager {
         final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
         final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
         return adapter.invokeSmartContract(smartContractPath,
-                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis);
+                functionIdentifier, inputs, outputs, minimumConfidenceAsProbability, timeoutMillis, sideEffects);
     }
 
     public void subscribeToEvent(

@@ -50,7 +50,8 @@ public class SubscriptionManager {
         if (this.subscriptions.containsKey(key)) {
             log.error("Subscription key <{}> already exists! Not subscribing!", key);
             // to not keep any loose ends
-            subscription.unsubscribe();
+            Subscription old = this.subscriptions.get(key);
+            old.unsubscribe();
         } else {
             this.subscriptions.put(key, subscription);
         }
