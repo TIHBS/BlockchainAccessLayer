@@ -13,7 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.scip.model.responses;
 
 import java.util.List;
 
-import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import lombok.*;
 
 @Builder

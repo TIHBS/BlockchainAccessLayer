@@ -306,7 +306,8 @@ class DistributedTransactionManagerTest {
                 final List<Parameter> outputs,
                 final double requiredConfidence,
                 final long timeoutMillis,
-                final String signature) throws BalException {
+                final String signature,
+                final boolean sideEffects) throws BalException {
             log.info("Mock-invoking function: {}.{}.{}", blockchainIdentifier, smartContractPath, functionIdentifier);
             SmartContractFunction function = new SmartContractFunction(functionIdentifier, inputs, outputs);
 
@@ -335,7 +336,7 @@ class DistributedTransactionManagerTest {
                 final String correlationId,
                 final String signature) throws BalException {
             this.invokeSmartContractFunction(blockchainIdentifier, smartContractPath,
-                    functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature);
+                    functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature, sideEffects);
         }
 
         @Override
