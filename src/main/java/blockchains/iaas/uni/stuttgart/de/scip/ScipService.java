@@ -11,12 +11,13 @@
 
 package blockchains.iaas.uni.stuttgart.de.scip;
 
+import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
 import blockchains.iaas.uni.stuttgart.de.scip.model.MemberSignature;
-import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.scip.model.responses.Argument;
 import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
@@ -25,7 +26,6 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @JsonRpcService
@@ -49,7 +49,7 @@ public class ScipService {
     @JsonRpcMethod
     public String Invoke(
             @JsonRpcParam("signature") MemberSignature memberSignature,
-            @JsonRpcParam("inputArguments") List<Parameter> inputs,
+            @JsonRpcParam("inputArguments") List<Argument> inputArguments,
             @JsonRpcParam("outputParams") List<Parameter> outputs,
             @JsonRpcParam("callbackUrl") String callbackUrl,
             @JsonRpcParam("correlationId") String correlationId,
@@ -57,15 +57,17 @@ public class ScipService {
             @JsonRpcParam("sideEffects") boolean sideEffects,
             @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double requiredConfidence,
             @JsonRpcOptional @JsonRpcParam("timeout") Long timeoutMillis,
-            @JsonRpcOptional @JsonRpcParam("Nonce") Long nonce,
+            @JsonRpcOptional @JsonRpcParam("nonce") Long nonce,
             @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
     ) {
         log.info("SCIP Invoke method is executed!");
-
-        for (Parameter input : inputs) {
-            Optional<Parameter> fromSig = memberSignature.getParameters().stream().filter(p -> p.getName().equals(input.getName())).findFirst();
-            input.setType(fromSig.orElseThrow(InvalidScipParameterException::new).getType());
-        }
+        List<Parameter> inputs = inputArguments.stream()
+                .map(arg -> Parameter.builder()
+                        .name(arg.getName())
+                        .value(arg.getValue())
+                        .type(memberSignature.getParameters().stream().filter(p -> p.getName().equals(arg.getName())).map(Parameter::getType).findFirst().orElse(""))
+                        .build())
+                .toList();
 
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
             dtxManager.invokeSc(blockchainId, smartContractPath, memberSignature.getName(), inputs, outputs,
