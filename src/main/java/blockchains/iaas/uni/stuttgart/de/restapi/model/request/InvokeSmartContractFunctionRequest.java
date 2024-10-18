@@ -22,6 +22,8 @@ public class InvokeSmartContractFunctionRequest {
     private String functionIdentifier;
     private double confidence;
     private String subscriptionId;
+    private boolean sideEffects;
+    private Long nonce;
     private String epUrl;
     private ParameterList inputs;
     private ParameterList outputs;
@@ -78,4 +80,13 @@ public class InvokeSmartContractFunctionRequest {
         return signature;
     }
 
+    @XmlElement(name = "SideEffects")
+    public boolean isSideEffects() {
+        return sideEffects;
+    }
+
+    @XmlElement(name = "Nonce")
+    public Long getNonce() {
+        return nonce;
+    }
 }
