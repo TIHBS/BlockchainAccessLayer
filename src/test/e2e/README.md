@@ -42,38 +42,27 @@ This includes the resource manager and a sample 'Hotel Manager' smart contract t
 ### Test Connectivity to Ethereum
 `curl --location 'http://127.0.0.1:8080/configure/test?blockchain-id=eth-0'`
 
-### Invoke Room Availability Function
+### SCIP methods
 ```bash
-curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0xE39Cd8aE628c3AE5E463172060B031494056205a' \
+curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0xD6de246d347982F64b809E01Fb9511e39506eF64' \
 --header 'Content-Type: application/json' \
 --data '{
     "jsonrpc": "2.0",
     "method": "Invoke",
     "params": {
         "signature": {
-            "name": "isRoomAvailable",
+            "name": "sendCoin",
             "function": "true",
-            "parameters": [
-                {
-                    "name": "txId",
-                    "type": "{ \"type\": \"string\" }",
-                    "value": ""
-                }
-            ]
+            "parameters": []
         },
-        "inputArguments": [
-            {
-                "name": "txId",
-                "value": "tx1"
-            }
-        ],
+        "inputArguments": [],
         "outputParams": [],
         "callbackBinding": "json-rpc",
-        "nonce": 10,
+        "nonce": 11,
         "degreeOfConfidence": 99,
         "callbackUrl": "http://localhost:8080/submit-transaction/dummy",
         "timeout": 100000,
-        "correlationId": "abc",
+        "correlationId": "abcde",
         "sideEffects": "true",
         "digitalSignature": ""
     },
@@ -81,31 +70,70 @@ curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&a
 }'
 ```
 
-### Query Room Availability Event
-
 ```bash
-curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0xE39Cd8aE628c3AE5E463172060B031494056205a' \
+curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0xD6de246d347982F64b809E01Fb9511e39506eF64' \
 --header 'Content-Type: application/json' \
 --data '{
     "jsonrpc": "2.0",
     "method": "Query",
     "params": {
         "signature": {
-            "name": "Error",
+            "name": "Transfer",
             "function": "false",
             "parameters": [
                 {
-                    "name": "txId",
-                    "type": "{ \"type\": \"string\" }",
-                    "value": ""
-                },
-                {
                     "name": "msg",
-                    "type": "{ \"type\": \"string\" }",
+                    "type": "{ \"type\": \"boolean\" }",
                     "value": ""
                 }
             ]
         }
+    },
+    "id": 123
+}'
+```
+
+```bash
+curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0xD6de246d347982F64b809E01Fb9511e39506eF64' \
+--header 'Content-Type: application/json' \
+--data '{
+    "jsonrpc": "2.0",
+    "method": "Subscribe",
+    "params": {
+        "signature": {
+            "name": "Transfer",
+            "function": "false",
+            "parameters": [
+                {
+                    "name": "msg",
+                    "type": "{ \"type\": \"boolean\" }",
+                    "value": ""
+                }
+            ]
+        },
+        "callbackBinding": "json-rpc",
+        "callbackUrl": "http://localhost:8080/submit-transaction/dummy",
+        "correlationId": "abcdefg"
+    },
+    "id": 123
+}'
+```
+
+```bash
+curl --location 'http://localhost:8080?blockchain-id=eth-0&blockchain=ethereum&address=0x182761AC584C0016Cdb3f5c59e0242EF9834fef0' \
+--header 'Content-Type: application/json' \
+--data '{
+    "jsonrpc": "2.0",
+    "method": "SendTx",
+    "params": {
+        "callbackBinding": "json-rpc",
+        "nonce": 12,
+        "degreeOfConfidence": 99,
+        "callbackUrl": "http://localhost:8080/submit-transaction/dummy",
+        "value": 5000,
+        "timeout": 100000,
+        "correlationId": "abcdefg",
+        "digitalSignature": ""
     },
     "id": 123
 }'
