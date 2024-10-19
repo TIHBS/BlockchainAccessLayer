@@ -16,11 +16,14 @@ import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
+import blockchains.iaas.uni.stuttgart.de.history.RequestHistoryManager;
+import blockchains.iaas.uni.stuttgart.de.history.model.RequestDetails;
+import blockchains.iaas.uni.stuttgart.de.history.model.RequestType;
 import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslator;
 import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
 import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
-import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
 import blockchains.iaas.uni.stuttgart.de.subscription.SubscriptionManager;
@@ -80,12 +83,15 @@ public class BlockchainManager {
     public void submitNewTransaction(final String correlationId, final String to, final BigInteger value,
                                      final String blockchainId, final double requiredConfidence, final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.SendTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
             // This happens when a communication error, or an error with the tx exist.
             future.
                     thenAccept(tx -> {
                         if (tx != null) {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(tx);
+
                             if (tx.getState() == TransactionState.CONFIRMED) {
                                 RestCallbackManager.getInstance().sendCallback(epUrl,
                                         CamundaMessageTranslator.convert(correlationId, tx, false));
@@ -93,11 +99,14 @@ public class BlockchainManager {
                                 RestCallbackManager.getInstance().sendCallback(epUrl,
                                         CamundaMessageTranslator.convert(correlationId, tx, true));
                             }
-                        } else
-                            log.info("resulting transaction is null");
+                        } else {
+                            log.warn("Resulting transaction is null");
+                        }
                     }).
                     exceptionally((e) -> {
                         log.error("Failed to submit a transaction.", e);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             RestCallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, ((BlockchainNodeUnreachableException) e).getCode()));
@@ -117,10 +126,12 @@ public class BlockchainManager {
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (InvalidTransactionException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when something is wrong with the transaction data
             RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
                     CamundaMessageTranslator.convert(correlationId, TransactionState.INVALID, true, e.getCode()));
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found
             RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
                     CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, e.getCode()));
@@ -145,15 +156,19 @@ public class BlockchainManager {
     public void receiveTransactions(final String correlationId, final String from, final String blockchainId,
                                     final double requiredConfidence, final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTxs, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
-                    .doOnError(throwable -> log.error("Failed to receive transaction.", throwable))
-                    .subscribe(transaction -> {
+                    .doOnError(throwable -> {
+                        log.error("Failed to receive transaction.", throwable);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(throwable);
+                    }).subscribe(transaction -> {
                         if (transaction != null) {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(transaction);
                             RestCallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, transaction, false));
                         } else {
@@ -165,9 +180,11 @@ public class BlockchainManager {
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTIONS);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
         } catch (BlockchainIdNotFoundException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found
             log.error("blockchainId ({}) is not recognized, but no error callback is sent to endpoint!", blockchainId);
         } catch (NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // trying to receive monetary transactions on, e.g., Fabric.
             log.error(e.getMessage());
         }
@@ -192,6 +209,7 @@ public class BlockchainManager {
     public void receiveTransaction(final String correlationId, final String from, final String blockchainId,
                                    final double requiredConfidence, final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
                     .doFinally(() -> {
@@ -199,6 +217,7 @@ public class BlockchainManager {
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
                     .doOnError(throwable -> {
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(throwable);
                         log.error("Failed to receive transaction.", throwable);
 
                         if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
@@ -211,11 +230,12 @@ public class BlockchainManager {
                     .take(1)
                     .subscribe(transaction -> {
                         if (transaction != null) {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(transaction);
                             RestCallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, transaction, false));
-                            log.info("Usubscribing from receiveTransactions");
+                            log.info("Unsubscribing from receiveTransactions");
                         } else {
-                            log.error("received transaction is null!");
+                            log.error("Received transaction is null!");
                         }
                     });
 
@@ -223,6 +243,7 @@ public class BlockchainManager {
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
             RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
@@ -248,18 +269,21 @@ public class BlockchainManager {
     public void detectOrphanedTransaction(final String correlationId, final String transactionId, final String blockchainId,
                                           final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.DetectOrphanedTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.detectOrphanedTransaction(transactionId);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTxState(txState);
                             RestCallbackManager.getInstance().sendCallback(epUrl,
                                     CamundaMessageTranslator.convert(correlationId, txState, false, 0));
                         } else // we should never reach here!
                             log.error("Resulting transactionState is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction.", e);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+                        log.error("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             RestCallbackManager.getInstance().sendCallback(epUrl,
@@ -276,6 +300,7 @@ public class BlockchainManager {
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.DETECT_ORPHANED_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
             RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
@@ -307,11 +332,14 @@ public class BlockchainManager {
     public void ensureTransactionState(final String correlationId, final String transactionId, final String blockchainId,
                                        final double requiredConfidence, final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.EnsureState, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTxState(txState);
+
                             if (txState == TransactionState.CONFIRMED)
                                 RestCallbackManager.getInstance().sendCallback(epUrl,
                                         CamundaMessageTranslator.convert(correlationId, txState, false, 0));
@@ -322,7 +350,8 @@ public class BlockchainManager {
                             log.error("resulting transactionState is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction.", e);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+                        log.error("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
                         if (e.getCause() instanceof BlockchainNodeUnreachableException)
                             RestCallbackManager.getInstance().sendCallback(epUrl,
@@ -339,6 +368,7 @@ public class BlockchainManager {
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to monitor a monetary transaction via, e.g., Fabric
             RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
@@ -386,12 +416,12 @@ public class BlockchainManager {
             final String correlationId,
             final String signature) throws BalException {
 
+        RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.InvokeSCFunction, blockchainIdentifier));
         final CompletableFuture<Transaction> future = this.invokeSmartContractFunction(blockchainIdentifier, smartContractPath,
                 functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature, sideEffects);
-
-        future.
-                thenAccept(tx -> {
+        future.thenAccept(tx -> {
                     if (tx != null) {
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(tx);
                         if (callbackUrl != null) {
                             if (tx.getState() == TransactionState.CONFIRMED || tx.getState() == TransactionState.RETURN_VALUE) {
                                 if (callbackBinding.isEmpty()) {
@@ -420,13 +450,14 @@ public class BlockchainManager {
                                 }
                             }
                         } else {
-                            log.info("callbackUrl is null");
+                            log.warn("CallbackUrl is null");
                         }
                     } else {
-                        log.info("Resulting transaction is null");
+                        log.warn("Resulting transaction is null");
                     }
                 }).
                 exceptionally((e) -> {
+                    RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
                     log.info("Failed to invoke smart contract function.", e);
                     // happens if the node is unreachable, or something goes wrong while trying to invoke the sc function.
                     if (e.getCause() instanceof BalException) {
@@ -493,6 +524,7 @@ public class BlockchainManager {
             final String callbackBinding,
             final String callbackUrl,
             final String correlationIdentifier) {
+        RequestHistoryManager.getInstance().addRequestDetails(correlationIdentifier, new RequestDetails(RequestType.Subscribe, blockchainIdentifier));
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
@@ -502,13 +534,18 @@ public class BlockchainManager {
                     // remove subscription from subscription list
                     SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
                 })
-                .doOnError(throwable -> log.error("Failed to detect an occurrence.", throwable))
+                .doOnError(throwable -> {
+                    log.error("Failed to detect an occurrence.", throwable);
+                    RequestHistoryManager.getInstance().getRequestDetails(correlationIdentifier).setException(throwable);
+                })
                 .subscribe(occurrence -> {
                     if (occurrence != null) {
+                        LinearChainTransaction dummy = new LinearChainTransaction();
+                        dummy.setReturnValues(occurrence.getParameters());
+                        dummy.setState(TransactionState.RETURN_VALUE);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationIdentifier).setTransaction(dummy);
+
                         if (callbackBinding.isEmpty()) {
-                            LinearChainTransaction dummy = new LinearChainTransaction();
-                            dummy.setReturnValues(occurrence.getParameters());
-                            dummy.setState(TransactionState.RETURN_VALUE);
                             RestCallbackManager.getInstance().sendCallback(callbackUrl,
                                     CamundaMessageTranslator.convert(correlationIdentifier, dummy, false));
                         } else {
