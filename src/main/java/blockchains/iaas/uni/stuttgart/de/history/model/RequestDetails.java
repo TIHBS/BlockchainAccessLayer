@@ -1,10 +1,7 @@
 package blockchains.iaas.uni.stuttgart.de.history.model;
 
-import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
-import blockchains.iaas.uni.stuttgart.de.api.model.Block;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.TransactionState;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

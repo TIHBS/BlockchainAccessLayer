@@ -40,7 +40,7 @@ public class SubmitTransactionController extends SubscriptionController {
     public void submitTransaction(SubmitTransactionRequest request) {
         log.info("Received an submitTransaction request via REST API");
         manager.submitNewTransaction(request.getSubscriptionId(), request.getTo(), request.getValue(), request.getBlockchainId(),
-                request.getRequiredConfidence(), request.getEpUrl());
+                request.getRequiredConfidence(), null, request.getEpUrl());
     }
 
     @PostMapping(path = "/dummy")

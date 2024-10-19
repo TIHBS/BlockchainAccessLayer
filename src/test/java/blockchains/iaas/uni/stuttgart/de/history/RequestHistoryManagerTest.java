@@ -41,8 +41,6 @@ class RequestHistoryManagerTest {
         assertNotNull(details);
         assertEquals(RequestType.SendTx, details.getType());
         assertEquals("bc2", details.getBlockchainId());
-
-
     }
 
 }
