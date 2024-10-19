@@ -79,10 +79,18 @@ public class BlockchainManager {
      */
     public void submitNewTransaction(final String correlationId, final String to, final BigInteger value,
                                      final String blockchainId, final double requiredConfidence, final String callbackBinding, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
             RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.SendTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
+            final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), minimumConfidenceAsProbability);
 
             future.
                     thenAccept(tx -> {
@@ -145,10 +153,18 @@ public class BlockchainManager {
      */
     public void receiveTransactions(final String correlationId, final String from, final String blockchainId,
                                     final double requiredConfidence, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
             RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTxs, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
+            final Disposable subscription = adapter.receiveTransactions(from, minimumConfidenceAsProbability)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
@@ -196,10 +212,18 @@ public class BlockchainManager {
      */
     public void receiveTransaction(final String correlationId, final String from, final String blockchainId, final String callbackBinding,
                                    final double requiredConfidence, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
             RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
+            final Disposable subscription = adapter.receiveTransactions(from, minimumConfidenceAsProbability)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
@@ -318,10 +342,19 @@ public class BlockchainManager {
      */
     public void ensureTransactionState(final String correlationId, final String transactionId, final String blockchainId,
                                        final String callbackBinding, final double requiredConfidence, final String epUrl) {
+
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
             RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.EnsureState, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
+            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, minimumConfidenceAsProbability);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {

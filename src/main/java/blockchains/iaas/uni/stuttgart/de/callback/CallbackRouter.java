@@ -36,7 +36,7 @@ public class CallbackRouter {
             RestCallbackManager.getInstance().sendCallbackAsync(endpointUrl,
                     CamundaMessageTranslator.convert(correlationId, txState, true, exception.getCode()));
         } else {
-            ScipCallbackManager.getInstance().sendAsyncErrorResponse(correlationId, bindingType, new AsynchronousBalException(exception, correlationId));
+            ScipCallbackManager.getInstance().sendAsyncErrorResponse(endpointUrl, bindingType, new AsynchronousBalException(exception, correlationId));
         }
     }
 

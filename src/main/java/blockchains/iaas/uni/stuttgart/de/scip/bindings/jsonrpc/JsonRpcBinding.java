@@ -99,9 +99,6 @@ public class JsonRpcBinding implements AbstractBinding {
         }
     }
 
-
-
-
     protected void sendSubscriptionResponse(String endpointUrl, SubscribeResponse response) {
         try {
             NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
