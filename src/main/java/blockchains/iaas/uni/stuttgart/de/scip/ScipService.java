@@ -16,8 +16,8 @@ import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterExce
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.scip.model.common.MemberSignature;
 import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.MemberSignature;
 import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
@@ -102,8 +102,9 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
-                              @JsonRpcParam("correlationId") String correlationId) {
+    public String Unsubscribe(
+            @JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
+            @JsonRpcParam("correlationId") String correlationId) {
         log.info("SCIP Unsubscribe method is executed!");
 
         if (memberSignature.isFunction()) {
@@ -131,6 +132,11 @@ public class ScipService {
 
     }
 
+
+    /* T-SCIP Methods */
+
+    /******************/
+
     @JsonRpcMethod
     public String Start_Dtx() {
         log.info("SCIP-T Start_Dtx method is executed!");
@@ -139,7 +145,8 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+    public String Commit_Dtx(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Commit_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.commitDtx(uuid);
@@ -148,11 +155,60 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+    public String Abort_Dtx(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Abort_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.abortDtx(uuid);
 
         return "OK";
     }
+
+    /* B-SCIP Methods */
+
+    /******************/
+
+    @JsonRpcMethod
+    public String SendTx(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcParam("value") long value,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
+            @JsonRpcOptional @JsonRpcParam("nonce") Long nonce,
+            @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
+            ) {
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String ReceiveTx(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
+            @JsonRpcOptional @JsonRpcParam("from") String from
+    ) {
+
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String EnsureState(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcParam("ref") String ref,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout
+    ) {
+
+        return "OK";
+    }
+
+
+
 }
