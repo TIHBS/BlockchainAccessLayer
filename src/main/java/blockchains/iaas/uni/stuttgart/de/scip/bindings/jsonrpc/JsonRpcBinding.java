@@ -14,8 +14,7 @@ package blockchains.iaas.uni.stuttgart.de.scip.bindings.jsonrpc;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
+import blockchains.iaas.uni.stuttgart.de.scip.model.responses.*;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.github.arteam.simplejsonrpc.client.Transport;
 import com.github.arteam.simplejsonrpc.client.builder.NotificationRequestBuilder;
@@ -36,7 +35,58 @@ public class JsonRpcBinding implements AbstractBinding {
     }
 
     @Override
-    public void sendInvocationResponse(String endpointUrl, InvokeResponse response) {
+    public void sendAsyncResponse(String endpointUrl, AsyncScipResponse response) {
+        if (response instanceof InvokeResponse invokeResponse) {
+            this.sendInvocationResponse(endpointUrl, invokeResponse);
+        } else if (response instanceof SubscribeResponse subscribeResponse) {
+            this.sendSubscriptionResponse(endpointUrl, subscribeResponse);
+        } else if (response instanceof SendTxResponse sendTxResponse) {
+            this.sendSendTxResponse(endpointUrl, sendTxResponse);
+        } else if (response instanceof ReceiveTxResponse receiveTxResponse) {
+            this.sendReceiveTxResponse(endpointUrl, receiveTxResponse);
+        } else if (response instanceof EnsureStateResponse ensureStateResponse) {
+            this.sendEnsureStateResponse(endpointUrl, ensureStateResponse);
+        }
+    }
+
+    protected void sendEnsureStateResponse(String endpointUrl, EnsureStateResponse response) {
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+
+            builder.param("correlationIdentifier", response.getCorrelationId())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send EnsureStateResponse to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
+    }
+
+    protected void sendSendTxResponse(String endpointUrl, SendTxResponse response) {
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+
+            builder.param("correlationIdentifier", response.getCorrelationId())
+                    .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send Invocation response to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
+    }
+
+    protected void sendReceiveTxResponse(String endpointUrl, ReceiveTxResponse response) {
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+
+            builder.param("correlationIdentifier", response.getCorrelationId())
+                    .param("from", response.getFrom())
+                    .param("value", String.valueOf(response.getValue()))
+                    .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send ReceiveTxResponse to {}. Reason: {}", endpointUrl, e.getMessage());
+        }
+    }
+
+    protected void sendInvocationResponse(String endpointUrl, InvokeResponse response) {
         try {
             NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
 
@@ -45,12 +95,14 @@ public class JsonRpcBinding implements AbstractBinding {
                     .param("timestamp", response.getTimeStamp() == null ? "" : response.getTimeStamp())
                     .execute();
         } catch (Exception e) {
-            log.error("Failed to send Invocation response to {}. Reason: {}", endpointUrl, e.getMessage());
+            log.error("Failed to send InvokeResponse to {}. Reason: {}", endpointUrl, e.getMessage());
         }
     }
 
-    @Override
-    public void sendSubscriptionResponse(String endpointUrl, SubscribeResponse response) {
+
+
+
+    protected void sendSubscriptionResponse(String endpointUrl, SubscribeResponse response) {
         try {
             NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
             builder.param("correlationIdentifier", response.getCorrelationId())
@@ -58,7 +110,7 @@ public class JsonRpcBinding implements AbstractBinding {
                     .param("timestamp", response.getTimestamp())
                     .execute();
         } catch (Exception e) {
-            log.error("Failed to send Subscription response to {}. Reason: {}", endpointUrl, e.getMessage());
+            log.error("Failed to send SubscribeResponse to {}. Reason: {}", endpointUrl, e.getMessage());
         }
     }
 
@@ -108,6 +160,5 @@ public class JsonRpcBinding implements AbstractBinding {
 
         return client.createNotification()
                 .method(METHOD_NAME);
-
     }
 }

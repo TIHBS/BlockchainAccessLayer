@@ -407,7 +407,7 @@ public class BlockchainManager {
                                                             .build()
                                                     ).toList())
                                             .build();
-                                    ScipCallbackManager.getInstance().sendInvocationResponse(callbackUrl, callbackBinding, response);
+                                    ScipCallbackManager.getInstance().sendAsyncResponse(callbackUrl, callbackBinding, response);
                                 }
                             } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
                                 AsynchronousBalException exception = generateAsynchronousBalException(correlationId, tx);
@@ -525,7 +525,7 @@ public class BlockchainManager {
                                                     .build()
                                             ).toList())
                                     .build();
-                            ScipCallbackManager.getInstance().sendSubscriptionResponse(callbackUrl, callbackBinding, response);
+                            ScipCallbackManager.getInstance().sendAsyncResponse(callbackUrl, callbackBinding, response);
                         }
                     } else {
                         log.error("detected occurrence is null!");

@@ -12,16 +12,13 @@
 package blockchains.iaas.uni.stuttgart.de.scip.bindings;
 
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
+import blockchains.iaas.uni.stuttgart.de.scip.model.responses.AsyncScipResponse;
 
 
 public interface AbstractBinding {
     String getBindingIdentifier();
 
-    void sendInvocationResponse(String endpointUrl, InvokeResponse response);
-
-    void sendSubscriptionResponse(String endpointUrl, SubscribeResponse response);
+    void sendAsyncResponse(String endpointUrl, AsyncScipResponse response);
 
     void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception);
 }

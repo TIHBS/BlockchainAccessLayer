@@ -19,10 +19,11 @@ import blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.CamundaBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.jsonrpc.JsonRpcBinding;
 import lombok.extern.log4j.Log4j2;
 
-@Log4j2
+
 /**
- * Manages the registered SCIP bindings
+  Manages the registered SCIP bindings
  */
+@Log4j2
 public class BindingsManager {
     private static BindingsManager instance = null;
     private final Map<String, AbstractBinding> bindings;

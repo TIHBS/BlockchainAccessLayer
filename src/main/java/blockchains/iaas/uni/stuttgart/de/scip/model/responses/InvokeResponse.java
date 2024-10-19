@@ -19,18 +19,23 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Builder
 @Setter
 @Getter
-public class InvokeResponse {
-    @NonNull private String correlationId;
+public class InvokeResponse extends AsyncScipResponse {
     private String timeStamp;
     @NonNull private List<Argument> outputArguments;
+
+    @Builder
+    public InvokeResponse(@NonNull String correlationId, String timeStamp, @NonNull List<Argument> outputArguments) {
+        super(correlationId);
+        this.timeStamp = timeStamp;
+        this.outputArguments = outputArguments;
+    }
 
     @Override
     public String toString() {
         return "InvokeResponse{" +
-                "correlationId='" + correlationId + '\'' +
+                "correlationId='" + getCorrelationId() + '\'' +
                 ", timeStamp='" + timeStamp + '\'' +
                 ", outputArguments=" + outputArguments +
                 '}';

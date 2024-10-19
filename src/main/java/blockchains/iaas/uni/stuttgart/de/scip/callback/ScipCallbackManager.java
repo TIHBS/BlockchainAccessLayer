@@ -11,16 +11,14 @@
 
 package blockchains.iaas.uni.stuttgart.de.scip.callback;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.BindingsManager;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
+import blockchains.iaas.uni.stuttgart.de.scip.model.responses.AsyncScipResponse;
 import lombok.extern.log4j.Log4j2;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Log4j2
 public class ScipCallbackManager {
@@ -38,17 +36,17 @@ public class ScipCallbackManager {
         return instance;
     }
 
-    public void sendInvocationResponse(String endpointUrl, String bindingName, InvokeResponse response) {
-        log.info("Sending SCIP InvokeResponse to {} using binding {}. Response body: {}", endpointUrl, bindingName, response);
+    public void sendAsyncResponse(String endpointUrl, String bindingName, AsyncScipResponse response) {
+        log.info("Sending SCIP {} to {} using binding {} (CorrelationId={}). Response body: {}",
+                () -> response.getClass().getName(),
+                () -> endpointUrl,
+                () -> bindingName,
+                () -> response.getCorrelationId(),
+                () -> response);
         AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
-        this.executorService.execute(() -> binding.sendInvocationResponse(endpointUrl, response));
+        this.executorService.execute(() -> binding.sendAsyncResponse(endpointUrl, response));
     }
 
-    public void sendSubscriptionResponse(String endpointUrl, String bindingName, SubscribeResponse response) {
-        log.info("Sending SCIP SubscribeResponse to {} using binding {}. Response body: {}", endpointUrl, bindingName, response);
-        AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
-        this.executorService.execute(() -> binding.sendSubscriptionResponse(endpointUrl, response));
-    }
 
     public void sendAsyncErrorResponse(String endpointUrl, String bindingName, AsynchronousBalException exception) {
         log.info("Sending asynchronous SCIP error to {} using binding {}. Exception body: {}", endpointUrl, bindingName, exception);
