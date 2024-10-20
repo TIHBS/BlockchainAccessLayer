@@ -48,6 +48,10 @@ public class RestCallbackManager {
         }
     }
 
+    public void sendCallbackAsync(final String endpointUrl, final CallbackMessage responseBody) {
+        this.executorService.execute(() -> sendCallback(endpointUrl, responseBody));
+    }
+
     private void sendRestCallback(final String endpointUrl, final CallbackMessage responseBody) {
         ResponseEntity<String> response = RestClient.create()
                 .post()
@@ -61,7 +65,5 @@ public class RestCallbackManager {
                 () -> response.getBody(), () -> response.getStatusCode());
     }
 
-    public void sendCallbackAsync(final String endpointUrl, final CallbackMessage responseBody) {
-        this.executorService.execute(() -> sendCallback(endpointUrl, responseBody));
-    }
+
 }

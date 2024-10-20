@@ -38,7 +38,7 @@ public class EnsureTransactionStateController extends SubscriptionController {
     @PostMapping(consumes= MediaType.APPLICATION_XML_VALUE)
     public void ensureTransactionState(@RequestBody EnsureTransactionStateRequest request){
         log.info("Received an ensureTransactionState request via REST API");
-        manager.ensureTransactionState(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(),
+        manager.ensureTransactionState(request.getSubscriptionId(), request.getTxId(), request.getBlockchainId(), null,
                 request.getRequiredConfidence(), request.getEpUrl());
     }
 }

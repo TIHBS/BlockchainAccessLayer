@@ -42,7 +42,7 @@ public class ReceiveTransactionController extends SubscriptionController {
     @PostMapping(consumes = MediaType.APPLICATION_XML_VALUE)
     public void receiveTransaction(ReceiveTransactionsRequest request) {
         log.info("Received an receiveTransaction request via REST API");
-        manager.receiveTransaction(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(),
+        manager.receiveTransaction(request.getSubscriptionId(), request.getFrom(), request.getBlockchainId(), null,
                 request.getRequiredConfidence(), request.getEpUrl());
     }
 }

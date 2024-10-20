@@ -45,7 +45,7 @@ public class InvokeSmartContractFunctionController extends SubscriptionControlle
                 request.getInputs().getArguments(),
                 request.getOutputs().getArguments(),
                 request.getConfidence(),
-                "",
+                null,
                 request.isSideEffects(),
                 request.getNonce(),
                 request.getEpUrl(),

@@ -16,13 +16,12 @@ import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.api.utils.MathUtils;
-import blockchains.iaas.uni.stuttgart.de.restapi.callback.CamundaMessageTranslator;
-import blockchains.iaas.uni.stuttgart.de.restapi.callback.RestCallbackManager;
-import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
+import blockchains.iaas.uni.stuttgart.de.callback.CallbackRouter;
+import blockchains.iaas.uni.stuttgart.de.history.RequestHistoryManager;
+import blockchains.iaas.uni.stuttgart.de.history.model.RequestDetails;
+import blockchains.iaas.uni.stuttgart.de.history.model.RequestType;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
-import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.InvokeResponse;
-import blockchains.iaas.uni.stuttgart.de.scip.model.responses.SubscribeResponse;
+
 import blockchains.iaas.uni.stuttgart.de.subscription.SubscriptionManager;
 import blockchains.iaas.uni.stuttgart.de.subscription.model.*;
 import com.google.common.base.Strings;
@@ -75,37 +74,51 @@ public class BlockchainManager {
      * @param value              the value of the transaction
      * @param blockchainId       the blockchain network id
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
+     * @param callbackBinding    the scip callback binding used when sending back asynchronous replies/exceptions. If null, REST will be used instead of SCIP
      * @param epUrl              the url of the endpoint to send the callback message to
      */
     public void submitNewTransaction(final String correlationId, final String to, final BigInteger value,
-                                     final String blockchainId, final double requiredConfidence, final String epUrl) {
+                                     final String blockchainId, final double requiredConfidence, final String callbackBinding, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.SendTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), requiredConfidence);
-            // This happens when a communication error, or an error with the tx exist.
+            final CompletableFuture<Transaction> future = adapter.submitTransaction(to, new BigDecimal(value), minimumConfidenceAsProbability);
+
             future.
                     thenAccept(tx -> {
                         if (tx != null) {
-                            if (tx.getState() == TransactionState.CONFIRMED) {
-                                RestCallbackManager.getInstance().sendCallback(epUrl,
-                                        CamundaMessageTranslator.convert(correlationId, tx, false));
-                            } else {// it is NOT_FOUND
-                                RestCallbackManager.getInstance().sendCallback(epUrl,
-                                        CamundaMessageTranslator.convert(correlationId, tx, true));
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(tx);
+
+                            if (tx.getState() != TransactionState.CONFIRMED) {
+                                CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, tx.getState(), new InvalidTransactionException("The transaction is not confirmed"));
+                            } else {
+                                CallbackRouter.getInstance().sendSubmitTransactionResponse(correlationId, epUrl, callbackBinding, tx);
                             }
-                        } else
-                            log.info("resulting transaction is null");
+                        } else {
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTxState(TransactionState.UNKNOWN);
+                            log.warn("Resulting transaction is null");
+                            // todo must return some callback
+                        }
                     }).
                     exceptionally((e) -> {
                         log.error("Failed to submit a transaction.", e);
-                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, ((BlockchainNodeUnreachableException) e).getCode()));
-                        else if (e.getCause() instanceof InvalidTransactionException)
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.INVALID, true, ((InvalidTransactionException) e).getCode()));
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException || e.getCause() instanceof InvalidTransactionException) {
+                            TransactionState state = e.getCause() instanceof BlockchainNodeUnreachableException ? TransactionState.UNKNOWN : TransactionState.INVALID;
+                            CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, state, (BalException) e.getCause());
+                        }
 
                         // ManualUnsubscriptionException is also captured here
+                        // todo must return some callback
                         return null;
                     }).
                     whenComplete((r, e) -> {
@@ -116,14 +129,10 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.SUBMIT_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
-        } catch (InvalidTransactionException e) {
-            // This (should only) happen when something is wrong with the transaction data
-            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    CamundaMessageTranslator.convert(correlationId, TransactionState.INVALID, true, e.getCode()));
-        } catch (BlockchainIdNotFoundException | NotSupportedException e) {
-            // This (should only) happen when the blockchainId is not found
-            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, e.getCode()));
+        } catch (InvalidTransactionException | BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+            // This (should only) happen when something is wrong with the transaction data or the blockchainId is not found
+            throw e;
         }
     }
 
@@ -144,18 +153,29 @@ public class BlockchainManager {
      */
     public void receiveTransactions(final String correlationId, final String from, final String blockchainId,
                                     final double requiredConfidence, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTxs, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
+            final Disposable subscription = adapter.receiveTransactions(from, minimumConfidenceAsProbability)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
-                    .doOnError(throwable -> log.error("Failed to receive transaction.", throwable))
-                    .subscribe(transaction -> {
+                    .doOnError(throwable -> {
+                        log.error("Failed to receive transaction.", throwable);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(throwable);
+                    }).subscribe(transaction -> {
                         if (transaction != null) {
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, transaction, false));
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(transaction);
+                            CallbackRouter.getInstance().sendReceiveTransactionsResponse(correlationId, epUrl, null, transaction);
                         } else {
                             log.error("received transaction is null!");
                         }
@@ -164,12 +184,12 @@ public class BlockchainManager {
             // Add subscription to the list of subscriptions
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTIONS);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
-        } catch (BlockchainIdNotFoundException e) {
-            // This (should only) happen when the blockchainId is not found
-            log.error("blockchainId ({}) is not recognized, but no error callback is sent to endpoint!", blockchainId);
-        } catch (NotSupportedException e) {
+        } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+            // This (should only) happen when the blockchainId is not found or the blockchain does not support operation, for example:
             // trying to receive monetary transactions on, e.g., Fabric.
-            log.error(e.getMessage());
+            log.error("blockchainId ({}) is not recognized", blockchainId, e);
+            throw e;
         }
     }
 
@@ -186,24 +206,36 @@ public class BlockchainManager {
      * @param from               an optional parameter.If supplied, it indicates the sending address of the transactions we are interested
      *                           in.
      * @param blockchainId       the blockchain network id
+     * @param callbackBinding    the scip callback binding used when sending back asynchronous replies/exceptions. If null, REST will be used instead of SCIP
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
      * @param epUrl              the url of the endpoint to send the callback message to
      */
-    public void receiveTransaction(final String correlationId, final String from, final String blockchainId,
+    public void receiveTransaction(final String correlationId, final String from, final String blockchainId, final String callbackBinding,
                                    final double requiredConfidence, final String epUrl) {
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.ReceiveTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final Disposable subscription = adapter.receiveTransactions(from, requiredConfidence)
+            final Disposable subscription = adapter.receiveTransactions(from, minimumConfidenceAsProbability)
                     .doFinally(() -> {
                         // remove subscription from subscription list
                         SubscriptionManager.getInstance().removeSubscription(correlationId, blockchainId);
                     })
                     .doOnError(throwable -> {
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(throwable);
                         log.error("Failed to receive transaction.", throwable);
 
-                        if (throwable instanceof BlockchainNodeUnreachableException || throwable.getCause() instanceof BlockchainNodeUnreachableException) {
-                            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, (new BlockchainNodeUnreachableException()).getCode()));
+                        if (throwable instanceof BlockchainNodeUnreachableException e) {
+                            CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, TransactionState.UNKNOWN, e);
+                        } else if (throwable.getCause() instanceof BlockchainNodeUnreachableException e) {
+                            CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, TransactionState.UNKNOWN, e);
                         } else {
                             log.error("Unhandled exception.", throwable);
                         }
@@ -211,11 +243,10 @@ public class BlockchainManager {
                     .take(1)
                     .subscribe(transaction -> {
                         if (transaction != null) {
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, transaction, false));
-                            log.info("Usubscribing from receiveTransactions");
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(transaction);
+                            CallbackRouter.getInstance().sendReceiveTransactionResponse(correlationId, epUrl, callbackBinding, transaction);
                         } else {
-                            log.error("received transaction is null!");
+                            log.error("Received transaction is null!");
                         }
                     });
 
@@ -223,10 +254,11 @@ public class BlockchainManager {
             final Subscription sub = new ObservableSubscription(subscription, SubscriptionType.RECEIVE_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, sub);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
-            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, e.getCode()));
+            log.error(e);
+            throw e;
         }
     }
 
@@ -248,22 +280,24 @@ public class BlockchainManager {
     public void detectOrphanedTransaction(final String correlationId, final String transactionId, final String blockchainId,
                                           final String epUrl) {
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.DetectOrphanedTx, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
             final CompletableFuture<TransactionState> future = adapter.detectOrphanedTransaction(transactionId);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, txState, false, 0));
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTxState(txState);
+                            CallbackRouter.getInstance().sendDetectOrphanedTransactionResponse(correlationId, epUrl, null, txState);
                         } else // we should never reach here!
                             log.error("Resulting transactionState is null");
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction.", e);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+                        log.error("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
-                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, false, 0));
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException ee) {
+                            CallbackRouter.getInstance().sendDetectOrphanedTransactionResponse(correlationId, epUrl, null, TransactionState.UNKNOWN);
+                        }
 
                         // ManualUnsubscriptionException is also captured here
                         return null;
@@ -276,10 +310,11 @@ public class BlockchainManager {
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.DETECT_ORPHANED_TRANSACTION);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to receive a monetary transaction via, e.g., Fabric
-            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, false, 0));
+            log.error(e);
+            throw e;
         }
     }
 
@@ -301,34 +336,51 @@ public class BlockchainManager {
      * @param correlationId      supplied by the remote application as a means for correlation
      * @param transactionId      the hash of the transaction to monitor
      * @param blockchainId       the blockchain network id
+     * @param callbackBinding    the scip callback binding used when sending back asynchronous replies/exceptions. If null, REST will be used instead of SCIP
      * @param requiredConfidence the degree-of-confidence required to be achieved before sending a callback message to the invoker.
      * @param epUrl              the url of the endpoint to send the callback message to
      */
     public void ensureTransactionState(final String correlationId, final String transactionId, final String blockchainId,
-                                       final double requiredConfidence, final String epUrl) {
+                                       final String callbackBinding, final double requiredConfidence, final String epUrl) {
+
+        // Validate scip parameters!
+        if (MathUtils.doubleCompare(requiredConfidence, 0.0) < 0
+                || MathUtils.doubleCompare(requiredConfidence, 100.0) > 0) {
+            throw new InvalidScipParameterException();
+        }
+
+        final double minimumConfidenceAsProbability = requiredConfidence / 100.0;
+
         try {
+            RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.EnsureState, blockchainId));
             final BlockchainAdapter adapter = adapterManager.getAdapter(blockchainId);
-            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, requiredConfidence);
+            final CompletableFuture<TransactionState> future = adapter.ensureTransactionState(transactionId, minimumConfidenceAsProbability);
             future.
                     thenAccept(txState -> {
                         if (txState != null) {
-                            if (txState == TransactionState.CONFIRMED)
-                                RestCallbackManager.getInstance().sendCallback(epUrl,
-                                        CamundaMessageTranslator.convert(correlationId, txState, false, 0));
-                            else
-                                RestCallbackManager.getInstance().sendCallback(epUrl,
-                                        CamundaMessageTranslator.convert(correlationId, txState, true, 0));
-                        } else // we should never reach here!
+                            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTxState(txState);
+
+                            if (txState == TransactionState.CONFIRMED) {
+                                CallbackRouter.getInstance().sendEnsureTransactionStateResponse(correlationId, epUrl, callbackBinding, txState);
+                            } else {
+                                CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, txState, new InvalidTransactionException("The transaction is not confirmed"));
+                            }
+                        } else {
+                            // we should never reach here!
+                            // todo must return some callback
                             log.error("resulting transactionState is null");
+                        }
                     }).
                     exceptionally((e) -> {
-                        log.info("Failed to monitor a transaction.", e);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
+                        log.error("Failed to monitor a transaction.", e);
                         // This happens when a communication error, or an error with the tx exist.
-                        if (e.getCause() instanceof BlockchainNodeUnreachableException)
-                            RestCallbackManager.getInstance().sendCallback(epUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, ((BlockchainNodeUnreachableException) e.getCause()).getCode()));
+                        if (e.getCause() instanceof BlockchainNodeUnreachableException ee) {
+                            CallbackRouter.getInstance().sendAsyncError(correlationId, epUrl, callbackBinding, TransactionState.UNKNOWN, ee);
+                        }
 
                         // ManualUnsubscriptionException is also captured here
+                        // todo must return some callback
                         return null;
                     }).
                     whenComplete((r, e) -> {
@@ -339,10 +391,11 @@ public class BlockchainManager {
             final Subscription subscription = new CompletableFutureSubscription<>(future, SubscriptionType.ENSURE_TRANSACTION_STATE);
             SubscriptionManager.getInstance().createSubscription(correlationId, blockchainId, subscription);
         } catch (BlockchainIdNotFoundException | NotSupportedException e) {
+            RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
             // This (should only) happen when the blockchainId is not found Or
             // if trying to monitor a monetary transaction via, e.g., Fabric
-            RestCallbackManager.getInstance().sendCallbackAsync(epUrl,
-                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, e.getCode()));
+            log.error(e);
+            throw e;
         }
     }
 
@@ -386,60 +439,40 @@ public class BlockchainManager {
             final String correlationId,
             final String signature) throws BalException {
 
+        RequestHistoryManager.getInstance().addRequestDetails(correlationId, new RequestDetails(RequestType.InvokeSCFunction, blockchainIdentifier));
         final CompletableFuture<Transaction> future = this.invokeSmartContractFunction(blockchainIdentifier, smartContractPath,
                 functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, signature, sideEffects);
-
-        future.
-                thenAccept(tx -> {
+        future.thenAccept(tx -> {
                     if (tx != null) {
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationId).setTransaction(tx);
                         if (callbackUrl != null) {
                             if (tx.getState() == TransactionState.CONFIRMED || tx.getState() == TransactionState.RETURN_VALUE) {
-                                if (callbackBinding.isEmpty()) {
-                                    RestCallbackManager.getInstance().sendCallback(callbackUrl,
-                                            CamundaMessageTranslator.convert(correlationId, tx, false));
-                                } else {
-                                    InvokeResponse response = InvokeResponse
-                                            .builder()
-                                            .correlationId(correlationId)
-                                            .outputArguments(tx.getReturnValues().stream()
-                                                    .map(p -> Argument.builder()
-                                                            .name(p.getName()).value(p.getValue())
-                                                            .build()
-                                                    ).toList())
-                                            .build();
-                                    ScipCallbackManager.getInstance().sendInvocationResponse(callbackUrl, callbackBinding, response);
-                                }
-                            } else {// it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
+                                CallbackRouter.getInstance().sendInvokeSCFunctionResponse(correlationId, callbackUrl, callbackBinding, tx);
+                            } else {
+                                // it is NOT_FOUND (it was dropped from the system due to invalidation) or ERRORED
                                 AsynchronousBalException exception = generateAsynchronousBalException(correlationId, tx);
-
-                                if (callbackBinding.isEmpty()) {
-                                    RestCallbackManager.getInstance().sendCallback(callbackUrl,
-                                            CamundaMessageTranslator.convert(correlationId, tx.getState(), true, exception.getCode()));
-                                } else {
-                                    ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, callbackBinding, exception);
-                                }
+                                CallbackRouter.getInstance().sendAsyncError(correlationId, callbackUrl, callbackBinding, tx.getState(), exception);
                             }
                         } else {
-                            log.info("callbackUrl is null");
+                            // todo must return callback
+                            log.error("CallbackUrl is null");
                         }
                     } else {
-                        log.info("Resulting transaction is null");
+                        // todo must return callback
+                        log.error("Resulting transaction is null");
                     }
                 }).
                 exceptionally((e) -> {
+                    RequestHistoryManager.getInstance().getRequestDetails(correlationId).setException(e);
                     log.info("Failed to invoke smart contract function.", e);
                     // happens if the node is unreachable, or something goes wrong while trying to invoke the sc function.
                     if (e.getCause() instanceof BalException) {
                         AsynchronousBalException exception =
                                 new AsynchronousBalException((BalException) e.getCause(), correlationId);
-                        if (callbackBinding.isEmpty()) {
-                            RestCallbackManager.getInstance().sendCallback(callbackUrl,
-                                    CamundaMessageTranslator.convert(correlationId, TransactionState.UNKNOWN, true, exception.getCode()));
-                        } else {
-                            ScipCallbackManager.getInstance().sendAsyncErrorResponse(callbackUrl, callbackBinding, exception);
-                        }
-                    }
+                        CallbackRouter.getInstance().sendAsyncError(correlationId, callbackUrl, callbackBinding, TransactionState.UNKNOWN, exception);
 
+                    }
+                    // todo must return callback
                     if (e instanceof ManualUnsubscriptionException || e.getCause() instanceof ManualUnsubscriptionException) {
                         log.info("Manual unsubscription of SC invocation!");
                     }
@@ -493,6 +526,7 @@ public class BlockchainManager {
             final String callbackBinding,
             final String callbackUrl,
             final String correlationIdentifier) {
+        RequestHistoryManager.getInstance().addRequestDetails(correlationIdentifier, new RequestDetails(RequestType.Subscribe, blockchainIdentifier));
 
         // first, we cancel previous identical subscriptions.
         this.cancelEventSubscriptions(blockchainIdentifier, smartContractPath, correlationIdentifier, eventIdentifier, outputParameters);
@@ -502,32 +536,19 @@ public class BlockchainManager {
                     // remove subscription from subscription list
                     SubscriptionManager.getInstance().removeSubscription(correlationIdentifier, blockchainIdentifier, smartContractPath);
                 })
-                .doOnError(throwable -> log.error("Failed to detect an occurrence.", throwable))
+                .doOnError(throwable -> {
+                    log.error("Failed to detect an occurrence.", throwable);
+                    RequestHistoryManager.getInstance().getRequestDetails(correlationIdentifier).setException(throwable);
+                })
                 .subscribe(occurrence -> {
                     if (occurrence != null) {
-                        if (callbackBinding.isEmpty()) {
-                            LinearChainTransaction dummy = new LinearChainTransaction();
-                            dummy.setReturnValues(occurrence.getParameters());
-                            dummy.setState(TransactionState.RETURN_VALUE);
-                            RestCallbackManager.getInstance().sendCallback(callbackUrl,
-                                    CamundaMessageTranslator.convert(correlationIdentifier, dummy, false));
-                        } else {
-                            SubscribeResponse response = SubscribeResponse
-                                    .builder()
-                                    .correlationId(correlationIdentifier)
-                                    .timestamp(occurrence.getIsoTimestamp())
-                                    .arguments(occurrence
-                                            .getParameters()
-                                            .stream()
-                                            .map(p -> Argument.builder()
-                                                    .name(p.getName())
-                                                    .value(p.getValue())
-                                                    .build()
-                                            ).toList())
-                                    .build();
-                            ScipCallbackManager.getInstance().sendSubscriptionResponse(callbackUrl, callbackBinding, response);
-                        }
+                        LinearChainTransaction dummy = new LinearChainTransaction();
+                        dummy.setReturnValues(occurrence.getParameters());
+                        dummy.setState(TransactionState.RETURN_VALUE);
+                        RequestHistoryManager.getInstance().getRequestDetails(correlationIdentifier).setTransaction(dummy);
+                        CallbackRouter.getInstance().sendSubscribeResponse(correlationIdentifier, callbackUrl, callbackBinding, occurrence, dummy);
                     } else {
+                        // todo must return callback
                         log.error("detected occurrence is null!");
                     }
                 });

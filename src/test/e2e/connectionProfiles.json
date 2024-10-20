@@ -1,0 +1,21 @@
+{
+  "fabric-0": {
+    "@type": "fabric",
+    "adversaryVotingRatio": 0.2,
+    "username": "User1",
+    "cryptoPath": "C:\\Users\\Ghareeb\\Documents\\GitHub\\TIHBS\\tccsci-demo\\fabric\\fabric-samples\\test-network\\organizations\\peerOrganizations\\org1.example.com",
+    "mspId": "Org1MSP",
+    "overrideAuth": "peer0.org1.example.com",
+    "peerEndpoint": "localhost:7051",
+    "resourceManagerSmartContractAddress": "mychannel/fabric-rmsc/ResourceManager"
+  },
+  "eth-0": {
+    "@type": "ethereum",
+    "nodeUrl":"http://localhost:8545",
+    "keystorePath":"C:\\Users\\Ghareeb\\.bal\\ethereum\\UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json",
+    "keystorePassword":"123456789",
+    "adversaryVotingRatio": 0.2,
+    "blockTimeSeconds": 2,
+    "resourceManagerSmartContractAddress": "0xE882ab3351C08aD55939aD613f0a1F13D83Bb568"
+  }
+}

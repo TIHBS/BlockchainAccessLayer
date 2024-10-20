@@ -13,18 +13,23 @@ package blockchains.iaas.uni.stuttgart.de.scip;
 
 import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.InvalidScipParameterException;
+import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.QueryResult;
 import blockchains.iaas.uni.stuttgart.de.api.model.TimeFrame;
-import blockchains.iaas.uni.stuttgart.de.scip.model.common.MemberSignature;
+import blockchains.iaas.uni.stuttgart.de.history.RequestHistoryManager;
+import blockchains.iaas.uni.stuttgart.de.history.model.RequestDetails;
 import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
+import blockchains.iaas.uni.stuttgart.de.scip.model.common.MemberSignature;
 import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import com.google.common.base.Strings;
 import lombok.extern.log4j.Log4j2;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,10 +76,10 @@ public class ScipService {
 
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
             dtxManager.invokeSc(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
         } else {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
         }
 
         return "OK";
@@ -102,8 +107,9 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Unsubscribe(@JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
-                              @JsonRpcParam("correlationId") String correlationId) {
+    public String Unsubscribe(
+            @JsonRpcOptional @JsonRpcParam("signature") MemberSignature memberSignature,
+            @JsonRpcParam("correlationId") String correlationId) {
         log.info("SCIP Unsubscribe method is executed!");
 
         if (memberSignature.isFunction()) {
@@ -125,11 +131,16 @@ public class ScipService {
         if (!memberSignature.isFunction()) {
             return manager.queryEvents(blockchainId, smartContractPath, memberSignature.getName(), memberSignature.getParameters(), filter, timeFrame);
         } else {
-            log.error("Not all SCIP adapters support subscribing to function occurrences. Cannot process request!");
+            log.error("Not all SCIP adapters support querying function occurrences. Cannot process request!");
             throw new InvalidScipParameterException();
         }
 
     }
+
+
+    /* T-SCIP Methods */
+
+    /******************/
 
     @JsonRpcMethod
     public String Start_Dtx() {
@@ -139,7 +150,8 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Commit_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+    public String Commit_Dtx(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Commit_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.commitDtx(uuid);
@@ -148,11 +160,73 @@ public class ScipService {
     }
 
     @JsonRpcMethod
-    public String Abort_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+    public String Abort_Dtx(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
         log.info("SCIP-T Abort_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.abortDtx(uuid);
 
         return "OK";
     }
+
+    /* B-SCIP Methods */
+
+    /******************/
+
+    @JsonRpcMethod
+    public String SendTx(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcParam("value") long value,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
+            @JsonRpcOptional @JsonRpcParam("nonce") Long nonce,
+            @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
+            ) {
+        log.info("B-SCIP SendTx method is executed!");
+        manager.submitNewTransaction(correlationId, smartContractPath, BigInteger.valueOf(value), blockchainId, degreeOfConfidence, callbackBinding, callbackUrl);
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String ReceiveTx(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
+            @JsonRpcOptional @JsonRpcParam("from") String from
+    ) {
+        log.info("B-SCIP ReceiveTx method is executed!");
+        manager.receiveTransaction(correlationId, from, blockchainId, callbackBinding, degreeOfConfidence, callbackUrl);
+        return "OK";
+    }
+
+    @JsonRpcMethod
+    public String EnsureState(
+            @JsonRpcParam("callbackUrl") String callbackUrl,
+            @JsonRpcParam("correlationId") String correlationId,
+            @JsonRpcParam("callbackBinding") String callbackBinding,
+            @JsonRpcParam("ref") String ref,
+            @JsonRpcOptional @JsonRpcParam("degreeOfConfidence") double degreeOfConfidence,
+            @JsonRpcOptional @JsonRpcParam("timeout") Long timeout
+    ) {
+        log.info("B-SCIP EnsureState method is executed!");
+        RequestDetails details = RequestHistoryManager.getInstance().getRequestDetails(ref);
+
+        if (details != null && details.getTransaction() != null && details.getTransaction() instanceof LinearChainTransaction ltx && !Strings.isNullOrEmpty(ltx.getTransactionHash())) {
+            final String txId = ltx.getTransactionHash();
+            manager.ensureTransactionState(correlationId, txId, blockchainId, callbackBinding, degreeOfConfidence, callbackUrl);
+            return "OK";
+        } else {
+            log.error("The passed reference '{}' does not correspond to any previously issued request that is associated with a blockchain transaction", ref);
+            throw new InvalidScipParameterException("The passed reference ");
+        }
+
+
+    }
+
+
+
 }
