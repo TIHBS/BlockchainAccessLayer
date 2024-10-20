@@ -76,10 +76,10 @@ public class ScipService {
 
         if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
             dtxManager.invokeSc(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
         } else {
             manager.invokeSmartContractFunction(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeout, correlationId, digitalSignature);
+                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
         }
 
         return "OK";
