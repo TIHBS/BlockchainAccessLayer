@@ -36,7 +36,7 @@ public class RootController {
     public ResponseEntity<String> performJsonRpcCall(@RequestBody String jsonRequest,
                                                      @RequestParam(name = "blockchain") final String blockchainType,
                                                      @RequestParam(name = "blockchain-id") final String blockchainId,
-                                                     @RequestParam(name = "address") final String smartContractAddress) {
+                                                     @RequestParam(name = "address", required = false) final String smartContractAddress) {
         ScipService service = new ScipService(blockchainType, blockchainId, smartContractAddress, manager, distributedTransactionManager);
         JsonRpcServer server = new JsonRpcServer();
         String response = server.handle(jsonRequest, service);
