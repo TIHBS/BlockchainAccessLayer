@@ -37,8 +37,8 @@ public class ScipCallbackManager {
     }
 
     public void sendAsyncResponse(String endpointUrl, String bindingName, AsyncScipResponse response) {
-        log.info("Sending SCIP {} to {} using binding {} (CorrelationId={}). Response body: {}",
-                () -> response.getClass().getName(),
+        log.info("Sending SCIP {} to {} using the binding '{}' (CorrelationId={}).\nResponse body: {}",
+                () -> response.getClass().getSimpleName(),
                 () -> endpointUrl,
                 () -> bindingName,
                 () -> response.getCorrelationId(),
@@ -49,7 +49,7 @@ public class ScipCallbackManager {
 
 
     public void sendAsyncErrorResponse(String endpointUrl, String bindingName, AsynchronousBalException exception) {
-        log.info("Sending asynchronous SCIP error to {} using binding {}. Exception body: {}", endpointUrl, bindingName, exception);
+        log.info("Sending asynchronous SCIP error to {} using the binding '{}'.\nException body: {}", endpointUrl, bindingName, exception);
         AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
         this.executorService.execute(() -> binding.sendAsyncErrorResponse(endpointUrl, exception));
     }
