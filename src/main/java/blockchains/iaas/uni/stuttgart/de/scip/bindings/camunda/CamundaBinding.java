@@ -69,13 +69,15 @@ public class CamundaBinding implements AbstractBinding {
 
             final Variable errCode = new LongVariable(exception.getCode());
             final Variable errMessage = new StringVariable(exception.getMessage());
-            final String messageName = "error_" + exception.getCorrelationIdentifier();
+            final String messageName = "error_" + exception.getCorrelationIdentifier().substring(exception.getCorrelationIdentifier().indexOf("_") + 1);
             variables.put("errorCode", errCode);
             variables.put("errorMessage", errMessage);
+            final String businessKey = exception.getCorrelationIdentifier().split("_")[0];
             Message message = Message
                     .builder()
                     .messageName(messageName)
-                    .processVariables(variables).build();
+                    .businessKey(businessKey)
+                    .processVariablesLocal(variables).build();
 
             sendCamundaMessage(message, endpointUrl);
         } catch (Exception e) {
@@ -156,10 +158,12 @@ public class CamundaBinding implements AbstractBinding {
     }
 
     private void sendCamundaMessage(String correlationId, String endpointUrl, final Map<String, Variable> variables) {
+        final String businessKey = correlationId.split("_")[0];
         final Message message = Message
                 .builder()
-                .messageName("result_" + correlationId)
-                .processVariables(variables)
+                .messageName("result_" + correlationId.substring(correlationId.indexOf("_") + 1))
+                .processVariablesLocal(variables)
+                .businessKey(businessKey)
                 .build();
 
         sendCamundaMessage(message, endpointUrl);
@@ -178,7 +182,7 @@ public class CamundaBinding implements AbstractBinding {
     }
 
     private void sendCamundaMessage(Message message, String endpointUrl) {
-
+        log.info("sending camunda message to client: {}", message);
         ResponseEntity<String> response = RestClient.create()
                 .post()
                 .uri(endpointUrl)

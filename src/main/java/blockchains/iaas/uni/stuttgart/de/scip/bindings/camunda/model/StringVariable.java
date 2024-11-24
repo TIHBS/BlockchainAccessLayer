@@ -13,9 +13,11 @@ package blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
+@ToString
 public class StringVariable extends Variable {
     @NonNull
     private final String value;

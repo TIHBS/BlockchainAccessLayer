@@ -13,9 +13,11 @@ package blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public abstract class Variable {
     private final String type;
 

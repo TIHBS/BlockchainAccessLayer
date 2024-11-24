@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 public class ScipCallbackManager {
     private static ScipCallbackManager instance = null;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private final int FORCED_SLEEP_MILLIS = 10 * 1000;
 
     private ScipCallbackManager() {
 
@@ -43,14 +44,28 @@ public class ScipCallbackManager {
                 () -> bindingName,
                 () -> response.getCorrelationId(),
                 () -> response);
-        AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
-        this.executorService.execute(() -> binding.sendAsyncResponse(endpointUrl, response));
+        try {
+            log.debug("Waiting {} millis before sending callback", FORCED_SLEEP_MILLIS);
+            Thread.sleep(FORCED_SLEEP_MILLIS);
+            AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
+            this.executorService.execute(() -> binding.sendAsyncResponse(endpointUrl, response));
+        } catch (InterruptedException e) {
+            log.error(e);
+        }
+
     }
 
 
     public void sendAsyncErrorResponse(String endpointUrl, String bindingName, AsynchronousBalException exception) {
         log.info("Sending asynchronous SCIP error to {} using the binding '{}'.\nException body: {}", endpointUrl, bindingName, exception);
-        AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
-        this.executorService.execute(() -> binding.sendAsyncErrorResponse(endpointUrl, exception));
+        try {
+            log.debug("Waiting {} millis before sending callback", FORCED_SLEEP_MILLIS);
+            Thread.sleep(FORCED_SLEEP_MILLIS);
+            AbstractBinding binding = BindingsManager.getInstance().getBinding(bindingName);
+            this.executorService.execute(() -> binding.sendAsyncErrorResponse(endpointUrl, exception));
+        } catch (InterruptedException e) {
+            log.error(e);
+        }
+
     }
 }

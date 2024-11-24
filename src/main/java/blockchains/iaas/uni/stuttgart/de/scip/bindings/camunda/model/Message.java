@@ -27,5 +27,7 @@ public class Message {
     @NonNull
     private String messageName;
     @NonNull
-    private Map<String, Variable> processVariables;
+    private Map<String, Variable> processVariablesLocal;
+    @NonNull
+    private String businessKey;
 }

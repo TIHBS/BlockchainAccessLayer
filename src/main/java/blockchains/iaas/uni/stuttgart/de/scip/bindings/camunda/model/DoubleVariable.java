@@ -12,8 +12,10 @@
 package blockchains.iaas.uni.stuttgart.de.scip.bindings.camunda.model;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString
 public class DoubleVariable extends Variable {
     private final double value;
 
