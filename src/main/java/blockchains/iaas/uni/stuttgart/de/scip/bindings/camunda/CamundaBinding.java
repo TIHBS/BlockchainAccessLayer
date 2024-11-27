@@ -34,6 +34,7 @@ import org.springframework.web.client.RestClient;
 
 @Log4j2
 public class CamundaBinding implements AbstractBinding {
+    private final int FORCED_SLEEP_MILLIS = 10 * 1000;
 
     @Override
     public String getBindingIdentifier() {
@@ -42,6 +43,13 @@ public class CamundaBinding implements AbstractBinding {
 
     @Override
     public void sendAsyncResponse(String endpointUrl, AsyncScipResponse response) {
+        log.debug("Waiting {} millis before sending callback", FORCED_SLEEP_MILLIS);
+
+        try {
+            Thread.sleep(FORCED_SLEEP_MILLIS);
+        } catch (InterruptedException ignored) {
+        }
+
         if (response instanceof InvokeResponse invokeResponse) {
             this.sendInvocationResponse(endpointUrl, invokeResponse);
         } else if (response instanceof SubscribeResponse subscribeResponse) {
@@ -58,6 +66,9 @@ public class CamundaBinding implements AbstractBinding {
     @Override
     public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
         try {
+            log.debug("Waiting {} millis before sending callback", FORCED_SLEEP_MILLIS);
+            Thread.sleep(FORCED_SLEEP_MILLIS);
+
             final Map<String, Variable> variables = new HashMap<>();
 
             if (exception.getCause() instanceof TimeoutException) {

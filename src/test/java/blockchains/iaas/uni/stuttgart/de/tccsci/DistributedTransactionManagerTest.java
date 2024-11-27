@@ -2,11 +2,10 @@ package blockchains.iaas.uni.stuttgart.de.tccsci;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.BalException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.NotSupportedException;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
-import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
-import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionRepository;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionVerdict;
@@ -22,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Log4j2
@@ -78,17 +76,27 @@ class DistributedTransactionManagerTest {
         return adapterManager;
     }
 
+    static DistributedTransactionManager getDistributedTransactionManager(AdapterManager adapterManager, BlockchainManager blockchainManager) {
+        return spy(new DistributedTransactionManager(adapterManager, blockchainManager) {
+            @Override
+            protected String getBlockchainIdentity(String blockchainId) {
+                return blockchainId + "/user1";
+            }
+        });
+
+    }
+
     @Test
     void testStartingDtx() {
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         assertNotNull(uuid);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertNotNull(dtx);
-        assertEquals(DistributedTransactionState.AWAITING_REQUESTS, dtx.getState());
+        assertEquals(DistributedTransactionState.STARTED, dtx.getState());
     }
 
     @Test
@@ -96,43 +104,47 @@ class DistributedTransactionManagerTest {
         /* DtxStart */
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         /* DtxInvoke 1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
-        dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
+        String identity = dManager.registerBc(uuid, "bc1");
+        assertEquals("bc1/user1", identity);
+        manager.invokeSmartContractFunction("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L, "callback-url", 0, "ABC", "");
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(1, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
         // we remain in the same state
-        assertEquals(DistributedTransactionState.AWAITING_REQUESTS, dtx.getState());
+        assertEquals(DistributedTransactionState.STARTED, dtx.getState());
         assertEquals(1, manager.functionInvocations.size());
         assertTrue(manager.functionInvocations.containsKey("bc1"));
         assertEquals(1, manager.functionInvocations.get("bc1").size());
 
         /* DtxInvoke 2 */
-        dManager.invokeSc("bc1", "sc2", "userF2", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc1", "sc2", "userF2", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(1, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
         // we remain in the same state
-        assertEquals(DistributedTransactionState.AWAITING_REQUESTS, dtx.getState());
+        assertEquals(DistributedTransactionState.STARTED, dtx.getState());
         assertEquals(1, manager.functionInvocations.size());
         assertTrue(manager.functionInvocations.containsKey("bc1"));
         assertEquals(2, manager.functionInvocations.get("bc1").size());
 
         /* DtxInvoke 3 */
-        dManager.invokeSc("bc2", "sc3", "userF3", List.of(uuidParameter), List.of(),
+        identity = dManager.registerBc(uuid, "bc2");
+        assertEquals("bc2/user1", identity);
+        manager.invokeSmartContractFunction("bc2", "sc3", "userF3", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(2, dtx.getBlockchainIds().size());
         assertTrue(dtx.getBlockchainIds().contains("bc1"));
         assertTrue(dtx.getBlockchainIds().contains("bc2"));
         // we remain in the same state
-        assertEquals(DistributedTransactionState.AWAITING_REQUESTS, dtx.getState());
+        assertEquals(DistributedTransactionState.STARTED, dtx.getState());
         assertEquals(2, manager.functionInvocations.size());
         assertTrue(manager.functionInvocations.containsKey("bc1"));
         assertEquals(2, manager.functionInvocations.get("bc1").size());
@@ -146,16 +158,18 @@ class DistributedTransactionManagerTest {
         /* DtxStart */
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
-        dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
+        dManager.registerBc(uuid, "bc1");
+        dManager.registerBc(uuid, "bc2");
+        manager.invokeSmartContractFunction("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
-        dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
@@ -164,6 +178,7 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
         assertEquals(0, dtx.getYes());
+        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
 
         /* vote 1 */
         assertTrue(manager.emitVotes(uuid, "bc1", true));
@@ -179,6 +194,7 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.COMMITTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.COMMIT, dtx.getVerdict());
         assertEquals(2, dtx.getYes());
+        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
 
     }
 
@@ -187,16 +203,18 @@ class DistributedTransactionManagerTest {
         /* DtxStart */
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
-        dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
+        dManager.registerBc(uuid, "bc1");
+        dManager.registerBc(uuid, "bc2");
+        manager.invokeSmartContractFunction("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
-        dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
@@ -219,6 +237,7 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.ABORTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.ABORT, dtx.getVerdict());
         assertEquals(1, dtx.getYes());
+        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
     }
 
     @Test
@@ -226,16 +245,18 @@ class DistributedTransactionManagerTest {
         /* DtxStart */
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
-        dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
+        dManager.registerBc(uuid, "bc1");
+        dManager.registerBc(uuid, "bc2");
+        manager.invokeSmartContractFunction("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
-        dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* SC Error */
@@ -258,16 +279,16 @@ class DistributedTransactionManagerTest {
         /* DtxStart */
         AdapterManager adapterManager = generateAdapterManager();
         MockBlockchainManager manager = new MockBlockchainManager(adapterManager);
-        DistributedTransactionManager dManager = new DistributedTransactionManager(adapterManager, manager);
+        DistributedTransactionManager dManager = getDistributedTransactionManager(adapterManager, manager);
         UUID uuid = dManager.startDtx();
 
         /* DtxInvoke bc1 */
         Parameter uuidParameter = new Parameter("txid", "string", uuid.toString());
-        dManager.invokeSc("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc1", "sc1", "userF1", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxInvoke bc2 */
-        dManager.invokeSc("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
+        manager.invokeSmartContractFunction("bc2", "sc2", "userF2", List.of(uuidParameter), List.of(),
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* SC Error */

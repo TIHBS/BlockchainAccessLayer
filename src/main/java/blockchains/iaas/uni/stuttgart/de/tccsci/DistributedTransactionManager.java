@@ -13,8 +13,11 @@
 package blockchains.iaas.uni.stuttgart.de.tccsci;
 
 import blockchains.iaas.uni.stuttgart.de.adaptation.AdapterManager;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.NotSupportedException;
+import blockchains.iaas.uni.stuttgart.de.api.exceptions.UnknownException;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
+import blockchains.iaas.uni.stuttgart.de.connectionprofiles.ConnectionProfilesManager;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionVerdict;
@@ -41,36 +44,15 @@ public class DistributedTransactionManager {
         return param1Name + "==\"" + txId.toString() + "\"";
     }
 
-    public UUID startDtx() {
-        DistributedTransaction tx = new DistributedTransaction();
-        DistributedTransactionRepository.getInstance().addDistributedTransaction(tx);
-        final UUID transactionId = tx.getId();
-        log.info("Received start_tx request and generated the following id: {}", () -> transactionId);
-        return transactionId;
-    }
+    public String registerBc(final UUID dtxId, final String blockchainIdentifier) {
+        log.info("Received register_bc({}) request for dtx: {}", blockchainIdentifier, dtxId);
+        DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(dtxId);
 
-    public void invokeSc(final String blockchainIdentifier,
-                         final String smartContractPath,
-                         final String functionIdentifier,
-                         final List<Parameter> inputs,
-                         final List<Parameter> outputs,
-                         final double requiredConfidence,
-                         final String callbackBinding,
-                         final boolean sideEffects,
-                         final Long nonce,
-                         final String callbackUrl,
-                         final long timeoutMillis,
-                         final String correlationId,
-                         final String signature) {
-        UUID txId = UUID.fromString(inputs.get(0).getValue());
-        log.info("Received invoke_sc request for dtx: {}", txId);
-        DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
-
-        if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
+        if (dtx.getState() == DistributedTransactionState.STARTED) {
             if (!dtx.getBlockchainIds().contains(blockchainIdentifier)) {
                 ResourceManagerSmartContract rmsc = this.adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
                 SmartContractEvent abortEvent = rmsc.getAbortEvent();
-                final UUID dtxId = dtx.getId();
+
                 this.blockchainManager.subscribeToEvent(blockchainIdentifier,
                                 rmsc.getSmartContractPath(),
                                 abortEvent.getFunctionIdentifier(),
@@ -83,17 +65,28 @@ public class DistributedTransactionManager {
                 dtx.getBlockchainIds().add(blockchainIdentifier);
             }
 
-            blockchainManager.invokeSmartContractFunction(blockchainIdentifier, smartContractPath, functionIdentifier, inputs,
-                    outputs, requiredConfidence, callbackBinding, sideEffects, nonce, callbackUrl, timeoutMillis, correlationId, signature);
+            final String identity = getBlockchainIdentity(blockchainIdentifier);
+            log.debug("Reporting the identity to the client: {}", identity);
+
+            return identity;
         }
 
+        throw new NotSupportedException("The requested operation requires the current transaction to be in the STARTED state, instead: " + dtx.getState());
+    }
+
+    public UUID startDtx() {
+        DistributedTransaction tx = new DistributedTransaction();
+        DistributedTransactionRepository.getInstance().addDistributedTransaction(tx);
+        final UUID transactionId = tx.getId();
+        log.info("Received start_tx request and generated the following id: {}", () -> transactionId);
+        return transactionId;
     }
 
     public void abortDtx(UUID txId) {
         log.info("Received abort_dtx request for dtx: {}", txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
-        if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
+        if (dtx.getState() == DistributedTransactionState.STARTED) {
             doAbort(txId);
         }
     }
@@ -102,7 +95,7 @@ public class DistributedTransactionManager {
         log.info("Received commit_dtx request for dtx: {}", txId);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(txId);
 
-        if (dtx.getState() == DistributedTransactionState.AWAITING_REQUESTS) {
+        if (dtx.getState() == DistributedTransactionState.STARTED) {
             dtx.setState(DistributedTransactionState.AWAITING_VOTES);
             dtx.setYes(0);
             List<String> ids = dtx.getBlockchainIds();
@@ -133,6 +126,10 @@ public class DistributedTransactionManager {
                         log.info("Invoked prepare* of all RMSCs of dtx: {}", txId);
                     });
         }
+    }
+
+    protected String getBlockchainIdentity(String blockchainId) {
+        return ConnectionProfilesManager.getInstance().getConnectionProfiles().get(blockchainId).getIdentity();
     }
 
     private void handleScError(Occurrence errorDetails) {

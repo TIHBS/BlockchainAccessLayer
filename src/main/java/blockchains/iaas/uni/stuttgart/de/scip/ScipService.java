@@ -73,14 +73,8 @@ public class ScipService {
                         .type(signature.getParameters().stream().filter(p -> p.getName().equals(arg.getName())).map(Parameter::getType).findFirst().orElse(""))
                         .build())
                 .toList();
-
-        if (inputs.stream().anyMatch(p -> p.getName().equals(DTX_ID_FIELD_NAME))) {
-            dtxManager.invokeSc(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
-        } else {
-            manager.invokeSmartContractFunction(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
-                    degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null? -1 : timeout, correlationId, digitalSignature);
-        }
+        manager.invokeSmartContractFunction(blockchainId, smartContractPath, signature.getName(), inputs, outputParams,
+                degreeOfConfidence, callbackBinding, sideEffects, nonce == null ? -1 : nonce, callbackUrl, timeout == null ? -1 : timeout, correlationId, digitalSignature);
 
         return "OK";
     }
@@ -142,9 +136,16 @@ public class ScipService {
 
     /******************/
 
+    public String Register_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId, @JsonRpcParam("blockchain-id") String blockchainId) {
+        log.info("T-SCIP Register_Dtx method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+
+        return dtxManager.registerBc(uuid, blockchainId);
+    }
+
     @JsonRpcMethod
     public String Start_Dtx() {
-        log.info("SCIP-T Start_Dtx method is executed!");
+        log.info("T-SCIP Start_Dtx method is executed!");
 
         return dtxManager.startDtx().toString();
     }
@@ -152,7 +153,7 @@ public class ScipService {
     @JsonRpcMethod
     public String Commit_Dtx(
             @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("SCIP-T Commit_Dtx method is executed!");
+        log.info("T-SCIP Commit_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.commitDtx(uuid);
 
@@ -162,7 +163,7 @@ public class ScipService {
     @JsonRpcMethod
     public String Abort_Dtx(
             @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("SCIP-T Abort_Dtx method is executed!");
+        log.info("T-SCIP Abort_Dtx method is executed!");
         UUID uuid = UUID.fromString(dtxId);
         dtxManager.abortDtx(uuid);
 
@@ -183,7 +184,7 @@ public class ScipService {
             @JsonRpcOptional @JsonRpcParam("timeout") Long timeout,
             @JsonRpcOptional @JsonRpcParam("nonce") Long nonce,
             @JsonRpcOptional @JsonRpcParam("digitalSignature") String digitalSignature
-            ) {
+    ) {
         log.info("B-SCIP SendTx method is executed!");
         manager.submitNewTransaction(correlationId, smartContractPath, BigInteger.valueOf(value), blockchainId, degreeOfConfidence, callbackBinding, callbackUrl);
         return "OK";
@@ -226,7 +227,6 @@ public class ScipService {
 
 
     }
-
 
 
 }

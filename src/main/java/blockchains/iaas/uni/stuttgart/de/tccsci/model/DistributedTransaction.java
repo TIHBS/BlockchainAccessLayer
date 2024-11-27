@@ -19,7 +19,7 @@ public class DistributedTransaction {
     public DistributedTransaction(UUID id) {
         this.id = id;
         this.blockchainIds = new ArrayList<>();
-        this.state = DistributedTransactionState.AWAITING_REQUESTS;
+        this.state = DistributedTransactionState.STARTED;
         this.verdict = DistributedTransactionVerdict.NOT_DECIDED;
     }
 

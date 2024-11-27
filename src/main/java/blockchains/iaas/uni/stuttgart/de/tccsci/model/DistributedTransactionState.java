@@ -1,7 +1,7 @@
 package blockchains.iaas.uni.stuttgart.de.tccsci.model;
 
 public enum DistributedTransactionState {
-    AWAITING_REQUESTS,
+    STARTED,
     AWAITING_VOTES,
     ABORTED,
     COMMITTED
