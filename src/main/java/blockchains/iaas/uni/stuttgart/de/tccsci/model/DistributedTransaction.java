@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Setter
 @Getter
@@ -14,7 +15,7 @@ public class DistributedTransaction {
     private final List<String> blockchainIds;
     private DistributedTransactionState state;
     private DistributedTransactionVerdict verdict;
-    private int yes;
+    private AtomicInteger yes = new AtomicInteger(0);
 
     public DistributedTransaction(UUID id) {
         this.id = id;

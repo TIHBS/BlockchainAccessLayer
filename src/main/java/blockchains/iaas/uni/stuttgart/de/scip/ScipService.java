@@ -36,7 +36,7 @@ import java.util.UUID;
 @JsonRpcService
 @Log4j2
 public class ScipService {
-    private static final String DTX_ID_FIELD_NAME = "dtx_id";
+    private static final String DTX_ID_FIELD_NAME = "dtxId";
     private final String blockchainType;
     private final String blockchainId;
     private final String smartContractPath;
@@ -136,36 +136,47 @@ public class ScipService {
 
     /******************/
 
-    public String Register_Dtx(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId, @JsonRpcParam("blockchain-id") String blockchainId) {
-        log.info("T-SCIP Register_Dtx method is executed!");
+    @JsonRpcMethod
+    public String DtxIsAborted(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
+        log.info("T-SCIP DtxIsAborted method is executed!");
+        UUID uuid = UUID.fromString(dtxId);
+
+        return dtxManager.isAbortedInBc(uuid, this.blockchainId);
+    }
+
+    @JsonRpcMethod
+    public String DtxRegister(@JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId, @JsonRpcParam("blockchainId") String blockchainId) {
+        log.info("T-SCIP DtxRegister method is executed!");
         UUID uuid = UUID.fromString(dtxId);
 
         return dtxManager.registerBc(uuid, blockchainId);
     }
 
     @JsonRpcMethod
-    public String Start_Dtx() {
-        log.info("T-SCIP Start_Dtx method is executed!");
+    public String DtxStart() {
+        log.info("T-SCIP DtxStart method is executed!");
 
         return dtxManager.startDtx().toString();
     }
 
     @JsonRpcMethod
-    public String Commit_Dtx(
-            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("T-SCIP Commit_Dtx method is executed!");
+    public String DtxCommit(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId,
+            @JsonRpcParam("callbackUrl") String callbackUrl) {
+        log.info("T-SCIP DtxCommit method is executed!");
         UUID uuid = UUID.fromString(dtxId);
-        dtxManager.commitDtx(uuid);
+        dtxManager.commitDtx(uuid, callbackUrl);
 
         return "OK";
     }
 
     @JsonRpcMethod
-    public String Abort_Dtx(
-            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId) {
-        log.info("T-SCIP Abort_Dtx method is executed!");
+    public String DtxAbort(
+            @JsonRpcParam(DTX_ID_FIELD_NAME) String dtxId,
+            @JsonRpcParam("callbackUrl") String callbackUrl) {
+        log.info("T-SCIP DtxAbort method is executed!");
         UUID uuid = UUID.fromString(dtxId);
-        dtxManager.abortDtx(uuid);
+        dtxManager.abortDtx(uuid, callbackUrl);
 
         return "OK";
     }

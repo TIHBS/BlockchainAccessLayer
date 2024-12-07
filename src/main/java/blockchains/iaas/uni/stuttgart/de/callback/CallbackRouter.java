@@ -11,6 +11,10 @@ import blockchains.iaas.uni.stuttgart.de.scip.callback.ScipCallbackManager;
 import blockchains.iaas.uni.stuttgart.de.scip.model.common.Argument;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.*;
+import blockchains.iaas.uni.stuttgart.de.tccsci.DistributedTransactionManager;
+import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransaction;
+import blockchains.iaas.uni.stuttgart.de.tccsci.model.responses.AbortResponse;
+import blockchains.iaas.uni.stuttgart.de.tccsci.model.responses.CommitResponse;
 
 /**
  * Routes callbacks to the correct CallbackManager
@@ -131,5 +135,18 @@ public class CallbackRouter {
         }
     }
 
+    public void sendCommitResponse(String endpointUrl, DistributedTransaction dtx, boolean success) {
+        final String message = success ? "Commit is successful!" :
+                "Commit failed. Received: " + (dtx.getBlockchainIds().size() - dtx.getYes().get()) + "/" + dtx.getBlockchainIds().size() + " NO votes. Verdict: " + dtx.getVerdict();
+        CommitResponse response = new CommitResponse(dtx, message);
+        ScipCallbackManager.getInstance().sendAsyncResponse(endpointUrl, "json-rpc", response);
+
+    }
+
+    public void sendAbortResponse(String endpointUrl, DistributedTransaction dtx) {
+        final String message = "Abort is successful!";
+        AbortResponse response = new AbortResponse(dtx, message);
+        ScipCallbackManager.getInstance().sendAsyncResponse(endpointUrl, "json-rpc", response);
+    }
 
 }

@@ -574,9 +574,9 @@ public class BlockchainManager {
         }
 
         final double minimumConfidenceAsProbability = degreeOfConfidence / 100.0;
+        BlockchainAdapter adapter = adapterManager.getAdapter(blockchainIdentifier);
 
-        return this.adapterManager.getAdapter(blockchainIdentifier)
-                .subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter);
+        return adapter.subscribeToEvent(smartContractPath, eventIdentifier, outputParameters, minimumConfidenceAsProbability, filter);
     }
 
     public void cancelEventSubscriptions(String blockchainId, String smartContractId, String correlationId, String eventIdentifier, List<Parameter> parameters) {

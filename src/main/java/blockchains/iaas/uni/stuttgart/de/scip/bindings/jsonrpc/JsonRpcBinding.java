@@ -15,6 +15,7 @@ import blockchains.iaas.uni.stuttgart.de.api.exceptions.TimeoutException;
 import blockchains.iaas.uni.stuttgart.de.scip.bindings.AbstractBinding;
 import blockchains.iaas.uni.stuttgart.de.scip.model.exceptions.AsynchronousBalException;
 import blockchains.iaas.uni.stuttgart.de.scip.model.responses.*;
+import blockchains.iaas.uni.stuttgart.de.tccsci.model.responses.TccsciResponse;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.github.arteam.simplejsonrpc.client.Transport;
 import com.github.arteam.simplejsonrpc.client.builder.NotificationRequestBuilder;
@@ -46,12 +47,27 @@ public class JsonRpcBinding implements AbstractBinding {
             this.sendReceiveTxResponse(endpointUrl, receiveTxResponse);
         } else if (response instanceof EnsureStateResponse ensureStateResponse) {
             this.sendEnsureStateResponse(endpointUrl, ensureStateResponse);
+        } else if (response instanceof TccsciResponse tccsciResponse) {
+            this.sendTccsciResponse(endpointUrl, tccsciResponse);
+        }
+    }
+
+    protected void sendTccsciResponse(String endpointUrl, TccsciResponse response) {
+        try {
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
+
+            builder.param("correlationIdentifier", response.getCorrelationId())
+                    .param("message", response.getMessage())
+                    .param("verdict", response.getVerdict().toString())
+                    .execute();
+        } catch (Exception e) {
+            log.error("Failed to send TccsciResponse to {}. Reason: {}", endpointUrl, e.getMessage());
         }
     }
 
     protected void sendEnsureStateResponse(String endpointUrl, EnsureStateResponse response) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
 
             builder.param("correlationIdentifier", response.getCorrelationId())
                     .execute();
@@ -62,7 +78,7 @@ public class JsonRpcBinding implements AbstractBinding {
 
     protected void sendSendTxResponse(String endpointUrl, SendTxResponse response) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
 
             builder.param("correlationIdentifier", response.getCorrelationId())
                     .param("timestamp", response.getTimestamp() == null ? "" : response.getTimestamp())
@@ -74,7 +90,7 @@ public class JsonRpcBinding implements AbstractBinding {
 
     protected void sendReceiveTxResponse(String endpointUrl, ReceiveTxResponse response) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
 
             builder.param("correlationIdentifier", response.getCorrelationId())
                     .param("from", response.getFrom())
@@ -88,7 +104,7 @@ public class JsonRpcBinding implements AbstractBinding {
 
     protected void sendInvocationResponse(String endpointUrl, InvokeResponse response) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
 
             builder.param("correlationIdentifier", response.getCorrelationId())
                     .param("parameters", response.getOutputArguments())
@@ -101,7 +117,7 @@ public class JsonRpcBinding implements AbstractBinding {
 
     protected void sendSubscriptionResponse(String endpointUrl, SubscribeResponse response) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, false);
             builder.param("correlationIdentifier", response.getCorrelationId())
                     .param("parameters", response.getArguments())
                     .param("timestamp", response.getTimestamp())
@@ -114,7 +130,7 @@ public class JsonRpcBinding implements AbstractBinding {
     @Override
     public void sendAsyncErrorResponse(String endpointUrl, AsynchronousBalException exception) {
         try {
-            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl);
+            NotificationRequestBuilder builder = createNotificationBuilder(endpointUrl, true);
 
             builder = builder.param("errorCode", exception.getCode());
             builder = builder.param("errorMessage", exception.getMessage());
@@ -133,8 +149,8 @@ public class JsonRpcBinding implements AbstractBinding {
         }
     }
 
-    private NotificationRequestBuilder createNotificationBuilder(final String endpointUrl) {
-        final String METHOD_NAME = "ReceiveResponse";
+    private NotificationRequestBuilder createNotificationBuilder(final String endpointUrl, boolean isError) {
+        final String METHOD_NAME = isError? "ReceiveError" : "ReceiveResponse";
         JsonRpcClient client = new JsonRpcClient(new Transport() {
             @NotNull
             @Override

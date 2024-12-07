@@ -34,8 +34,8 @@ public class RootController {
 
     @PostMapping
     public ResponseEntity<String> performJsonRpcCall(@RequestBody String jsonRequest,
-                                                     @RequestParam(name = "blockchain") final String blockchainType,
-                                                     @RequestParam(name = "blockchain-id") final String blockchainId,
+                                                     @RequestParam(name = "blockchain", required = false) final String blockchainType,
+                                                     @RequestParam(name = "blockchain-id", required = false) final String blockchainId,
                                                      @RequestParam(name = "address", required = false) final String smartContractAddress) {
         ScipService service = new ScipService(blockchainType, blockchainId, smartContractAddress, manager, distributedTransactionManager);
         JsonRpcServer server = new JsonRpcServer();

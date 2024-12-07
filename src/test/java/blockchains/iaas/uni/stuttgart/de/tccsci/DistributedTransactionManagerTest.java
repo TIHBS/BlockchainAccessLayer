@@ -173,11 +173,11 @@ class DistributedTransactionManagerTest {
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
-        dManager.commitDtx(uuid);
+        dManager.commitDtx(uuid, null);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
-        assertEquals(0, dtx.getYes());
+        assertEquals(0, dtx.getYes().get());
         assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
 
         /* vote 1 */
@@ -185,7 +185,7 @@ class DistributedTransactionManagerTest {
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
-        assertEquals(1, dtx.getYes());
+        assertEquals(1, dtx.getYes().get());
 
 
         /* vote 2 */
@@ -193,7 +193,7 @@ class DistributedTransactionManagerTest {
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.COMMITTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.COMMIT, dtx.getVerdict());
-        assertEquals(2, dtx.getYes());
+        assertEquals(2, dtx.getYes().get());
         assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
 
     }
@@ -218,25 +218,25 @@ class DistributedTransactionManagerTest {
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* DtxCommit */
-        dManager.commitDtx(uuid);
+        dManager.commitDtx(uuid, null);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
-        assertEquals(0, dtx.getYes());
+        assertEquals(0, dtx.getYes().get());
 
         /* yes vote */
         assertTrue(manager.emitVotes(uuid, "bc1", true));
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
-        assertEquals(1, dtx.getYes());
+        assertEquals(1, dtx.getYes().get());
 
         /* no vote */
         assertTrue(manager.emitVotes(uuid, "bc2", false));
         dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.ABORTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.ABORT, dtx.getVerdict());
-        assertEquals(1, dtx.getYes());
+        assertEquals(1, dtx.getYes().get());
         assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
     }
 
@@ -264,7 +264,7 @@ class DistributedTransactionManagerTest {
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.ABORTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.ABORT, dtx.getVerdict());
-        assertEquals(0, dtx.getYes());
+        assertEquals(0, dtx.getYes().get());
 
         // At this point the distributed transaction manager is not listening to votes anymore.
         /* yes vote */
@@ -292,11 +292,11 @@ class DistributedTransactionManagerTest {
                 0, "json-rpc", true, 0L,"callback-url", 0, "ABC", "");
 
         /* SC Error */
-        dManager.abortDtx(uuid);
+        dManager.abortDtx(uuid, null);
         DistributedTransaction dtx = DistributedTransactionRepository.getInstance().getById(uuid);
         assertEquals(DistributedTransactionState.ABORTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.ABORT, dtx.getVerdict());
-        assertEquals(0, dtx.getYes());
+        assertEquals(0, dtx.getYes().get());
 
         // At this point the distributed transaction manager is not listening to votes anymore.
         /* yes vote */
