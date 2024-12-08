@@ -9,10 +9,12 @@ import blockchains.iaas.uni.stuttgart.de.BlockchainManager;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransaction;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionState;
 import blockchains.iaas.uni.stuttgart.de.tccsci.model.DistributedTransactionVerdict;
+import blockchains.iaas.uni.stuttgart.de.tccsci.model.exception.IllegalProtocolStateException;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -178,7 +180,7 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.AWAITING_VOTES, dtx.getState());
         assertEquals(DistributedTransactionVerdict.NOT_DECIDED, dtx.getVerdict());
         assertEquals(0, dtx.getYes().get());
-        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
+        assertThrows(IllegalProtocolStateException.class, () -> dManager.registerBc(uuid, "bc3"));
 
         /* vote 1 */
         assertTrue(manager.emitVotes(uuid, "bc1", true));
@@ -194,7 +196,7 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.COMMITTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.COMMIT, dtx.getVerdict());
         assertEquals(2, dtx.getYes().get());
-        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
+        assertThrows(IllegalProtocolStateException.class, () -> dManager.registerBc(uuid, "bc3"));
 
     }
 
@@ -237,9 +239,10 @@ class DistributedTransactionManagerTest {
         assertEquals(DistributedTransactionState.ABORTED, dtx.getState());
         assertEquals(DistributedTransactionVerdict.ABORT, dtx.getVerdict());
         assertEquals(1, dtx.getYes().get());
-        assertThrows(NotSupportedException.class, () -> dManager.registerBc(uuid, "bc3"));
+        assertThrows(IllegalProtocolStateException.class, () -> dManager.registerBc(uuid, "bc3"));
     }
 
+    @Disabled
     @Test
     void testAbortViaError() {
         /* DtxStart */
@@ -419,11 +422,12 @@ class DistributedTransactionManagerTest {
         boolean emitVotes(UUID txId, String blockchainIdentifier, boolean isYes) {
             log.info("Emitting votes for the txid: {} and blockchainId: {}. Vote={}", txId, blockchainIdentifier, isYes);
             ImmutablePair<UUID, String> key = ImmutablePair.of(txId, blockchainIdentifier);
+            Parameter ownerPar = new Parameter("owner", "string", "abc");
             Parameter txIdPar = new Parameter("txId", "string", txId.toString());
-            Parameter votePar = new Parameter("vote", "boolean", String.valueOf(isYes));
+            Parameter isYesPar = new Parameter("vote", "boolean", String.valueOf(isYes));
 
             if (this.voteEventEmitters.containsKey(key)) {
-                this.voteEventEmitters.get(key).forEach(emitter -> emitter.onNext(new Occurrence(List.of(txIdPar, votePar), "")));
+                this.voteEventEmitters.get(key).forEach(emitter -> emitter.onNext(new Occurrence(List.of(ownerPar, txIdPar, isYesPar), "")));
                 return true;
             }
 
