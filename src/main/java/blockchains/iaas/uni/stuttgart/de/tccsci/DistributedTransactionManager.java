@@ -30,9 +30,12 @@ import io.reactivex.disposables.Disposable;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
+import javax.management.Query;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Log4j2
 @Component
@@ -115,28 +118,18 @@ public class DistributedTransactionManager {
             dtx.setState(DistributedTransactionState.AWAITING_VOTES);
             List<String> ids = dtx.getBlockchainIds();
 
-            for (String blockchainIdentifier : ids) {
-                ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
-                SmartContractEvent voteEvent = rmsc.getVoteEvent();
-                final UUID dtxId = dtx.getId();
-                blockchainManager.subscribeToEvent(blockchainIdentifier,
-                                rmsc.getSmartContractPath(),
-                                voteEvent.getFunctionIdentifier(),
-                                voteEvent.getOutputs(),
-                                0.0,
-                                buildEventFilter(voteEvent, dtxId))
-                        .take(1)
-                        .subscribe(occurrence -> {
-                            handleVoteEvent(occurrence, dtx, ids.size(), callbackUrl);
-                        });
-                log.info("Subscribed to the Vote event of blockchain: {} for the dtx: {}", blockchainIdentifier, dtxId);
-            }
-
             CompletableFuture.allOf(ids
                             .stream()
                             .map(bcId -> invokePrepare(bcId, txId))
                             .toList()
                             .toArray(new CompletableFuture[ids.size()]))
+                    .thenAccept((result)-> {
+                        log.info("Invoked prepare* of all RMSCs of dtx: {}", txId);
+
+                        for (String blockchainIdentifier : ids) {
+                            analyzeBlockchainVote(blockchainIdentifier, dtx, ids.size(), callbackUrl);
+                        }
+                    })
                     .exceptionally(e -> {
                         log.error("Error detected while invoking prepare* of all RMSCs of dtx: {}", txId, e);
 
@@ -152,9 +145,6 @@ public class DistributedTransactionManager {
                         }
 
                         return null;
-                    })
-                    .whenComplete((v, th) -> {
-                        log.info("Invoked prepare* of all RMSCs of dtx: {}", txId);
                     });
         } else {
             throw new IllegalProtocolStateException("The requested operation requires the current transaction to be in the STARTED state, instead: " + dtx.getState());
@@ -172,11 +162,27 @@ public class DistributedTransactionManager {
         doAbort(txId, false, null);
     }
 
+    private void analyzeBlockchainVote(String blockchainIdentifier, DistributedTransaction dtx, int blockchainCount, String callbackUrl) {
+        ResourceManagerSmartContract rmsc = adapterManager.getAdapter(blockchainIdentifier).getResourceManagerSmartContract();
+        SmartContractEvent voteEvent = rmsc.getVoteEvent();
+        final UUID dtxId = dtx.getId();
+        log.info("Querying the Vote event of blockchain: {} for the dtx: {}", blockchainIdentifier, dtxId);
+
+        QueryResult result = blockchainManager.queryEvents(blockchainIdentifier,
+                        rmsc.getSmartContractPath(),
+                        voteEvent.getFunctionIdentifier(),
+                        voteEvent.getOutputs(),
+                        "txId==\"" + dtxId.toString() + "\"",
+                        null);
+        Occurrence occurrence = result.getOccurrences().stream().max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
+        handleVoteEvent(occurrence, dtx, blockchainCount, callbackUrl);
+    }
+
     // todo make synchronized so we do not miss counting votes!
     // todo use a better way to get to the special event arguments (a different blockchain system might have a different order!)
     private void handleVoteEvent(Occurrence voteDetails, DistributedTransaction tx, int bcCount, String callbackUrl) {
         final UUID txId = tx.getId();
-        log.info("Received Vote event for dtx: {}", txId);
+        log.info("Handling Vote event for dtx: {}", txId);
         boolean isYesVote = Boolean.parseBoolean(voteDetails.getParameters().get(2).getValue());
 
         if (!isYesVote) {

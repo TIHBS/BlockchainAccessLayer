@@ -137,7 +137,7 @@ public class CallbackRouter {
 
     public void sendCommitResponse(String endpointUrl, DistributedTransaction dtx, boolean success) {
         final String message = success ? "Commit is successful!" :
-                "Commit failed. Received: " + (dtx.getBlockchainIds().size() - dtx.getYes().get()) + "/" + dtx.getBlockchainIds().size() + " NO votes. Verdict: " + dtx.getVerdict();
+                "Commit failed. Received one or more NO votes. Verdict: " + dtx.getVerdict();
         CommitResponse response = new CommitResponse(dtx, message);
         ScipCallbackManager.getInstance().sendAsyncResponse(endpointUrl, "json-rpc", response);
 
