@@ -174,7 +174,7 @@ public class DistributedTransactionManager {
                         voteEvent.getOutputs(),
                         null,
                         null);
-        Occurrence occurrence = result.getOccurrences().stream().filter(o -> o.getParameters().get(1).getValue().equals(dtx.toString())).max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
+        Occurrence occurrence = result.getOccurrences().stream().filter(o -> o.getParameters().get(1).getValue().equals(dtx.getId().toString())).max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
         handleVoteEvent(occurrence, dtx, blockchainCount, callbackUrl);
     }
 
