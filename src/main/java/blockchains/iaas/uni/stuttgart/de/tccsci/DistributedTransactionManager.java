@@ -172,9 +172,10 @@ public class DistributedTransactionManager {
                         rmsc.getSmartContractPath(),
                         voteEvent.getFunctionIdentifier(),
                         voteEvent.getOutputs(),
-                        "txId==\"" + dtxId.toString() + "\"",
+                        //"txId==\"" + dtxId.toString() + "\"",
+                        "1==1",
                         null);
-        Occurrence occurrence = result.getOccurrences().stream().max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
+        Occurrence occurrence = result.getOccurrences().stream().filter(o -> o.getParameters().get(1).getValue().equals(dtx.toString())).max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
         handleVoteEvent(occurrence, dtx, blockchainCount, callbackUrl);
     }
 
@@ -297,7 +298,7 @@ public class DistributedTransactionManager {
         functionInputs.get(0).setValue(txId.toString());
 
         return blockchainManager.invokeSmartContractFunction(blockchainId, rmsc.getSmartContractPath(), prepareFunction.getFunctionIdentifier(),
-                functionInputs, prepareFunction.getOutputs(), 0.0, 100000, null, true);
+                functionInputs, prepareFunction.getOutputs(), 0.5, 100000, null, true);
     }
 
 
