@@ -172,8 +172,7 @@ public class DistributedTransactionManager {
                         rmsc.getSmartContractPath(),
                         voteEvent.getFunctionIdentifier(),
                         voteEvent.getOutputs(),
-                        //"txId==\"" + dtxId.toString() + "\"",
-                        "1==1",
+                        null,
                         null);
         Occurrence occurrence = result.getOccurrences().stream().filter(o -> o.getParameters().get(1).getValue().equals(dtx.toString())).max((Comparator.comparing(Occurrence::getTimestampObject))).orElse(null);
         handleVoteEvent(occurrence, dtx, blockchainCount, callbackUrl);
